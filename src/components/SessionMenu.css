@@ -1,0 +1,56 @@
+/* SessionMenu 组件样式 */
+.session-menu-dropdown .ant-dropdown-menu {
+  background-color: #374151 !important;
+  border: 1px solid #4B5563 !important;
+  border-radius: 8px !important;
+}
+
+.session-menu-dropdown .ant-dropdown-menu-item {
+  color: #D1D5DB !important;
+}
+
+.session-menu-dropdown .ant-dropdown-menu-item:hover {
+  background-color: #4B5563 !important;
+}
+
+/* 模态框深色主题样式 */
+.ant-modal .ant-modal-content {
+  background-color: #1F2937 !important;
+  border: 1px solid #374151 !important;
+}
+
+.ant-modal .ant-modal-header {
+  background-color: #1F2937 !important;
+  border-bottom: 1px solid #374151 !important;
+}
+
+.ant-modal .ant-modal-title {
+  color: #F9FAFB !important;
+}
+
+.ant-modal .ant-modal-footer {
+  background-color: #1F2937 !important;
+  border-top: 1px solid #374151 !important;
+}
+
+.ant-modal .ant-btn-default {
+  background-color: #374151 !important;
+  border-color: #4B5563 !important;
+  color: #D1D5DB !important;
+}
+
+.ant-modal .ant-btn-default:hover {
+  background-color: #4B5563 !important;
+  border-color: #6B7280 !important;
+  color: #F9FAFB !important;
+}
+
+.ant-modal .ant-btn-primary {
+  background-color: #3B82F6 !important;
+  border-color: #3B82F6 !important;
+}
+
+.ant-modal .ant-btn-primary:hover {
+  background-color: #2563EB !important;
+  border-color: #2563EB !important;
+} 
