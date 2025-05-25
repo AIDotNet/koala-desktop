@@ -110,6 +110,7 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
   const [isLoadingModels, setIsLoadingModels] = useState(false)
   const [searchText, setSearchText] = useState('')
   const [filterType, setFilterType] = useState<string | null>(null)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   // 添加自定义滚动条样式
   const scrollbarStyles = `
@@ -813,9 +814,35 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
                 className="flex-1 p-6"
                 style={{
                   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  animation: 'fadeIn 0.4s ease-out'
+                  animation: 'fadeIn 0.4s ease-out',
+                  position: 'relative'
                 }}
               >
+                {/* 刷新覆盖层 */}
+                {isRefreshing && (
+                  <div 
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                      backdropFilter: 'blur(2px)',
+                      zIndex: 10,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      animation: 'fadeIn 0.2s ease-out'
+                    }}
+                  >
+                    <div className="flex flex-col items-center">
+                      <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500 mb-2"></div>
+                      <Text className="text-white">更新中...</Text>
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex items-center justify-between mb-6">
                   <div>
                     <Title level={4} className="!text-white !mb-2 flex items-center">
@@ -899,7 +926,7 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
 
                 {/* 模型网格布局 */}
                 {getFilteredModels().length > 0 ? (
-                  <div className="custom-scrollbar" style={{ maxHeight: "calc(100vh - 420px)", overflowY: "auto" }}>
+                  <div className="custom-scrollbar" style={{ maxHeight: "calc(100vh - 520px)", overflowY: "auto" }}>
                     <div className="border border-white/5 rounded-lg overflow-hidden bg-black/30">
                       {getFilteredModels().map((model, index) => {
                         // 根据模型类型设置颜色
@@ -925,12 +952,48 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
                             onClick: (e: any) => {
                               e.domEvent.stopPropagation();
                               try {
+                                // 设置刷新状态
+                                setIsRefreshing(true);
+                                
                                 onModelToggle(model.provider, model.id, !model.enabled);
+                                
                                 // 给用户反馈
-                                message.success(`模型 "${model.displayName}" 已${!model.enabled ? '启用' : '禁用'}`);
+                                message.loading({
+                                  content: '正在更新模型状态...',
+                                  duration: 0.5,
+                                  key: 'modelToggleMenu'
+                                });
+                                
+                                // 刷新当前提供商数据
+                                setTimeout(async () => {
+                                  try {
+                                    // 从数据库获取最新数据
+                                    const updatedProvider = await providerDB.getProvider(model.provider);
+                                    if (updatedProvider) {
+                                      // 更新上层组件状态
+                                      onProviderUpdate(updatedProvider);
+                                      // 更新当前选中的提供商
+                                      setSelectedProvider(updatedProvider);
+                                      // 成功提示
+                                      message.success({
+                                        content: `模型 "${model.displayName}" 已${!model.enabled ? '启用' : '禁用'}`,
+                                        key: 'modelToggleMenu'
+                                      });
+                                    }
+                                  } catch (error) {
+                                    console.error('刷新提供商数据失败:', error);
+                                    message.error({
+                                      content: '更新状态失败，请重试',
+                                      key: 'modelToggleMenu'
+                                    });
+                                  } finally {
+                                    setIsRefreshing(false);
+                                  }
+                                }, 100);
                               } catch (error) {
                                 console.error('切换模型状态失败:', error);
                                 message.error('操作失败');
+                                setIsRefreshing(false);
                               }
                             }
                           },
@@ -1038,12 +1101,48 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
                                         target.style.transform = '';
                                       }, 150);
                                       
+                                      // 设置刷新状态
+                                      setIsRefreshing(true);
+                                      
                                       onModelToggle(model.provider, model.id, !model.enabled);
+                                      
                                       // 立即给用户反馈
-                                      message.success(`模型 "${model.displayName}" 已${!model.enabled ? '启用' : '禁用'}`);
+                                      message.loading({
+                                        content: '正在更新模型状态...',
+                                        duration: 0.5,
+                                        key: 'modelToggle'
+                                      });
+                                      
+                                      // 刷新当前提供商数据
+                                      setTimeout(async () => {
+                                        try {
+                                          // 从数据库获取最新数据
+                                          const updatedProvider = await providerDB.getProvider(model.provider);
+                                          if (updatedProvider) {
+                                            // 更新上层组件状态
+                                            onProviderUpdate(updatedProvider);
+                                            // 更新当前选中的提供商
+                                            setSelectedProvider(updatedProvider);
+                                            // 成功提示
+                                            message.success({
+                                              content: `模型 "${model.displayName}" 已${!model.enabled ? '启用' : '禁用'}`,
+                                              key: 'modelToggle'
+                                            });
+                                          }
+                                        } catch (error) {
+                                          console.error('刷新提供商数据失败:', error);
+                                          message.error({
+                                            content: '更新状态失败，请重试',
+                                            key: 'modelToggle'
+                                          });
+                                        } finally {
+                                          setIsRefreshing(false);
+                                        }
+                                      }, 100);
                                     } catch (error) {
                                       console.error('切换模型状态失败:', error);
                                       message.error('操作失败');
+                                      setIsRefreshing(false);
                                     }
                                   }}
                                 >

@@ -2,6 +2,7 @@
 export interface ModelAbilities {
   functionCall?: boolean
   vision?: boolean
+  reasoning?: boolean
 }
 
 // 模型定价接口
@@ -15,10 +16,10 @@ export interface ModelPricing {
 export interface Model {
   id: string
   displayName: string
-  description: string
+  description?: string
   provider: string
   type: 'chat' | 'completion' | 'embedding' | 'image' | 'tts' | 'sst'
-  enabled: boolean
+  enabled?: boolean
   contextWindowTokens: number
   maxOutput?: number
   abilities?: ModelAbilities
