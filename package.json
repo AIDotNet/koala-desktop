@@ -27,7 +27,7 @@
     "electron-updater": "^6.3.9",
     "idb": "^8.0.3",
     "lucide-react": "^0.511.0",
-    "react-router-dom": "^7.6.0"
+    "react-router-dom": "^7.6.1"
   },
   "devDependencies": {
     "@playwright/test": "^1.48.2",
