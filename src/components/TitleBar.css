@@ -1,0 +1,94 @@
+/* TitleBar 样式 */
+.titlebar {
+  display: flex;
+  align-items: center;
+  height: 40px;
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  user-select: none;
+  transition: all 0.3s ease;
+  -webkit-app-region: drag;
+}
+
+.titlebar-left {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.titlebar-right {
+  display: flex;
+  -webkit-app-region: no-drag;
+}
+
+.titlebar-tabs {
+  height: 100%;
+  -webkit-app-region: no-drag;
+}
+
+.titlebar-app-title {
+  font-size: 14px;
+  font-weight: 500;
+  padding: 0 12px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  -webkit-app-region: drag;
+}
+
+.titlebar-toggle-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 40px;
+}
+
+.window-button {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 48px !important;
+  height: 40px !important;
+  border: none !important;
+  background: transparent !important;
+  transition: background-color 0.15s ease !important;
+  cursor: pointer !important;
+  padding: 0 !important;
+}
+
+.window-button:hover {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+}
+
+.close-button:hover {
+  background-color: #e32c2c !important;
+}
+
+.close-button:hover svg {
+  color: white !important;
+}
+
+.restore-icon {
+  position: relative;
+}
+
+.restore-icon-front {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+}
+
+.restore-icon-back {
+  position: relative;
+}
+
+/* 深色模式特定样式 */
+body.dark .window-button:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+body.dark .close-button:hover {
+  background-color: #e32c2c !important;
+} 

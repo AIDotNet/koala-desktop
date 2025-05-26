@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import { Minus, Square, X, Maximize2 } from 'lucide-react'
-import { Button } from 'antd'
+import { Button, theme, Layout } from 'antd'
 import ThemeToggle from './ThemeToggle'
 import TabBar, { Tab } from './TabBar'
-import { createStyles } from '@/theme'
+import { getThemeColors } from '@/theme'
+import './TitleBar.css'
 
 interface TitleBarProps {
   onThemeChange?: (isDark: boolean) => void
@@ -22,6 +23,8 @@ const TitleBar: React.FC<TitleBarProps> = ({
 }) => {
   const [isMaximized, setIsMaximized] = useState(false)
   const [isDarkTheme, setIsDarkTheme] = useState(false)
+  const { token } = theme.useToken();
+  const themeColors = getThemeColors(isDarkTheme);
 
   useEffect(() => {
     // 检查初始最大化状态
@@ -62,77 +65,12 @@ const TitleBar: React.FC<TitleBarProps> = ({
     onThemeChange?.(isDark)
   }
 
-  const styles = createStyles(isDarkTheme);
-
-  const titleBarStyle = {
-    ...styles.titleBar,
-    display: 'flex',
-    alignItems: 'center',
-    height: '40px',
-    borderBottom: `1px solid ${isDarkTheme ? '#3a3a4a' : '#e5e7eb'}`,
-    userSelect: 'none' as const,
-    transition: 'all 0.3s ease',
-    WebkitAppRegion: 'drag' as any,
-  };
-
-  const leftAreaStyle = {
-    flex: 1,
-    height: '100%',
-    display: 'flex',
-    alignItems: 'center',
-  };
-
-  const rightAreaStyle = {
-    display: 'flex',
-    WebkitAppRegion: 'no-drag' as any,
-  };
-
-  const windowButtonStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '48px',
-    height: '40px',
-    border: 'none',
-    background: 'transparent',
-    transition: 'background-color 0.15s ease',
-    cursor: 'pointer',
-  };
-
-  const closeButtonStyle = {
-    ...windowButtonStyle,
-  };
-
-  const themeToggleContainerStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '48px',
-    height: '40px',
-  };
-
-  const appTitleStyle = {
-    fontSize: '14px',
-    fontWeight: 500,
-    color: isDarkTheme ? '#e0e0e8' : '#6b7280',
-    padding: '0 12px',
-    height: '100%',
-    display: 'flex',
-    alignItems: 'center',
-    WebkitAppRegion: 'drag' as any,
-  };
-
-  const tabContainerStyle = {
-    height: '100%',
-    WebkitAppRegion: 'no-drag' as any,
-  };
-
   return (
-    <div style={titleBarStyle}>
+    <div className="titlebar" style={{ borderBottomColor: token.colorBorder }}>
       {/* 左侧可拖拽区域 */}
-      <div style={leftAreaStyle}>
+      <div className="titlebar-left">
         {tabs.length > 0 ? (
-          <div style={tabContainerStyle}>
+          <div className="titlebar-tabs">
             <TabBar
               tabs={tabs}
               onTabClick={onTabClick}
@@ -142,85 +80,71 @@ const TitleBar: React.FC<TitleBarProps> = ({
             />
           </div>
         ) : (
-          <div style={appTitleStyle}>
+          <div className="titlebar-app-title" style={{ color: themeColors.text.secondary }}>
             <span>Koala Desktop</span>
           </div>
         )}
       </div>
 
       {/* 右侧：窗口控制按钮 */}
-      <div style={rightAreaStyle}>
+      <div className="titlebar-right">
         {/* 主题切换按钮 */}
         {onThemeChange && (
-          <div style={themeToggleContainerStyle}>
+          <div className="titlebar-toggle-container">
             <ThemeToggle onThemeChange={handleThemeChange} />
           </div>
         )}
 
         <Button
-          type='text'
+          type="text"
           onClick={handleMinimize}
-          style={windowButtonStyle}
+          className="window-button"
           title="最小化"
           icon={
             <Minus 
               size={16} 
-              style={{ 
-                color: isDarkTheme ? '#b0b0c0' : '#6b7280',
-                transition: 'color 0.15s ease',
-              }} 
+              style={{ color: themeColors.text.tertiary }}
             />
           }
         />
         
         <Button
-          type='text'
+          type="text"
           onClick={handleMaximize}
-          style={windowButtonStyle}
+          className="window-button"
           title={isMaximized ? "还原" : "最大化"}
           icon={
             isMaximized ? (
-              <div style={{ position: 'relative' }}>
+              <div className="restore-icon">
                 <Square 
                   size={12} 
-                  style={{ 
-                    position: 'absolute', 
-                    top: '2px', 
-                    left: '2px',
-                    color: isDarkTheme ? '#b0b0c0' : '#6b7280',
-                  }} 
+                  className="restore-icon-front"
+                  style={{ color: themeColors.text.tertiary }}
                 />
                 <Square 
                   size={12} 
-                  style={{ 
-                    color: isDarkTheme ? '#b0b0c0' : '#6b7280',
-                  }} 
+                  className="restore-icon-back"
+                  style={{ color: themeColors.text.tertiary }}
                 />
               </div>
             ) : (
               <Maximize2 
                 size={14} 
-                style={{ 
-                  color: isDarkTheme ? '#b0b0c0' : '#6b7280',
-                  transition: 'color 0.15s ease',
-                }} 
+                style={{ color: themeColors.text.tertiary }}
               />
             )
           }
         />
         
         <Button
-          type='text'
+          type="text"
           onClick={handleClose}
-          style={closeButtonStyle}
+          className="window-button close-button"
           title="关闭"
           icon={
             <X 
               size={16} 
-              style={{ 
-                color: isDarkTheme ? '#b0b0c0' : '#6b7280',
-                transition: 'color 0.15s ease',
-              }} 
+              style={{ color: themeColors.text.tertiary }}
             />
           }
         />

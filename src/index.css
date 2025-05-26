@@ -14,3 +14,97 @@ body {
   height: 100vh;
   overflow: hidden;
 }
+
+/* 全局样式重置 */
+* {
+  box-sizing: border-box;
+}
+
+/* 应用容器 */
+.app-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s ease;
+}
+
+/* 主内容区域 */
+.main-content {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* 滚动条样式 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+body.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+body.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* 卡片通用样式 */
+.card {
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.2s ease;
+}
+
+body.dark .card {
+  background: #1e1e2e;
+  border: 1px solid #3a3a4a;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+body:not(.dark) .card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.card:hover {
+  transform: translateY(-2px);
+}
+
+body.dark .card:hover {
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+}
+
+body:not(.dark) .card:hover {
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* 玻璃态效果 */
+.glass-effect {
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+}
+
+body.dark .glass-effect {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+body:not(.dark) .glass-effect {
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}

@@ -10,10 +10,9 @@ import ProviderDemo from '@/components/ProviderDemo'
 import { Monitor, Smartphone, Tablet, Zap } from 'lucide-react'
 import logoVite from './assets/logo-vite.svg'
 import logoElectron from './assets/logo-electron.svg'
-import { darkTheme, lightTheme, createStyles } from '@/theme'
+import { darkTheme, lightTheme, getThemeColors } from '@/theme'
 
 function App() {
-  const [count, setCount] = useState(0)
   const [isDarkTheme, setIsDarkTheme] = useState(false)
   const [tabs, setTabs] = useState<Tab[]>([])
   const [currentUrl, setCurrentUrl] = useState('/')
@@ -24,6 +23,13 @@ function App() {
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
     const shouldUseDark = savedTheme === 'dark' || (!savedTheme && prefersDark)
     setIsDarkTheme(shouldUseDark)
+    
+    // 为 body 添加深色主题标记类名
+    if (shouldUseDark) {
+      document.body.classList.add('dark')
+    } else {
+      document.body.classList.remove('dark')
+    }
   }, [])
   
   // 确保应用启动时有默认标签页
@@ -42,6 +48,13 @@ function App() {
 
   const handleThemeChange = (isDark: boolean) => {
     setIsDarkTheme(isDark)
+    
+    // 更新 body 类名以反映主题变化
+    if (isDark) {
+      document.body.classList.add('dark')
+    } else {
+      document.body.classList.remove('dark')
+    }
   }
 
   const handleTabClick = (tabId: string) => {
@@ -206,26 +219,37 @@ function App() {
     }
   }
 
-  const styles = createStyles(isDarkTheme);
+  const styles = getThemeColors(isDarkTheme);
 
   return (
     <ConfigProvider
       theme={isDarkTheme ? darkTheme : lightTheme}
-          >
-        <div style={styles.appContainer}>
-          <TitleBar 
-            onThemeChange={handleThemeChange}
-            tabs={tabs}
-            onTabClick={handleTabClick}
-            onTabClose={handleTabClose}
-            onNewTab={handleNewTab}
-          />
-          
-          {/* 主内容区域 - 直接渲染组件 */}
-          <div style={styles.mainContent}>
-            {renderCurrentPage()}
-          </div>
+    >
+      <div className="app-container" style={{
+        height: '100vh',
+        display: 'flex',
+        flexDirection: 'column' as const,
+        background: isDarkTheme ? 'rgb(10, 10, 15)' : 'rgb(245, 245, 245)',
+        color: isDarkTheme ? '#ffffff' : '#1f2937',
+        transition: 'all 0.3s ease'
+      }}>
+        <TitleBar 
+          onThemeChange={handleThemeChange}
+          tabs={tabs}
+          onTabClick={handleTabClick}
+          onTabClose={handleTabClose}
+          onNewTab={handleNewTab}
+        />
+        
+        {/* 主内容区域 - 直接渲染组件 */}
+        <div style={{
+          flex: 1,
+          display: 'flex',
+          overflow: 'hidden'
+        }}>
+          {renderCurrentPage()}
         </div>
+      </div>
     </ConfigProvider>
   )
 }

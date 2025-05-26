@@ -87,13 +87,13 @@ export const darkTheme: ThemeConfig = {
       ghostBg: 'transparent',
       linkHoverBg: 'transparent',
     },
-         Input: {
-       colorBgContainer: '#2a2a3a',
-       colorBorder: '#3a3a4a',
-       colorText: '#ffffff',
-       colorTextPlaceholder: '#808090',
-       colorBgContainerDisabled: '#1a1a24',
-     },
+    Input: {
+      colorBgContainer: '#2a2a3a',
+      colorBorder: '#3a3a4a',
+      colorText: '#ffffff',
+      colorTextPlaceholder: '#808090',
+      colorBgContainerDisabled: '#1a1a24',
+    },
     Card: {
       colorBgContainer: '#1e1e2e',
       colorBorderSecondary: '#3a3a4a',
@@ -234,13 +234,13 @@ export const lightTheme: ThemeConfig = {
       ghostBg: 'transparent',
       linkHoverBg: 'transparent',
     },
-         Input: {
-       colorBgContainer: '#ffffff',
-       colorBorder: '#d1d5db',
-       colorText: '#1f2937',
-       colorTextPlaceholder: '#9ca3af',
-       colorBgContainerDisabled: '#f9fafb',
-     },
+    Input: {
+      colorBgContainer: '#ffffff',
+      colorBorder: '#d1d5db',
+      colorText: '#1f2937',
+      colorTextPlaceholder: '#9ca3af',
+      colorBgContainerDisabled: '#f9fafb',
+    },
     Card: {
       colorBgContainer: '#ffffff',
       colorBorderSecondary: '#e5e7eb',
@@ -294,179 +294,201 @@ export const lightTheme: ThemeConfig = {
   },
 };
 
+// 定义通用颜色变量供组件使用
+export const colors = {
+  dark: {
+    // 主要色调
+    primary: '#6366f1',
+    success: '#10b981',
+    warning: '#f59e0b',
+    error: '#ef4444',
+    info: '#06b6d4',
+    
+    // 背景
+    bg: {
+      base: '#0a0a0f',
+      container: '#1e1e2e',
+      elevated: '#2a2a3a',
+      spotlight: '#2d2d44',
+    },
+    
+    // 文本
+    text: {
+      primary: '#ffffff',
+      secondary: '#e0e0e8',
+      tertiary: '#b0b0c0',
+      quaternary: '#808090',
+      disabled: '#606070',
+    },
+    
+    // 边框
+    border: {
+      base: '#3a3a4a',
+      light: '#4a4a5a',
+    },
+  },
+  light: {
+    // 主要色调
+    primary: '#6366f1',
+    success: '#10b981',
+    warning: '#f59e0b',
+    error: '#ef4444',
+    info: '#06b6d4',
+    
+    // 背景
+    bg: {
+      base: '#f5f5f5',
+      container: '#ffffff',
+      elevated: '#ffffff',
+      spotlight: '#f8f9fa',
+    },
+    
+    // 文本
+    text: {
+      primary: '#1f2937',
+      secondary: '#6b7280',
+      tertiary: '#9ca3af',
+      quaternary: '#d1d5db',
+      disabled: '#e5e7eb',
+    },
+    
+    // 边框
+    border: {
+      base: '#d1d5db',
+      light: '#e5e7eb',
+    },
+  },
+};
+
+// 获取当前主题下的颜色值
+export const getThemeColors = (isDark: boolean) => {
+  return isDark ? colors.dark : colors.light;
+};
+
 // CSS-in-JS 样式工具函数
-export const createStyles = (isDark: boolean) => ({
-  // 应用容器样式
-  appContainer: {
-    height: '100vh',
-    display: 'flex',
-    flexDirection: 'column' as const,
-    background: isDark 
-      ? 'linear-gradient(135deg, #0a0a0f 0%, #1a1a24 100%)' 
-      : 'linear-gradient(135deg, #f0f2f5 0%, #ffffff 100%)',
-    color: isDark ? '#ffffff' : '#1f2937',
-    transition: 'all 0.3s ease',
-  },
+export const createStyles = (isDark: boolean) => {
+  const theme = getThemeColors(isDark);
   
-  // 标题栏样式
-  titleBar: {
-    height: '32px',
-    background: isDark ? '#1e1e2e' : '#ffffff',
-    borderBottom: `1px solid ${isDark ? '#3a3a4a' : '#e5e7eb'}`,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: '0 16px',
-    WebkitAppRegion: 'drag' as any,
-    userSelect: 'none' as const,
-  },
-  
-  // 主内容区域样式
-  mainContent: {
-    flex: 1,
-    display: 'flex',
-    overflow: 'hidden',
-  },
-  
-  // 侧边栏样式
-  sidebar: {
-    width: '280px',
-    background: isDark ? '#1a1a24' : '#ffffff',
-    borderRight: `1px solid ${isDark ? '#3a3a4a' : '#e5e7eb'}`,
-    display: 'flex',
-    flexDirection: 'column' as const,
-  },
-  
-  // 聊天区域样式
-  chatArea: {
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'column' as const,
-    background: isDark ? '#0a0a0f' : '#f9fafb',
-  },
-  
-  // 消息容器样式
-  messageContainer: {
-    flex: 1,
-    padding: '24px',
-    overflowY: 'auto' as const,
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '16px',
-  },
-  
-  // 用户消息样式
-  userMessage: {
-    alignSelf: 'flex-end',
-    maxWidth: '70%',
-    background: '#6366f1',
-    color: '#ffffff',
-    padding: '12px 16px',
-    borderRadius: '18px 18px 4px 18px',
-    wordBreak: 'break-word' as const,
-    boxShadow: isDark 
-      ? '0 2px 8px rgba(99, 102, 241, 0.3)' 
-      : '0 2px 8px rgba(99, 102, 241, 0.2)',
-  },
-  
-  // AI消息样式
-  aiMessage: {
-    alignSelf: 'flex-start',
-    maxWidth: '70%',
-    background: isDark ? '#2a2a3a' : '#ffffff',
-    color: isDark ? '#ffffff' : '#1f2937',
-    padding: '12px 16px',
-    borderRadius: '18px 18px 18px 4px',
-    wordBreak: 'break-word' as const,
-    border: `1px solid ${isDark ? '#3a3a4a' : '#e5e7eb'}`,
-    boxShadow: isDark 
-      ? '0 2px 8px rgba(0, 0, 0, 0.3)' 
-      : '0 2px 8px rgba(0, 0, 0, 0.1)',
-  },
-  
-  // 输入区域样式
-  inputArea: {
-    padding: '16px 24px',
-    background: isDark ? '#1e1e2e' : '#ffffff',
-    borderTop: `1px solid ${isDark ? '#3a3a4a' : '#e5e7eb'}`,
-  },
-  
-  // 按钮样式
-  primaryButton: {
-    background: '#6366f1',
-    borderColor: '#6366f1',
-    color: '#ffffff',
-    borderRadius: '8px',
-    fontWeight: 500,
-    transition: 'all 0.2s ease',
-    '&:hover': {
-      background: '#8b5cf6',
-      borderColor: '#8b5cf6',
-      transform: 'translateY(-1px)',
-      boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)',
+  return {
+    // 应用容器样式
+    appContainer: {
+      height: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      background: isDark ? theme.bg.base : theme.bg.base,
+      color: theme.text.primary,
+      transition: 'all 0.3s ease',
     },
-    '&:active': {
-      transform: 'translateY(0)',
+    
+    // 标题栏样式
+    titleBar: {
+      height: '32px',
+      borderBottom: `1px solid ${theme.border.base}`,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      WebkitAppRegion: 'drag',
+      userSelect: 'none',
     },
-  },
-  
-  // 次要按钮样式
-  secondaryButton: {
-    background: isDark ? '#2a2a3a' : '#ffffff',
-    borderColor: isDark ? '#3a3a4a' : '#d1d5db',
-    color: isDark ? '#e0e0e8' : '#6b7280',
-    borderRadius: '8px',
-    fontWeight: 500,
-    transition: 'all 0.2s ease',
-    '&:hover': {
-      background: isDark ? '#2d2d44' : '#f3f4f6',
-      borderColor: isDark ? '#4a4a5a' : '#9ca3af',
-      color: isDark ? '#ffffff' : '#1f2937',
+    
+    // 主内容区域样式
+    mainContent: {
+      flex: 1,
+      display: 'flex',
+      overflow: 'hidden',
     },
-  },
-  
-  // 卡片样式
-  card: {
-    background: isDark ? '#1e1e2e' : '#ffffff',
-    border: `1px solid ${isDark ? '#3a3a4a' : '#e5e7eb'}`,
-    borderRadius: '12px',
-    padding: '20px',
-    boxShadow: isDark 
-      ? '0 4px 6px rgba(0, 0, 0, 0.3)' 
-      : '0 4px 6px rgba(0, 0, 0, 0.1)',
-    transition: 'all 0.2s ease',
-    '&:hover': {
-      transform: 'translateY(-2px)',
+    
+    // 侧边栏样式
+    sidebar: {
+      width: '280px',
+      background: theme.bg.container,
+      borderRight: `1px solid ${theme.border.base}`,
+      display: 'flex',
+      flexDirection: 'column',
+    },
+    
+    // 聊天区域样式
+    chatArea: {
+      flex: 1,
+      display: 'flex',
+      flexDirection: 'column',
+      background: theme.bg.base,
+    },
+    
+    // 消息容器样式
+    messageContainer: {
+      flex: 1,
+      padding: '24px',
+      overflowY: 'auto',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '16px',
+    },
+    
+    // 用户消息样式
+    userMessage: {
+      alignSelf: 'flex-end',
+      maxWidth: '70%',
+      background: theme.primary,
+      color: '#ffffff',
+      padding: '12px 16px',
+      borderRadius: '18px 18px 4px 18px',
+      wordBreak: 'break-word',
       boxShadow: isDark 
-        ? '0 8px 25px rgba(0, 0, 0, 0.4)' 
-        : '0 8px 25px rgba(0, 0, 0, 0.15)',
+        ? '0 2px 8px rgba(99, 102, 241, 0.3)' 
+        : '0 2px 8px rgba(99, 102, 241, 0.2)',
     },
-  },
-  
-  // 玻璃态效果样式
-  glassEffect: {
-    background: isDark 
-      ? 'rgba(255, 255, 255, 0.03)' 
-      : 'rgba(255, 255, 255, 0.8)',
-    backdropFilter: 'blur(10px)',
-    border: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.2)'}`,
-    borderRadius: '12px',
-  },
-  
-  // 滚动条样式
-  scrollbar: {
-    '&::-webkit-scrollbar': {
-      width: '6px',
+    
+    // AI消息样式
+    aiMessage: {
+      alignSelf: 'flex-start',
+      maxWidth: '70%',
+      background: theme.bg.elevated,
+      color: theme.text.primary,
+      padding: '12px 16px',
+      borderRadius: '18px 18px 18px 4px',
+      wordBreak: 'break-word',
+      border: `1px solid ${theme.border.base}`,
+      boxShadow: isDark 
+        ? '0 2px 8px rgba(0, 0, 0, 0.3)' 
+        : '0 2px 8px rgba(0, 0, 0, 0.1)',
     },
-    '&::-webkit-scrollbar-track': {
-      background: 'transparent',
+    
+    // 输入区域样式
+    inputArea: {
+      padding: '16px 24px',
+      background: theme.bg.container,
+      borderTop: `1px solid ${theme.border.base}`,
     },
-    '&::-webkit-scrollbar-thumb': {
-      background: isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)',
-      borderRadius: '3px',
+    
+    // 滚动条样式
+    scrollbar: {
+      '&::-webkit-scrollbar': {
+        width: '6px',
+        height: '6px',
+      },
+      '&::-webkit-scrollbar-track': {
+        background: isDark ? 'rgba(0, 0, 0, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+        borderRadius: '3px',
+      },
+      '&::-webkit-scrollbar-thumb': {
+        background: isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)',
+        borderRadius: '3px',
+        '&:hover': {
+          background: isDark ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)',
+        },
+      },
     },
-    '&::-webkit-scrollbar-thumb:hover': {
-      background: isDark ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)',
+    
+    // 输入框获取焦点时的边框样式
+    focusedInputContainer: {
+      background: isDark ? 'rgba(30, 30, 42, 0.7)' : 'rgba(255, 255, 255, 0.8)',
+      backdropFilter: 'blur(12px)',
+      borderRadius: '16px',
+      border: `1px solid ${theme.primary}`,
+      padding: '16px',
+      boxShadow: `0 0 0 2px ${isDark ? 'rgba(99, 102, 241, 0.3)' : 'rgba(99, 102, 241, 0.2)'}`,
+      transition: 'all 0.3s ease',
     },
-  },
-}); 
+  };
+}; 

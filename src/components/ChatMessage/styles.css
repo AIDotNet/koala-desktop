@@ -1,0 +1,133 @@
+/* ChatMessage组件样式，复用自ChatArea */
+.message-container {
+  display: flex;
+  gap: 1rem;
+  padding: 1.5rem;
+}
+
+.user-message-container {
+  justify-content: flex-end;
+  background-color: transparent;
+}
+
+.assistant-message-container {
+  
+}
+
+body:not(.dark) .assistant-message-container {
+}
+
+.message-content {
+  flex: 1;
+  max-width: 48rem;
+}
+
+.user-message-content {
+  text-align: right;
+}
+
+.message-bubble {
+  display: inline-block;
+  border-radius: 12px;
+  padding: 8px;
+}
+
+.user-message-bubble {
+  background-color: #6366f1;
+  color: white;
+  border-bottom-right-radius: 0.125rem;
+}
+
+.assistant-message-bubble {
+  background-color: rgba(34, 34, 51, 0.9);
+  color: white;
+  border-bottom-left-radius: 0.125rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+body:not(.dark) .assistant-message-bubble {
+  background-color: white;
+  color: #1f2937;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.message-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+}
+
+.message-container:hover .message-actions {
+  opacity: 1;
+}
+
+.user-message-container .message-actions {
+  justify-content: flex-end;
+}
+
+.assistant-message-container .message-actions {
+  justify-content: flex-start;
+}
+
+.message-time {
+  font-size: 0.75rem;
+  display: block;
+  margin-top: 0.25rem;
+  color: #808090;
+}
+
+body:not(.dark) .message-time {
+  color: #9ca3af;
+}
+
+.message-text {
+  margin-bottom: 0 !important;
+  white-space: pre-wrap;
+}
+
+.user-avatar {
+  flex-shrink: 0;
+}
+
+.user-avatar.dark {
+  background-color: #4b5563;
+}
+
+.user-avatar.light {
+  background-color: #9ca3af;
+}
+
+.assistant-avatar {
+  flex-shrink: 0;
+}
+
+.assistant-avatar.dark {
+  background-color: #3b82f6;
+}
+
+.assistant-avatar.light {
+  background-color: #3b82f6;
+}
+
+.action-button.dark {
+  color: #9ca3af;
+}
+
+.action-button.dark:hover {
+  color: #f9fafb;
+}
+
+.action-button.light {
+  color: #6b7280;
+}
+
+.action-button.light:hover {
+  color: #1f2937;
+}
+
+.edit-message-area {
+  width: 100%;
+} 

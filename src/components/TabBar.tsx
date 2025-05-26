@@ -166,8 +166,8 @@ const TabBar: React.FC<TabBarProps> = ({
     left: 0,
     right: 0,
     height: '2px',
-    background: 'linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%)',
-    boxShadow: '0 1px 2px rgba(99, 102, 241, 0.3)',
+    background: 'rgb(76, 76, 82)',
+    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.3)',
   };
 
   const hoverEffectStyle = {
@@ -175,7 +175,6 @@ const TabBar: React.FC<TabBarProps> = ({
     inset: 0,
     opacity: 0,
     transition: 'all 0.3s ease-out',
-    background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, transparent 100%)',
     borderRadius: '8px 8px 0 0',
   };
 
@@ -191,8 +190,16 @@ const TabBar: React.FC<TabBarProps> = ({
               key={tab.id}
               style={getTabStyle(tab, isHovered, index)}
               onClick={() => handleTabClick(tab.id)}
-              onMouseEnter={() => handleTabMouseEnter(tab.id)}
-              onMouseLeave={handleTabMouseLeave}
+              onMouseEnter={() =>{
+                if(tab.canClose){
+                  handleTabMouseEnter(tab.id)
+                }
+              }}
+              onMouseLeave={(e)=>{
+                if(tab.canClose){
+                  handleTabMouseLeave();
+                }
+              }}
               title={tab.title}
             >
               {/* 标签页内容 */}

@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react'
-import { Select, Input } from 'antd'
+import React, { useState } from 'react'
+import { Select } from 'antd'
 import { ChevronDown, Zap, Eye, Search } from 'lucide-react'
 import { Model, Provider, ModelSelectorProps } from '@/types/model'
 import { getIcon, IconName } from '@/utils/iconutils'
@@ -15,7 +15,6 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
   className = ''
 }) => {
   const [open, setOpen] = useState(false)
-  const [searchText, setSearchText] = useState('')
 
   // 获取所有启用渠道下的启用模型
   const getEnabledModels = (): Model[] => {
@@ -26,19 +25,6 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
       )
   }
 
-  // 根据搜索文本过滤模型
-  const getFilteredModels = (models: Model[]): Model[] => {
-    if (!searchText.trim()) return models
-    
-    const searchLower = searchText.toLowerCase()
-    return models.filter(model => 
-      model.displayName.toLowerCase().includes(searchLower) ||
-      model.id.toLowerCase().includes(searchLower) ||
-      model.description?.toLowerCase().includes(searchLower) ||
-      model.provider.toLowerCase().includes(searchLower)
-    )
-  }
-
   // 根据服务商分组模型（只包含启用的渠道和模型）
   const getGroupedModels = () => {
     const groups: { [key: string]: { models: Model[], provider: Provider } } = {}
@@ -47,11 +33,10 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
       .filter(provider => provider.enabled) // 只处理启用的渠道
       .forEach(provider => {
         const enabledModels = provider.models.filter(model => model.enabled) // 只获取启用的模型
-        const filteredModels = getFilteredModels(enabledModels) // 应用搜索过滤
         
-        if (filteredModels.length > 0) {
+        if (enabledModels.length > 0) {
           groups[provider.displayName] = {
-            models: filteredModels,
+            models: enabledModels,
             provider: provider
           }
         }
@@ -62,18 +47,6 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
 
   const enabledModels = getEnabledModels()
   const groupedModels = getGroupedModels()
-  const currentModel = enabledModels.find(model => model.id === selectedModel)
-
-  // 计算搜索结果统计
-  const searchStats = useMemo(() => {
-    const allEnabledModels = getEnabledModels()
-    const filteredModels = getFilteredModels(allEnabledModels)
-    return {
-      total: allEnabledModels.length,
-      filtered: filteredModels.length,
-      hasSearch: searchText.trim().length > 0
-    }
-  }, [searchText, providers])
 
   // 渲染提供商图标
   const renderProviderIcon = (provider: Provider) => {
@@ -143,42 +116,29 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
     return tokens.toString()
   }
 
-  // 自定义下拉框渲染
-  const dropdownRender = (menu: React.ReactElement) => (
-    <div className="model-selector-dropdown-content">
-      {/* 搜索框 */}
-      <div className="model-selector-search">
-        <Input
-          placeholder="搜索模型..."
-          prefix={<Search size={14} style={{ color: '#9ca3af' }} />}
-          value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
-          className="search-input"
-          allowClear
-        />
-        {searchStats.hasSearch && (
-          <div className="search-stats">
-            找到 {searchStats.filtered} 个模型（共 {searchStats.total} 个）
-          </div>
-        )}
-      </div>
-      
-      {/* 模型列表 */}
-      <div className="model-selector-menu">
-        {Object.keys(groupedModels).length > 0 ? (
-          menu
-        ) : (
-          <div className="no-results">
-            <div className="no-results-icon">🔍</div>
-            <div className="no-results-text">
-              {searchStats.hasSearch ? '未找到匹配的模型' : '暂无可用模型'}
-            </div>
-            <div className="no-results-hint">
-              {searchStats.hasSearch ? '尝试调整搜索关键词' : '请在设置中启用模型渠道'}
-            </div>
-          </div>
-        )}
-      </div>
+  // 处理下拉框打开状态变化
+  const handleDropdownVisibleChange = (visible: boolean) => {
+    setOpen(visible)
+  }
+
+  // 自定义过滤函数
+  const filterOption = (input: string, option: any) => {
+    const model = enabledModels.find(m => m.id === option.value)
+    if (!model) return false
+    
+    const searchLower = input.toLowerCase()
+    return model.displayName.toLowerCase().includes(searchLower) ||
+           model.id.toLowerCase().includes(searchLower) ||
+           (model.description || '').toLowerCase().includes(searchLower) ||
+           model.provider.toLowerCase().includes(searchLower)
+  }
+
+  // 自定义下拉框无结果内容
+  const renderNoResults = () => (
+    <div className="no-results">
+      <div className="no-results-icon">🔍</div>
+      <div className="no-results-text">未找到匹配的模型</div>
+      <div className="no-results-hint">尝试调整搜索关键词</div>
     </div>
   )
 
@@ -189,17 +149,19 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
         onChange={onModelChange}
         disabled={disabled}
         open={open}
-        onDropdownVisibleChange={setOpen}
+        onDropdownVisibleChange={handleDropdownVisibleChange}
         style={{ width: '100%' }}
-        placeholder="选择模型"
+        placeholder="搜索模型..."
         suffixIcon={<ChevronDown size={14} style={{ color: '#9ca3af' }} />}
         dropdownClassName="model-selector-dropdown"
         optionLabelProp="label"
-        showSearch={false}
+        showSearch={true}
+        filterOption={filterOption}
         virtual={true}
         listHeight={350}
-        dropdownRender={dropdownRender}
-        notFoundContent={null}
+        notFoundContent={renderNoResults()}
+        dropdownMatchSelectWidth={false}
+        getPopupContainer={(trigger) => trigger.parentNode}
       >
         {Object.entries(groupedModels).map(([providerName, { models, provider }]) => (
           <Select.OptGroup 

@@ -1,0 +1,10 @@
+/* 聊天区域样式 */
+.chat-area {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.chat-content {
+  max-width: 4xl;
+  margin: 0 auto;
+}
