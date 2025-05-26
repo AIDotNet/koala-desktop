@@ -166,45 +166,12 @@ const parseThinkContent = (content: string): { cleanContent: string; thinkBlocks
   let cleanContent = content
   let index = 0
 
-  // 如果内容为空或不包含think标签，直接返回
-  if (!content || !content.includes('<think>')) {
-    return { cleanContent: content, thinkBlocks: [] }
-  }
-
-  // 检查是否有未闭合的 <think> 标签（流式输出场景）
-  const openThinkMatches = [...content.matchAll(/<think>/gi)]
-  const closeThinkMatches = [...content.matchAll(/<\/think>/gi)]
-  
-  // 如果开始标签数量大于结束标签数量，说明有未闭合的标签
-  if (openThinkMatches.length > closeThinkMatches.length) {
-    // 找到最后一个未闭合的 <think> 标签位置
-    const lastOpenMatch = openThinkMatches[openThinkMatches.length - 1]
-    const lastOpenIndex = lastOpenMatch.index || 0
-    
-    // 只处理已经完整闭合的部分
-    const completedPart = content.substring(0, lastOpenIndex)
-    const incompletePart = content.substring(lastOpenIndex)
-    
-    // 递归处理已完成的部分（如果存在完整的think标签对）
-    if (completedPart.trim() && completedPart.includes('</think>')) {
-      const { cleanContent: completedClean, thinkBlocks: completedBlocks } = parseThinkContent(completedPart)
-      
-      // 返回已处理的部分 + 未完成的部分
-      return {
-        cleanContent: completedClean + incompletePart,
-        thinkBlocks: completedBlocks
-      }
-    } else {
-      // 如果没有已完成的think标签对，直接返回原内容
-      return { cleanContent: content, thinkBlocks: [] }
-    }
-  }
-
-  // 使用正则表达式匹配完整的 <think>...</think> 标签对
-  const thinkRegex = /<think>([\s\S]*?)<\/think>/gi
+  // 首先处理完整的 <think>...</think> 标签对
+  const completeThinkRegex = /<think>([\s\S]*?)<\/think>/gi
   let match
 
-  while ((match = thinkRegex.exec(content)) !== null) {
+  // 收集所有完整的 think 块
+  while ((match = completeThinkRegex.exec(content)) !== null) {
     const thinkContent = match[1].trim()
     if (thinkContent) {
       thinkBlocks.push({
@@ -215,17 +182,40 @@ const parseThinkContent = (content: string): { cleanContent: string; thinkBlocks
   }
 
   // 重置正则表达式的 lastIndex
-  thinkRegex.lastIndex = 0
+  completeThinkRegex.lastIndex = 0
 
-  // 移除原始内容中的完整 think 标签，替换为占位符
+  // 替换完整的 think 标签对为占位符
   let placeholderIndex = 0
-  cleanContent = content.replace(thinkRegex, (match, thinkContent) => {
+  cleanContent = content.replace(completeThinkRegex, (match, thinkContent) => {
     const trimmedContent = thinkContent.trim()
     if (trimmedContent) {
       return `__THINK_PLACEHOLDER_${placeholderIndex++}__`
     }
     return ''
   })
+
+  // 检查是否还有未闭合的 <think> 标签（流式输出中的情况）
+  const incompleteThinkRegex = /<think>(?![\s\S]*<\/think>)([\s\S]*)$/i
+  const incompleteMatch = incompleteThinkRegex.exec(cleanContent)
+  
+  if (incompleteMatch) {
+    // 找到了未闭合的 <think> 标签
+    const incompleteThinkContent = incompleteMatch[1].trim()
+    
+    if (incompleteThinkContent) {
+      // 如果有内容，添加到 think 块中
+      thinkBlocks.push({
+        content: incompleteThinkContent,
+        index: index++
+      })
+      
+      // 替换未闭合的 <think> 及其后续内容为占位符
+      cleanContent = cleanContent.replace(incompleteThinkRegex, `__THINK_PLACEHOLDER_${placeholderIndex}__`)
+    } else {
+      // 如果没有内容，只是移除 <think> 标签
+      cleanContent = cleanContent.replace(/<think>$/, '')
+    }
+  }
 
   return { cleanContent, thinkBlocks }
 }

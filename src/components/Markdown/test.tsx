@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import MarkdownRenderer from './index'
 
 const testMarkdown = `# 测试标题
@@ -122,8 +122,73 @@ $$
 </think>
 `
 
+// 流式输出测试内容
+const streamingTestCases = [
+  {
+    name: '只有开始标签',
+    content: `# 流式测试
+
+这是普通内容。
+
+<think>
+这是正在流式输出的推理内容`
+  },
+  {
+    name: '标签中间有内容',
+    content: `# 流式测试
+
+这是普通内容。
+
+<think>
+这是推理过程：
+1. 分析问题
+2. 制定方案`
+  },
+  {
+    name: '完整+不完整混合',
+    content: `# 流式测试
+
+<think>
+这是完整的推理块。
+</think>
+
+这是中间内容。
+
+<think>
+这是不完整的推理块，正在流式输出`
+  }
+]
+
 const MarkdownTest: React.FC = () => {
   const [isDarkTheme, setIsDarkTheme] = useState(false)
+  const [testMode, setTestMode] = useState<'normal' | 'streaming'>('normal')
+  const [currentStreamTest, setCurrentStreamTest] = useState(0)
+  const [streamingContent, setStreamingContent] = useState('')
+
+  // 模拟流式输出
+  useEffect(() => {
+    if (testMode === 'streaming') {
+      const testCase = streamingTestCases[currentStreamTest]
+      let currentIndex = 0
+      const interval = setInterval(() => {
+        if (currentIndex <= testCase.content.length) {
+          setStreamingContent(testCase.content.substring(0, currentIndex))
+          currentIndex += 5 // 每次增加5个字符
+        } else {
+          clearInterval(interval)
+        }
+      }, 100)
+
+      return () => clearInterval(interval)
+    }
+  }, [testMode, currentStreamTest])
+
+  const switchTestCase = () => {
+    setCurrentStreamTest((prev) => (prev + 1) % streamingTestCases.length)
+    setStreamingContent('')
+  }
+
+  const currentContent = testMode === 'streaming' ? streamingContent : testMarkdown
 
   return (
     <div style={{
@@ -132,7 +197,7 @@ const MarkdownTest: React.FC = () => {
       color: isDarkTheme ? '#ffffff' : '#1f2937',
       minHeight: '100vh'
     }}>
-      <div style={{ marginBottom: '20px' }}>
+      <div style={{ marginBottom: '20px', display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
         <button
           onClick={() => setIsDarkTheme(!isDarkTheme)}
           style={{
@@ -141,14 +206,51 @@ const MarkdownTest: React.FC = () => {
             color: 'white',
             border: 'none',
             borderRadius: '6px',
-            cursor: 'pointer',
-            marginRight: '12px'
+            cursor: 'pointer'
           }}
         >
           切换主题 ({isDarkTheme ? '深色' : '浅色'})
         </button>
-        <span style={{ fontSize: '14px', color: isDarkTheme ? '#9ca3af' : '#6b7280' }}>
-          测试Think功能：点击"推理内容"按钮查看展开/收缩效果
+
+        <button
+          onClick={() => setTestMode(testMode === 'normal' ? 'streaming' : 'normal')}
+          style={{
+            padding: '8px 16px',
+            background: testMode === 'streaming' ? '#ef4444' : '#22c55e',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer'
+          }}
+        >
+          {testMode === 'streaming' ? '停止流式测试' : '开始流式测试'}
+        </button>
+
+        {testMode === 'streaming' && (
+          <button
+            onClick={switchTestCase}
+            style={{
+              padding: '8px 16px',
+              background: '#f59e0b',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer'
+            }}
+          >
+            切换测试用例 ({streamingTestCases[currentStreamTest].name})
+          </button>
+        )}
+
+        <span style={{ 
+          fontSize: '14px', 
+          color: isDarkTheme ? '#9ca3af' : '#6b7280',
+          maxWidth: '400px'
+        }}>
+          {testMode === 'normal' 
+            ? '测试Think功能：点击"推理内容"按钮查看展开/收缩效果'
+            : `流式测试：模拟 ${streamingTestCases[currentStreamTest].name} 的情况`
+          }
         </span>
       </div>
       
@@ -161,7 +263,7 @@ const MarkdownTest: React.FC = () => {
           : '0 2px 6px rgba(0, 0, 0, 0.08)'
       }}>
         <MarkdownRenderer
-          content={testMarkdown}
+          content={currentContent}
           isDarkTheme={isDarkTheme}
           enableCopy={true}
           enableZoom={false}
@@ -169,6 +271,23 @@ const MarkdownTest: React.FC = () => {
           enableFullscreen={false}
         />
       </div>
+
+      {testMode === 'streaming' && (
+        <div style={{
+          marginTop: '16px',
+          padding: '12px',
+          background: isDarkTheme ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.05)',
+          border: `1px solid ${isDarkTheme ? 'rgba(59, 130, 246, 0.3)' : 'rgba(59, 130, 246, 0.2)'}`,
+          borderRadius: '8px',
+          fontSize: '12px',
+          fontFamily: 'monospace'
+        }}>
+          <div style={{ marginBottom: '8px', fontWeight: 'bold' }}>当前测试内容:</div>
+          <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>
+            {currentContent || '(空内容)'}
+          </pre>
+        </div>
+      )}
     </div>
   )
 }
