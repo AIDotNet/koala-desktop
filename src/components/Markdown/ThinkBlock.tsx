@@ -15,7 +15,7 @@ interface ThinkBlockProps {
 }
 
 const ThinkBlock: React.FC<ThinkBlockProps> = ({ content, isDarkTheme = false }) => {
-  const [isExpanded, setIsExpanded] = useState(false)
+  const [isExpanded, setIsExpanded] = useState(true)
   const [contentHeight, setContentHeight] = useState(0)
   const contentRef = useRef<HTMLDivElement>(null)
 
