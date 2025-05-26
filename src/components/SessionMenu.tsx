@@ -64,7 +64,12 @@ const SessionMenu: React.FC<SessionMenuProps> = ({
     {
       key: 'edit',
       label: (
-        <div className="flex items-center space-x-2 text-gray-300">
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '8px', 
+          color: '#d1d5db' 
+        }}>
           <Edit3 size={14} />
           <span>编辑标题</span>
         </div>
@@ -77,7 +82,12 @@ const SessionMenu: React.FC<SessionMenuProps> = ({
     {
       key: 'delete',
       label: (
-        <div className="flex items-center space-x-2 text-red-400">
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '8px', 
+          color: '#f87171' 
+        }}>
           <Trash2 size={14} />
           <span>删除会话</span>
         </div>
@@ -95,10 +105,15 @@ const SessionMenu: React.FC<SessionMenuProps> = ({
         overlayClassName="session-menu-dropdown"
       >
         <div
-          className={`p-1 rounded hover:bg-gray-600 transition-colors ${className}`}
+          style={{
+            padding: '4px',
+            borderRadius: '4px',
+            transition: 'background-color 0.2s ease',
+            cursor: 'pointer',
+          }}
           onClick={(e) => e.stopPropagation()}
         >
-          <MoreHorizontal size={14} className="text-gray-400" />
+          <MoreHorizontal size={14} style={{ color: '#9ca3af' }} />
         </div>
       </Dropdown>
 
@@ -111,13 +126,17 @@ const SessionMenu: React.FC<SessionMenuProps> = ({
         cancelText="取消"
         confirmLoading={isLoading}
       >
-        <div className="py-4">
+        <div style={{ padding: '16px 0' }}>
           <Input
             value={editTitle}
             onChange={(e) => setEditTitle(e.target.value)}
             placeholder="请输入会话标题"
             maxLength={50}
-            className="bg-gray-800 border-gray-600 text-white"
+            style={{
+              background: '#374151',
+              borderColor: '#4b5563',
+              color: '#ffffff',
+            }}
             onPressEnter={handleEdit}
             autoFocus
           />

@@ -26,7 +26,8 @@ import {
   Divider,
   Alert,
   Dropdown,
-  Radio
+  Radio,
+  theme
 } from 'antd'
 import {
   Plus,
@@ -53,6 +54,7 @@ import { Provider, Model, ProviderManagerProps } from '@/types/model'
 import { providerDB } from '@/utils/providerDB'
 import { getIcon, IconName } from '@/utils/iconutils'
 import { OpenAI } from '@lobehub/icons'
+import ModelListItem from './ModelListItem'
 
 const { Title, Text } = Typography
 const { TextArea } = Input
@@ -98,6 +100,8 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
   onProviderDelete,
   onModelToggle
 }) => {
+  // 获取主题token
+  const { token } = theme.useToken()
   const [selectedProvider, setSelectedProvider] = useState<Provider | null>(
     providers.length > 0 ? providers.find(p => p.enabled) || providers[0] : null
   )
@@ -160,8 +164,7 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
   // 监听 providers 变化，更新选中的提供商
   useEffect(() => {
     if (providers.length > 0 && !selectedProvider) {
-      const enabledProvider = providers.find(p => p.enabled)
-      setSelectedProvider(enabledProvider || providers[0])
+      setSelectedProvider(providers[0])
     }
   }, [providers, selectedProvider])
 
@@ -225,7 +228,7 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
         contentElement.style.opacity = '0';
         contentElement.style.transform = 'translateY(10px)';
       }
-      
+
       // 设置一个短暂延迟后更新状态，实现平滑过渡
       setTimeout(() => {
         setSelectedProvider(provider);
@@ -589,15 +592,41 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
   };
 
   return (
-    <div className="h-full flex flex-col bg-black">
+    <div style={{
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      background: '#0a0a0f'
+    }}>
       <style>{scrollbarStyles}</style>
       <style>{animationStyles}</style>
-      <div className="flex-1 flex">
-        <div className="w-64 border-r border-gray-800 bg-gray-900 flex flex-col">
-          <div className="p-4 border-b border-gray-800">
-            <div className="flex items-center justify-between">
-              <Title level={5} className="!text-white !mb-0 flex items-center">
-                <Globe className="mr-2" size={16} />
+      <div style={{ flex: 1, display: 'flex' }}>
+        <div style={{
+          width: '256px',
+          borderRight: '1px solid #4b5563',
+          background: '#374151',
+          display: 'flex',
+          flexDirection: 'column'
+        }}>
+          <div style={{
+            padding: '16px',
+            borderBottom: '1px solid #4b5563'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}>
+              <Title
+                level={5}
+                style={{
+                  color: '#ffffff',
+                  marginBottom: 0,
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+              >
+                <Globe style={{ marginRight: '8px' }} size={16} />
                 提供商
               </Title>
               <Button
@@ -605,17 +634,22 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
                 size="small"
                 icon={<Plus size={14} />}
                 onClick={handleAddProvider}
-                className="bg-blue-600 hover:bg-blue-700"
+                style={{
+                  background: '#3b82f6',
+                  borderColor: '#3b82f6',
+                }}
               >
                 添加
               </Button>
             </div>
           </div>
 
-          <div className="flex-1 overflow-hidden">
+          <div style={{ flex: 1, overflow: 'hidden' }}>
             <div style={{
-              height: 'calc(100vh - 120px)'
-            }} className="h-full overflow-y-auto custom-scrollbar">
+              height: 'calc(100vh - 120px)',
+              overflowY: 'auto',
+              overflowX: "hidden",
+            }} className="custom-scrollbar">
               <List
                 dataSource={providers.sort((a, b) => (a.enabled === b.enabled) ? 0 : a.enabled ? -1 : 1)}
                 renderItem={(provider) => (
@@ -623,26 +657,46 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
                     key={provider.id}
                     style={{
                       borderRadius: '10px',
-                      marginLeft: '10px',
-                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                      margin:5,
+                      backgroundColor: selectedProvider?.id === provider.id
+                        ? 'rgba(59, 130, 246, 0.2)'
+                        : 'rgba(255, 255, 255, 0.05)',
                       padding: '10px',
                       marginBottom: '10px',
                       transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      cursor: 'pointer',
+                      border: 'none',
+                      boxShadow: selectedProvider?.id === provider.id
+                        ? '0 4px 6px rgba(0, 0, 0, 0.2)'
+                        : 'none',
                     }}
-                    className={`cursor-pointer border-none px-4 py-4 hover:bg-gray-800/70 transition-all duration-300 ${
-                      selectedProvider?.id === provider.id 
-                        ? 'bg-gradient-to-r from-blue-800/30 to-gray-800 border-l-2 border-blue-500 scale-[1.02] shadow-lg shadow-black/20' 
-                        : 'hover:scale-[1.01] hover:shadow-md hover:shadow-black/10'
-                    }`}
                     onClick={() => handleProviderSelect(provider)}
                   >
                     <div
                       style={{
                         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                      }}
-                      className="flex items-center justify-between w-full">
-                      <div className="flex items-center space-x-3">
-                        <div className={`text-2xl w-8 h-8 flex items-center justify-center bg-gray-800 rounded-lg transition-all duration-300 ${selectedProvider?.id === provider.id ? 'bg-blue-900/50 shadow-inner' : ''}`}>
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        width: '100%'
+                      }}>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px'
+                      }}>
+                        <div style={{
+                          fontSize: '24px',
+                          width: '32px',
+                          height: '32px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          background: selectedProvider?.id === provider.id ? 'rgba(59, 130, 246, 0.3)' : '#4b5563',
+                          borderRadius: '8px',
+                          transition: 'all 0.3s ease',
+                          boxShadow: selectedProvider?.id === provider.id ? 'inset 0 2px 4px rgba(0, 0, 0, 0.1)' : 'none'
+                        }}>
                           <ProviderIcon
                             provider={provider.id}
                             size={38}
@@ -650,30 +704,73 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
                           />
                         </div>
                         <div>
-                          <div className="text-white font-medium text-sm flex items-center">
+                          <div style={{
+                            color: '#ffffff',
+                            fontWeight: 500,
+                            fontSize: '14px',
+                            display: 'flex',
+                            alignItems: 'center'
+                          }}>
                             {provider.displayName}
                             {provider.enabled && (
-                              <div className={`w-1.5 h-1.5 rounded-full bg-green-500 ml-2 transition-all duration-300 ${selectedProvider?.id === provider.id ? 'w-2 h-2' : ''}`}></div>
+                              <div style={{
+                                width: selectedProvider?.id === provider.id ? '8px' : '6px',
+                                height: selectedProvider?.id === provider.id ? '8px' : '6px',
+                                borderRadius: '50%',
+                                background: '#10b981',
+                                marginLeft: '8px',
+                                transition: 'all 0.3s ease'
+                              }}></div>
                             )}
                           </div>
-                          <div className="text-gray-400 text-xs flex items-center space-x-1">
+                          <div style={{
+                            color: '#9ca3af',
+                            fontSize: '12px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}>
                             <span>{provider.models.length} 个模型</span>
                             {provider.models.length > 0 && (
-                              <span className="text-gray-500">•</span>
+                              <span style={{ color: '#6b7280' }}>•</span>
                             )}
                             {provider.models.filter(m => m.enabled).length > 0 && (
-                              <span className={`text-green-400 transition-all duration-300 ${selectedProvider?.id === provider.id ? 'font-medium' : ''}`}>
+                              <span style={{
+                                color: '#10b981',
+                                transition: 'all 0.3s ease',
+                                fontWeight: selectedProvider?.id === provider.id ? 500 : 'normal'
+                              }}>
                                 {provider.models.filter(m => m.enabled).length} 个活跃
                               </span>
                             )}
                           </div>
                         </div>
                       </div>
-                      <div className="flex flex-col items-end space-y-1">
-                        <div className={`${provider.apiKey ? 'bg-green-500/20 text-green-400' : 'bg-gray-700/50 text-gray-500'} text-xs px-1.5 py-0.5 rounded-md flex items-center transition-all duration-300 ${selectedProvider?.id === provider.id ? (provider.apiKey ? 'bg-green-500/30' : 'bg-gray-700/70') : ''}`}>
+                      <div style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'flex-end',
+                        gap: '4px'
+                      }}>
+                        <div style={{
+                          background: provider.apiKey ? 'rgba(16, 185, 129, 0.2)' : 'rgba(107, 114, 128, 0.3)',
+                          color: provider.apiKey ? '#10b981' : '#6b7280',
+                          fontSize: '12px',
+                          padding: '2px 6px',
+                          borderRadius: '6px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          transition: 'all 0.3s ease',
+                          ...(selectedProvider?.id === provider.id && provider.apiKey && {
+                            background: 'rgba(16, 185, 129, 0.3)'
+                          }),
+                          ...(selectedProvider?.id === provider.id && !provider.apiKey && {
+                            background: 'rgba(107, 114, 128, 0.5)'
+                          })
+                        }}>
                           {provider.apiKey ? (
                             <>
-                              <CheckCircle size={10} className="mr-1" />
+                              <CheckCircle size={10} style={{ marginRight: '4px' }} />
                               已配置
                             </>
                           ) : '未配置'}
@@ -688,52 +785,86 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
         </div>
 
         {/* 右侧内容区域 */}
-        <div className="flex-1 flex flex-col provider-content" style={{ 
+        <div style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
           transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          opacity: '1',
+          opacity: 1,
           transform: 'translateY(0)'
         }}>
           {selectedProvider ? (
             <>
-              {/* API 配置区域 */}
-              <div 
-                className="p-6 border-b border-gray-800 bg-gradient-to-r from-gray-900 to-gray-900/90"
+              <div
                 style={{
+                  padding: '24px',
+                  borderBottom: '1px solid #374151',
+                  background: 'linear-gradient(to right, #1f2937, rgba(31, 41, 55, 0.9))',
                   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                   animation: 'fadeIn 0.3s ease-out'
                 }}
               >
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center">
-                    <div 
-                      className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center mr-3 border border-blue-500/30"
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: '24px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <div
                       style={{
+                        width: '40px',
+                        height: '40px',
+                        background: 'rgba(59, 130, 246, 0.2)',
+                        borderRadius: '8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginRight: '12px',
+                        border: '1px solid rgba(59, 130, 246, 0.3)',
                         transition: 'all 0.3s ease',
                         animation: 'scaleIn 0.3s ease-out'
                       }}
                     >
-                      <div className="text-xl">
-                        {renderProviderIcon(selectedProvider.icon)}
+                      <div style={{ fontSize: '20px' }}>
+                        <ProviderIcon
+                          provider={selectedProvider.id}
+                          size={24}
+                          type={'color'}
+                        />
                       </div>
                     </div>
                     <div>
-                      <Title level={4} className="!text-white !mb-0 flex items-center">
+                      <Title
+                        level={4}
+                        style={{
+                          color: '#ffffff',
+                          marginBottom: 0,
+                          display: 'flex',
+                          alignItems: 'center'
+                        }}
+                      >
                         {selectedProvider.displayName}
                         <Badge
                           status={selectedProvider.enabled ? "success" : "default"}
-                          className="ml-2"
+                          style={{ marginLeft: '8px' }}
                         />
                       </Title>
-                      <Text className="text-gray-400 text-sm">
+                      <Text style={{ color: '#9ca3af', fontSize: '14px' }}>
                         {selectedProvider.description || "AI模型提供商"}
                       </Text>
                     </div>
                   </div>
-                  <div className="flex space-x-2">
+                  <div style={{ display: 'flex', gap: '8px' }}>
                     <Button
                       icon={<Settings size={16} />}
                       onClick={() => handleEditProvider(selectedProvider)}
-                      className="bg-gray-800 hover:bg-gray-700 text-gray-300 border-gray-700 rounded-lg hover:text-white flex items-center"
+                      style={{
+                        background: '#374151',
+                        borderColor: '#4b5563',
+                        color: '#d1d5db',
+                        borderRadius: '8px'
+                      }}
                     >
                       编辑配置
                     </Button>
@@ -741,54 +872,28 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
                       <Switch
                         checked={selectedProvider.enabled}
                         onChange={(checked) => handleProviderToggle(selectedProvider, checked)}
-                        className="ml-2"
+                        style={{ marginLeft: '8px' }}
                       />
                     </Tooltip>
                   </div>
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-2">
-                      <Globe size={16} className="text-blue-400" />
-                      <Text className="text-gray-400">API URL:</Text>
-                    </div>
-                    <div className="p-3 bg-gray-800/60 rounded-lg border border-white/5 backdrop-blur-sm">
-                      <code className="text-gray-300 text-sm break-all">
-                        {selectedProvider.apiUrl || '未配置'}
-                      </code>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-2">
-                      <Key size={16} className="text-blue-400" />
-                      <Text className="text-gray-400">API Key:</Text>
-                    </div>
-                    <div className="p-3 bg-gray-800/60 rounded-lg border border-white/5 backdrop-blur-sm">
-                      <div className="flex items-center justify-between">
-                        <Text className="text-gray-300 text-sm">
-                          {selectedProvider.apiKey ? '已配置 ••••••••' : '未配置'}
-                        </Text>
-                        {selectedProvider.apiKey && (
-                          <Button
-                            type="text"
-                            size="small"
-                            icon={<Eye size={14} />}
-                            className="text-gray-400 hover:text-white"
-                          />
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-4 flex items-center space-x-3">
+                <div style={{
+                  marginTop: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px'
+                }}>
                   {selectedProvider.website && (
                     <Button
                       type="link"
                       icon={<ExternalLink size={14} />}
-                      className="p-0 h-auto flex items-center text-blue-400 hover:text-blue-300"
+                      style={{
+                        padding: 0,
+                        height: 'auto',
+                        display: 'flex',
+                        alignItems: 'center',
+                        color: '#60a5fa'
+                      }}
                       onClick={() => window.open(selectedProvider.website, '_blank')}
                     >
                       访问官方网站
@@ -801,7 +906,14 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
                       icon={<Download size={14} />}
                       loading={isLoadingModels}
                       onClick={fetchModelsFromOpenAI}
-                      className="bg-blue-600 hover:bg-blue-700 text-white border-blue-600 rounded-lg flex items-center"
+                      style={{
+                        background: '#2563eb',
+                        borderColor: '#2563eb',
+                        color: '#ffffff',
+                        borderRadius: '8px',
+                        display: 'flex',
+                        alignItems: 'center'
+                      }}
                     >
                       {isLoadingModels ? '加载中...' : '加载模型列表'}
                     </Button>
@@ -810,9 +922,10 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
               </div>
 
               {/* 模型列表区域 */}
-              <div 
-                className="flex-1 p-6"
+              <div
                 style={{
+                  flex: 1,
+                  padding: '24px',
                   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                   animation: 'fadeIn 0.4s ease-out',
                   position: 'relative'
@@ -820,7 +933,7 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
               >
                 {/* 刷新覆盖层 */}
                 {isRefreshing && (
-                  <div 
+                  <div
                     style={{
                       position: 'absolute',
                       top: 0,
@@ -836,23 +949,37 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
                       animation: 'fadeIn 0.2s ease-out'
                     }}
                   >
-                    <div className="flex flex-col items-center">
-                      <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500 mb-2"></div>
-                      <Text className="text-white">更新中...</Text>
+                    <div style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center'
+                    }}>
+                      <div style={{
+                        width: '40px',
+                        height: '40px',
+                        border: '2px solid transparent',
+                        borderTop: '2px solid #3b82f6',
+                        borderBottom: '2px solid #3b82f6',
+                        borderRadius: '50%',
+                        animation: 'spin 1s linear infinite',
+                        marginBottom: '8px'
+                      }}></div>
+                      <Text style={{ color: '#ffffff' }}>更新中...</Text>
                     </div>
                   </div>
                 )}
 
-                <div className="flex items-center justify-between mb-6">
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: '24px'
+                }}>
                   <div>
-                    <Title level={4} className="!text-white !mb-2 flex items-center">
-                      <Bot size={18} className="mr-2 text-blue-400" />
-                      模型列表
-                    </Title>
-                    <Text className="text-gray-400">
+                    <Text style={{ color: '#9ca3af' }}>
                       管理 {selectedProvider.displayName} 的模型配置，共 {selectedProvider.models.length} 个模型
                       {selectedProvider.models.filter(m => m.enabled).length > 0 && (
-                        <span className="text-green-400 ml-2">
+                        <span style={{ color: '#10b981', marginLeft: '8px' }}>
                           ({selectedProvider.models.filter(m => m.enabled).length} 个活跃)
                         </span>
                       )}
@@ -862,22 +989,42 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
                     type="primary"
                     icon={<Plus size={16} />}
                     onClick={handleAddModel}
-                    className="bg-blue-600 hover:bg-blue-700 border-blue-600 rounded-lg shadow-md"
+                    style={{
+                      background: '#2563eb',
+                      borderColor: '#2563eb',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+                    }}
                   >
                     添加模型
                   </Button>
                 </div>
 
                 {/* 搜索和筛选区域 */}
-                <div className="mb-6 flex flex-col space-y-3">
-                  <div className="flex items-center space-x-4">
-                    <div className="relative flex-1">
+                <div style={{
+                  marginBottom: 24,
+                  padding: '16px 20px',
+                  backgroundColor: token.colorFillAlter,
+                  borderRadius: token.borderRadiusLG,
+                  border: `1px solid ${token.colorBorder}`
+                }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 16,
+                    marginBottom: 12
+                  }}>
+                    <div style={{ position: 'relative', flex: 1 }}>
                       <Input
-                        placeholder="搜索模型..."
+                        placeholder="搜索模型名称或ID..."
                         value={searchText}
                         onChange={e => setSearchText(e.target.value)}
-                        prefix={<Search size={16} className="text-gray-400" />}
-                        className="bg-gray-800 border-gray-700 text-white"
+                        prefix={<Search size={16} style={{ color: token.colorTextQuaternary }} />}
+                        style={{
+                          borderRadius: token.borderRadius,
+                          border: `1px solid ${token.colorBorder}`
+                        }}
+                        size="middle"
                       />
                     </div>
                     <div>
@@ -885,287 +1032,123 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
                         value={filterType}
                         onChange={e => setFilterType(e.target.value)}
                         buttonStyle="solid"
-                        className="flex-shrink-0"
+                        size="middle"
+                        style={{ flexShrink: 0 }}
                       >
-                        <Radio.Button value={null} className="bg-gray-800 border-gray-700 text-gray-300">
-                          全部
-                        </Radio.Button>
-                        <Radio.Button value="chat" className="bg-gray-800 border-gray-700 text-gray-300">
-                          对话
-                        </Radio.Button>
-                        <Radio.Button value="image" className="bg-gray-800 border-gray-700 text-gray-300">
-                          图像
-                        </Radio.Button>
-                        <Radio.Button value="embedding" className="bg-gray-800 border-gray-700 text-gray-300">
-                          嵌入
-                        </Radio.Button>
+                        <Radio.Button value={null}>全部</Radio.Button>
+                        <Radio.Button value="chat">对话</Radio.Button>
+                        <Radio.Button value="image">图像</Radio.Button>
+                        <Radio.Button value="embedding">嵌入</Radio.Button>
                       </Radio.Group>
                     </div>
                   </div>
 
-                  <div className="text-xs text-gray-400 flex items-center">
-                    <AlertTriangle size={12} className="mr-1 text-yellow-500" />
-                    提示：右键点击模型可以进行编辑、删除等更多操作
+                  <div style={{
+                    fontSize: 12,
+                    color: token.colorTextSecondary,
+                    display: 'flex',
+                    alignItems: 'center'
+                  }}>
+                    <AlertTriangle size={12} style={{ marginRight: 6, color: token.colorWarning }} />
+                    点击右侧菜单按钮可以进行编辑、删除等更多操作
                   </div>
                 </div>
 
                 {/* 加载状态 */}
                 {isLoadingModels && (
-                  <div 
-                    className="flex items-center justify-center py-12 bg-gray-900/40 rounded-lg mb-6 border border-white/5 backdrop-blur-sm"
+                  <div
                     style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: '48px 0',
+                      background: 'rgba(31, 41, 55, 0.4)',
+                      borderRadius: '8px',
+                      marginBottom: '24px',
+                      border: '1px solid rgba(255, 255, 255, 0.05)',
+                      backdropFilter: 'blur(4px)',
                       animation: 'scaleIn 0.3s ease-out'
                     }}
                   >
-                    <div className="flex flex-col items-center">
-                      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4"></div>
-                      <Text className="text-gray-300">正在从API获取模型列表，请稍候...</Text>
+                    <div style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center'
+                    }}>
+                      <div style={{
+                        width: '48px',
+                        height: '48px',
+                        border: '2px solid transparent',
+                        borderTop: '2px solid #3b82f6',
+                        borderBottom: '2px solid #3b82f6',
+                        borderRadius: '50%',
+                        animation: 'spin 1s linear infinite',
+                        marginBottom: '16px'
+                      }}></div>
+                      <Text style={{ color: '#d1d5db' }}>正在从API获取模型列表，请稍候...</Text>
                     </div>
                   </div>
                 )}
 
-                {/* 模型网格布局 */}
+                {/* 模型列表 */}
                 {getFilteredModels().length > 0 ? (
-                  <div className="custom-scrollbar" style={{ maxHeight: "calc(100vh - 520px)", overflowY: "auto" }}>
-                    <div className="border border-white/5 rounded-lg overflow-hidden bg-black/30">
-                      {getFilteredModels().map((model, index) => {
-                        // 根据模型类型设置颜色
-                        const typeColor =
-                          model.type === 'chat' ? 'text-orange-500' :
-                            model.type === 'image' ? 'text-green-500' :
-                              model.type === 'embedding' ? 'text-purple-500' :
-                                model.type === 'tts' ? 'text-pink-500' :
-                                  model.type === 'sst' ? 'text-cyan-500' : 'text-gray-500';
-
-                        // 右键菜单项
-                        const menuItems = [
-                          {
-                            key: 'edit',
-                            label: '编辑模型',
-                            icon: <Edit size={14} />,
-                            onClick: () => handleEditModel(model)
-                          },
-                          {
-                            key: 'toggle',
-                            label: model.enabled ? '禁用模型' : '启用模型',
-                            icon: model.enabled ? <EyeOff size={14} /> : <Eye size={14} />,
-                            onClick: (e: any) => {
-                              e.domEvent.stopPropagation();
-                              try {
-                                // 设置刷新状态
-                                setIsRefreshing(true);
-                                
-                                onModelToggle(model.provider, model.id, !model.enabled);
-                                
-                                // 给用户反馈
-                                message.loading({
-                                  content: '正在更新模型状态...',
-                                  duration: 0.5,
-                                  key: 'modelToggleMenu'
-                                });
-                                
-                                // 刷新当前提供商数据
-                                setTimeout(async () => {
-                                  try {
-                                    // 从数据库获取最新数据
-                                    const updatedProvider = await providerDB.getProvider(model.provider);
-                                    if (updatedProvider) {
-                                      // 更新上层组件状态
-                                      onProviderUpdate(updatedProvider);
-                                      // 更新当前选中的提供商
-                                      setSelectedProvider(updatedProvider);
-                                      // 成功提示
-                                      message.success({
-                                        content: `模型 "${model.displayName}" 已${!model.enabled ? '启用' : '禁用'}`,
-                                        key: 'modelToggleMenu'
-                                      });
-                                    }
-                                  } catch (error) {
-                                    console.error('刷新提供商数据失败:', error);
-                                    message.error({
-                                      content: '更新状态失败，请重试',
-                                      key: 'modelToggleMenu'
-                                    });
-                                  } finally {
-                                    setIsRefreshing(false);
-                                  }
-                                }, 100);
-                              } catch (error) {
-                                console.error('切换模型状态失败:', error);
-                                message.error('操作失败');
-                                setIsRefreshing(false);
-                              }
-                            }
-                          },
-                          {
-                            key: 'divider',
-                            type: 'divider' as const
-                          },
-                          {
-                            key: 'delete',
-                            label: '删除模型',
-                            icon: <Trash2 size={14} className="text-red-400" />,
-                            danger: true,
-                            onClick: () => {
-                              Modal.confirm({
-                                title: '删除模型',
-                                content: `确定要删除模型 "${model.displayName}" 吗？此操作不可撤销。`,
-                                okText: '删除',
-                                okType: 'danger',
-                                cancelText: '取消',
-                                onOk: () => handleDeleteModel(model.id)
-                              });
-                            }
-                          }
-                        ];
-
-                        return (
-                          <Dropdown
-                            key={model.id}
-                            menu={{
-                              items: menuItems
-                            }}
-                            trigger={['contextMenu']}
-                          >
-                            <div
-                              className={`flex items-center justify-between px-4 py-3 hover:bg-white/5 hover:shadow-lg hover:shadow-blue-900/5 transition-all ${index !== selectedProvider.models.length - 1 ? 'border-b border-white/5' : ''
-                                }`}
-                              style={{
-                                transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-                                animation: `fadeIn 0.3s ease-out forwards`,
-                                animationDelay: `${index * 0.03}s`,
-                                opacity: 0
-                              }}
-                            >
-                              <div className="flex items-center space-x-3 overflow-hidden">
-                                <div 
-                                  style={{
-                                    transition: 'all 0.25s ease',
-                                  }}
-                                  className="flex items-center justify-center"
-                                >
-                                  <ProviderIcon
-                                    size={38}
-                                    type={'color'}
-                                    provider={model.provider} />
-                                </div>
-                                {/* 模型名称和ID */}
-                                <div className="flex flex-col min-w-0">
-                                  <div className="font-medium text-white flex items-center space-x-2 text-sm">
-                                    <span className="truncate">{model.displayName}</span>
-                                    {/* 功能指示器 */}
-                                    <div className="flex items-center space-x-1">
-                                      {model.abilities?.vision && (
-                                        <Eye size={14} className="text-blue-400" />
-                                      )}
-                                      {model.abilities?.functionCall && (
-                                        <Zap size={14} className="text-yellow-400" />
-                                      )}
-                                    </div>
-                                  </div>
-                                  <code className="text-xs text-gray-400 truncate max-w-[200px]">
-                                    {model.id}
-                                  </code>
-                                </div>
-                              </div>
-
-                              <div className="flex items-center space-x-3">
-                                {/* 上下文窗口大小标签 */}
-                                <span className="text-xs text-gray-400">
-                                  {formatContextWindow(model.contextWindowTokens)}
-                                </span>
-
-                                {/* 默认标签 */}
-                                <span className="text-xs text-gray-400">
-                                  default
-                                </span>
-
-                                {/* 启用/禁用开关 - 绿色圆圈样式 */}
-                                <div
-                                  className={`w-5 h-5 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 ${
-                                    model.enabled 
-                                      ? 'bg-green-500 hover:bg-green-600 active:bg-green-700 active:scale-90' 
-                                      : 'bg-gray-700 border border-gray-600 hover:bg-gray-600 active:bg-gray-800 active:scale-90'
-                                  }`}
-                                  style={{
-                                    boxShadow: model.enabled ? '0 0 0 2px rgba(34, 197, 94, 0.2)' : 'none'
-                                  }}
-                                  onClick={(e) => {
-                                    e.stopPropagation(); // 阻止事件冒泡，防止触发Dropdown
-                                    e.preventDefault();
-                                    try {
-                                      // 创建点击效果
-                                      const target = e.currentTarget;
-                                      target.style.transform = 'scale(0.8)';
-                                      setTimeout(() => {
-                                        target.style.transform = '';
-                                      }, 150);
-                                      
-                                      // 设置刷新状态
-                                      setIsRefreshing(true);
-                                      
-                                      onModelToggle(model.provider, model.id, !model.enabled);
-                                      
-                                      // 立即给用户反馈
-                                      message.loading({
-                                        content: '正在更新模型状态...',
-                                        duration: 0.5,
-                                        key: 'modelToggle'
-                                      });
-                                      
-                                      // 刷新当前提供商数据
-                                      setTimeout(async () => {
-                                        try {
-                                          // 从数据库获取最新数据
-                                          const updatedProvider = await providerDB.getProvider(model.provider);
-                                          if (updatedProvider) {
-                                            // 更新上层组件状态
-                                            onProviderUpdate(updatedProvider);
-                                            // 更新当前选中的提供商
-                                            setSelectedProvider(updatedProvider);
-                                            // 成功提示
-                                            message.success({
-                                              content: `模型 "${model.displayName}" 已${!model.enabled ? '启用' : '禁用'}`,
-                                              key: 'modelToggle'
-                                            });
-                                          }
-                                        } catch (error) {
-                                          console.error('刷新提供商数据失败:', error);
-                                          message.error({
-                                            content: '更新状态失败，请重试',
-                                            key: 'modelToggle'
-                                          });
-                                        } finally {
-                                          setIsRefreshing(false);
-                                        }
-                                      }, 100);
-                                    } catch (error) {
-                                      console.error('切换模型状态失败:', error);
-                                      message.error('操作失败');
-                                      setIsRefreshing(false);
-                                    }
-                                  }}
-                                >
-                                  {model.enabled && (
-                                    <CheckCircle size={14} className="text-white" />
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          </Dropdown>
-                        );
-                      })}
-                    </div>
+                  <div
+                    className="custom-scrollbar"
+                    style={{
+                      maxHeight: "calc(100vh - 420px)",
+                      overflowY: "auto",
+                      padding: '0 4px'
+                    }}
+                  >
+                    {getFilteredModels().map((model, index) => (
+                      <ModelListItem
+                        key={model.id}
+                        model={model}
+                        index={index}
+                        onEdit={handleEditModel}
+                        onDelete={handleDeleteModel}
+                        onToggle={onModelToggle}
+                        onProviderUpdate={onProviderUpdate}
+                        setSelectedProvider={setSelectedProvider}
+                        setIsRefreshing={setIsRefreshing}
+                      />
+                    ))}
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center justify-center py-20 text-center">
-                    <div className="w-16 h-16 rounded-full bg-gray-800/50 flex items-center justify-center mb-6">
-                      <Bot size={32} className="text-gray-500" />
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '80px 20px',
+                    textAlign: 'center'
+                  }}>
+                    <div style={{
+                      width: 80,
+                      height: 80,
+                      borderRadius: '50%',
+                      backgroundColor: token.colorFillQuaternary,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginBottom: 24,
+                      border: `1px solid ${token.colorBorderSecondary}`
+                    }}>
+                      <Bot size={40} style={{ color: token.colorTextQuaternary }} />
                     </div>
-                    <Title level={3} className="!text-gray-300 !mb-3">
+                    <Title level={3} style={{ 
+                      color: token.colorTextSecondary, 
+                      marginBottom: 12,
+                      fontWeight: 500
+                    }}>
                       {selectedProvider.models.length > 0 ? '没有匹配的模型' : '暂无模型'}
                     </Title>
-                    <Text className="text-gray-500 mb-6 max-w-md">
+                    <Text style={{ 
+                      color: token.colorTextTertiary, 
+                      marginBottom: 32, 
+                      maxWidth: 400,
+                      lineHeight: 1.6
+                    }}>
                       {selectedProvider.models.length > 0
                         ? '尝试调整搜索条件或清除筛选器以查看更多模型。'
                         : '还没有配置任何模型。添加您的第一个模型来开始使用 AI 功能。'}
@@ -1174,9 +1157,16 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
                       <Button
                         type="primary"
                         size="large"
-                        icon={<Plus size={18} />}
+                        icon={<Plus size={16} />}
                         onClick={handleAddModel}
-                        className="bg-blue-600 hover:bg-blue-700 border-blue-600 rounded-lg px-6 py-2 h-auto transition-all duration-300 hover:shadow-lg hover:shadow-blue-600/20 hover:scale-105"
+                        style={{
+                          borderRadius: token.borderRadiusLG,
+                          padding: '8px 24px',
+                          height: 'auto',
+                          fontSize: 14,
+                          fontWeight: 500,
+                          boxShadow: token.boxShadowSecondary
+                        }}
                       >
                         添加第一个模型
                       </Button>

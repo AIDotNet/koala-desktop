@@ -1,0 +1,316 @@
+/* 模型选择器下拉框样式优化 */
+.model-selector-dropdown {
+  /* 基础样式 */
+  border-radius: 12px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background: linear-gradient(135deg, rgba(30, 30, 40, 0.95) 0%, rgba(20, 20, 30, 0.95) 100%) !important;
+  backdrop-filter: blur(10px) !important;
+  overflow: hidden !important;
+  max-height: 450px !important;
+  min-width: 480px !important;
+  max-width: 600px !important;
+  padding: 0 !important;
+}
+
+/* 下拉框内容容器 */
+.model-selector-dropdown-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* 搜索区域 */
+.model-selector-search {
+  padding: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* 搜索输入框 */
+.model-selector-search .search-input {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 8px !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.model-selector-search .search-input:hover {
+  border-color: rgba(59, 130, 246, 0.5) !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+}
+
+.model-selector-search .search-input:focus,
+.model-selector-search .search-input.ant-input-focused {
+  border-color: rgba(59, 130, 246, 0.8) !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1) !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+}
+
+.model-selector-search .search-input .ant-input {
+  background: transparent !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.model-selector-search .search-input .ant-input::placeholder {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* 搜索统计信息 */
+.search-stats {
+  margin-top: 8px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+}
+
+/* 模型菜单区域 */
+.model-selector-menu {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+/* 无结果状态 */
+.no-results {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.no-results-icon {
+  font-size: 32px;
+  margin-bottom: 12px;
+  opacity: 0.6;
+}
+
+.no-results-text {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.no-results-hint {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
+}
+
+/* 下拉框内容区域 */
+.model-selector-dropdown .ant-select-dropdown {
+  padding: 0 !important;
+  background: transparent !important;
+}
+
+/* 分组样式 */
+.model-selector-dropdown .ant-select-item-group {
+  padding: 0 !important;
+  margin-bottom: 8px !important;
+}
+
+.model-selector-dropdown .ant-select-item-group-list {
+  margin: 0 !important;
+}
+
+/* 分组标签样式 */
+.model-selector-dropdown .ant-select-item-group-label {
+  padding: 8px 12px 4px 12px !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-radius: 8px !important;
+  margin: 4px 0 8px 0 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+}
+
+/* 模型数量标签 */
+.model-count {
+  background: #52c41a;
+  color: white;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  margin-left: 8px;
+  font-weight: 500;
+}
+
+/* 选项样式 */
+.model-selector-dropdown .ant-select-item-option {
+  padding: 0 !important;
+  margin: 2px 0 !important;
+  border-radius: 8px !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  transition: all 0.2s ease !important;
+  min-height: auto !important;
+}
+
+/* 选项悬停效果 */
+.model-selector-dropdown .ant-select-item-option:hover {
+  background: rgba(59, 130, 246, 0.15) !important;
+  border-color: rgba(59, 130, 246, 0.3) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1) !important;
+}
+
+/* 选中状态 */
+.model-selector-dropdown .ant-select-item-option-selected {
+  background: rgba(59, 130, 246, 0.2) !important;
+  border-color: rgba(59, 130, 246, 0.5) !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1) !important;
+}
+
+/* 选中且悬停状态 */
+.model-selector-dropdown .ant-select-item-option-selected:hover {
+  background: rgba(59, 130, 246, 0.25) !important;
+  border-color: rgba(59, 130, 246, 0.6) !important;
+}
+
+/* 能力图标 */
+.ability-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: help;
+}
+
+/* 上下文窗口标签 */
+.context-window-badge {
+  background: #1890ff;
+  color: white;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 9px;
+  font-weight: 500;
+  min-width: 18px;
+  text-align: center;
+}
+
+/* 滚动条样式 */
+.model-selector-menu::-webkit-scrollbar {
+  width: 6px;
+}
+
+.model-selector-menu::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.model-selector-menu::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+  transition: background 0.2s ease;
+}
+
+.model-selector-menu::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* 模型选择器容器 */
+.model-selector {
+  position: relative;
+}
+
+/* 选择器输入框样式 */
+.model-selector .ant-select-selector {
+  border-radius: 8px !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  transition: all 0.2s ease !important;
+}
+
+.model-selector .ant-select-selector:hover {
+  border-color: rgba(59, 130, 246, 0.5) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+.model-selector .ant-select-focused .ant-select-selector {
+  border-color: rgba(59, 130, 246, 0.8) !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1) !important;
+}
+
+/* 默认菜单背景颜色设置 */
+.ant-menu {
+  background: rgba(30, 30, 40, 0.95) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.ant-menu-item {
+  background: transparent !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.ant-menu-item:hover {
+  background: rgba(59, 130, 246, 0.15) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.ant-menu-item-selected {
+  background: rgba(59, 130, 246, 0.2) !important;
+  color: rgba(255, 255, 255, 1) !important;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .model-selector-dropdown {
+    min-width: 320px !important;
+    max-width: 90vw !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .model-selector-dropdown {
+    min-width: 280px !important;
+    max-width: 95vw !important;
+  }
+  
+  .model-selector-dropdown .ant-select-item-group-label {
+    padding: 6px 8px 3px 8px !important;
+    font-size: 12px !important;
+  }
+  
+  .model-selector-search {
+    padding: 8px;
+  }
+}
+
+/* 动画效果 */
+.model-selector-dropdown .ant-select-item-option {
+  animation: fadeInUp 0.2s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 深色主题适配 */
+.model-selector-dropdown .ant-select-item-option-content {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* 禁用状态 */
+.model-selector .ant-select-disabled .ant-select-selector {
+  background: rgba(255, 255, 255, 0.02) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: rgba(255, 255, 255, 0.4) !important;
+}
+
+/* 清除按钮样式 */
+.model-selector-search .search-input .ant-input-clear-icon {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.model-selector-search .search-input .ant-input-clear-icon:hover {
+  color: rgba(255, 255, 255, 0.8) !important;
+} 

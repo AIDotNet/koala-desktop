@@ -3,6 +3,7 @@ import { Minus, Square, X, Maximize2 } from 'lucide-react'
 import { Button } from 'antd'
 import ThemeToggle from './ThemeToggle'
 import TabBar, { Tab } from './TabBar'
+import { createStyles } from '@/theme'
 
 interface TitleBarProps {
   onThemeChange?: (isDark: boolean) => void
@@ -12,12 +13,12 @@ interface TitleBarProps {
   onNewTab?: () => void
 }
 
-const TitleBar: React.FC<TitleBarProps> = ({ 
-  onThemeChange, 
+const TitleBar: React.FC<TitleBarProps> = ({
+  onThemeChange,
   tabs = [],
-  onTabClick = () => {},
-  onTabClose = () => {},
-  onNewTab = () => {}
+  onTabClick = () => { },
+  onTabClose = () => { },
+  onNewTab = () => { }
 }) => {
   const [isMaximized, setIsMaximized] = useState(false)
   const [isDarkTheme, setIsDarkTheme] = useState(false)
@@ -61,16 +62,77 @@ const TitleBar: React.FC<TitleBarProps> = ({
     onThemeChange?.(isDark)
   }
 
+  const styles = createStyles(isDarkTheme);
+
+  const titleBarStyle = {
+    ...styles.titleBar,
+    display: 'flex',
+    alignItems: 'center',
+    height: '40px',
+    borderBottom: `1px solid ${isDarkTheme ? '#3a3a4a' : '#e5e7eb'}`,
+    userSelect: 'none' as const,
+    transition: 'all 0.3s ease',
+    WebkitAppRegion: 'drag' as any,
+  };
+
+  const leftAreaStyle = {
+    flex: 1,
+    height: '100%',
+    display: 'flex',
+    alignItems: 'center',
+  };
+
+  const rightAreaStyle = {
+    display: 'flex',
+    WebkitAppRegion: 'no-drag' as any,
+  };
+
+  const windowButtonStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '48px',
+    height: '40px',
+    border: 'none',
+    background: 'transparent',
+    transition: 'background-color 0.15s ease',
+    cursor: 'pointer',
+  };
+
+  const closeButtonStyle = {
+    ...windowButtonStyle,
+  };
+
+  const themeToggleContainerStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '48px',
+    height: '40px',
+  };
+
+  const appTitleStyle = {
+    fontSize: '14px',
+    fontWeight: 500,
+    color: isDarkTheme ? '#e0e0e8' : '#6b7280',
+    padding: '0 12px',
+    height: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    WebkitAppRegion: 'drag' as any,
+  };
+
+  const tabContainerStyle = {
+    height: '100%',
+    WebkitAppRegion: 'no-drag' as any,
+  };
+
   return (
-    <div className={`flex items-center h-10 border-b select-none transition-colors duration-300 drag-region ${
-      isDarkTheme 
-        ? 'bg-gray-900 border-gray-700 text-white' 
-        : 'bg-white border-gray-200 text-gray-900'
-    }`}>
+    <div style={titleBarStyle}>
       {/* 左侧可拖拽区域 */}
-      <div className="flex-1 h-full flex items-center">
+      <div style={leftAreaStyle}>
         {tabs.length > 0 ? (
-          <div className="h-full no-drag-region">
+          <div style={tabContainerStyle}>
             <TabBar
               tabs={tabs}
               onTabClick={onTabClick}
@@ -80,78 +142,88 @@ const TitleBar: React.FC<TitleBarProps> = ({
             />
           </div>
         ) : (
-          <div className="flex items-center h-full px-3 drag-region">
-            <span className={`text-sm font-medium ${
-              isDarkTheme ? 'text-gray-200' : 'text-gray-700'
-            }`}>Koala Desktop</span>
+          <div style={appTitleStyle}>
+            <span>Koala Desktop</span>
           </div>
         )}
       </div>
 
       {/* 右侧：窗口控制按钮 */}
-      <div className="flex no-drag-region">
+      <div style={rightAreaStyle}>
         {/* 主题切换按钮 */}
         {onThemeChange && (
-          <div className="flex items-center justify-center w-12 h-10">
+          <div style={themeToggleContainerStyle}>
             <ThemeToggle onThemeChange={handleThemeChange} />
           </div>
         )}
-        
+
         <Button
           type='text'
           onClick={handleMinimize}
-          className={`flex items-center justify-center w-12 h-10 transition-colors duration-150 group border-0 ${
-            isDarkTheme 
-              ? 'hover:bg-gray-700' 
-              : 'hover:bg-gray-100'
-          }`}
+          style={windowButtonStyle}
           title="最小化"
-        >
-          <Minus size={16} className={`transition-colors ${
-            isDarkTheme 
-              ? 'text-gray-300 group-hover:text-white' 
-              : 'text-gray-600 group-hover:text-gray-900'
-          }`} />
-        </Button>
+          icon={
+            <Minus 
+              size={16} 
+              style={{ 
+                color: isDarkTheme ? '#b0b0c0' : '#6b7280',
+                transition: 'color 0.15s ease',
+              }} 
+            />
+          }
+        />
+        
         <Button
           type='text'
           onClick={handleMaximize}
-          className={`flex items-center justify-center w-12 h-10 transition-colors duration-150 group border-0 ${
-            isDarkTheme 
-              ? 'hover:bg-gray-700' 
-              : 'hover:bg-gray-100'
-          }`}
+          style={windowButtonStyle}
           title={isMaximized ? "还原" : "最大化"}
-        >
-          {isMaximized ? (
-            <div className="relative">
-              <Square size={12} className={`transition-colors absolute top-0.5 left-0.5 ${
-                isDarkTheme 
-                  ? 'text-gray-300 group-hover:text-white' 
-                  : 'text-gray-600 group-hover:text-gray-900'
-              }`} />
-              <Square size={12} className={`transition-colors ${
-                isDarkTheme 
-                  ? 'text-gray-300 group-hover:text-white' 
-                  : 'text-gray-600 group-hover:text-gray-900'
-              }`} />
-            </div>
-          ) : (
-            <Maximize2 size={14} className={`transition-colors ${
-              isDarkTheme 
-                ? 'text-gray-300 group-hover:text-white' 
-                : 'text-gray-600 group-hover:text-gray-900'
-            }`} />
-          )}
-        </Button>
+          icon={
+            isMaximized ? (
+              <div style={{ position: 'relative' }}>
+                <Square 
+                  size={12} 
+                  style={{ 
+                    position: 'absolute', 
+                    top: '2px', 
+                    left: '2px',
+                    color: isDarkTheme ? '#b0b0c0' : '#6b7280',
+                  }} 
+                />
+                <Square 
+                  size={12} 
+                  style={{ 
+                    color: isDarkTheme ? '#b0b0c0' : '#6b7280',
+                  }} 
+                />
+              </div>
+            ) : (
+              <Maximize2 
+                size={14} 
+                style={{ 
+                  color: isDarkTheme ? '#b0b0c0' : '#6b7280',
+                  transition: 'color 0.15s ease',
+                }} 
+              />
+            )
+          }
+        />
+        
         <Button
           type='text'
           onClick={handleClose}
-          className="flex items-center justify-center w-12 h-10 hover:bg-red-600 transition-colors duration-150 group border-0"
+          style={closeButtonStyle}
           title="关闭"
-        >
-          <X size={16} className="text-gray-300 group-hover:text-white" />
-        </Button>
+          icon={
+            <X 
+              size={16} 
+              style={{ 
+                color: isDarkTheme ? '#b0b0c0' : '#6b7280',
+                transition: 'color 0.15s ease',
+              }} 
+            />
+          }
+        />
       </div>
     </div>
   )

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { ConfigProvider, theme } from 'antd'
+import { ConfigProvider } from 'antd'
 import { RouterProvider, createBrowserRouter } from 'react-router-dom'
 import UpdateElectron from '@/components/update'
 import TitleBar from '@/components/TitleBar'
@@ -10,7 +10,7 @@ import ProviderDemo from '@/components/ProviderDemo'
 import { Monitor, Smartphone, Tablet, Zap } from 'lucide-react'
 import logoVite from './assets/logo-vite.svg'
 import logoElectron from './assets/logo-electron.svg'
-import './App.css'
+import { darkTheme, lightTheme, createStyles } from '@/theme'
 
 function App() {
   const [count, setCount] = useState(0)
@@ -206,29 +206,26 @@ function App() {
     }
   }
 
+  const styles = createStyles(isDarkTheme);
+
   return (
     <ConfigProvider
-      theme={{
-        algorithm: isDarkTheme ? theme.darkAlgorithm : theme.defaultAlgorithm,
-        token: {
-          colorPrimary: '#1890ff',
-        },
-      }}
-    >
-      <div className={`App h-screen flex flex-col ${isDarkTheme ? 'dark' : ''}`}>
-        <TitleBar 
-          onThemeChange={handleThemeChange}
-          tabs={tabs}
-          onTabClick={handleTabClick}
-          onTabClose={handleTabClose}
-          onNewTab={handleNewTab}
-        />
-        
-        {/* 主内容区域 - 直接渲染组件 */}
-        <div className="flex-1 overflow-hidden">
-          {renderCurrentPage()}
+      theme={isDarkTheme ? darkTheme : lightTheme}
+          >
+        <div style={styles.appContainer}>
+          <TitleBar 
+            onThemeChange={handleThemeChange}
+            tabs={tabs}
+            onTabClick={handleTabClick}
+            onTabClose={handleTabClose}
+            onNewTab={handleNewTab}
+          />
+          
+          {/* 主内容区域 - 直接渲染组件 */}
+          <div style={styles.mainContent}>
+            {renderCurrentPage()}
+          </div>
         </div>
-      </div>
     </ConfigProvider>
   )
 }

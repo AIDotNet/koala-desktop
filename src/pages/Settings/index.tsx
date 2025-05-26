@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react'
-import './index.css'
 import { 
   Layout, 
   Menu, 
@@ -43,6 +42,7 @@ import { Provider, Model } from '@/types/model'
 import { providerDB } from '@/utils/providerDB'
 import { getIcon } from '@/utils/iconutils'
 import { OpenAI } from '@lobehub/icons'
+import { createStyles } from '@/theme'
 
 const { Sider, Content } = Layout
 const { Title, Text, Paragraph } = Typography
@@ -55,6 +55,8 @@ interface SettingsProps {
 const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate }) => {
   const [selectedKey, setSelectedKey] = useState<string>('models')
   const [providers, setProviders] = useState<Provider[]>([])
+
+  const styles = createStyles(isDarkTheme);
 
   // 从IndexedDB加载提供商数据
   useEffect(() => {
@@ -92,7 +94,7 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate }) => {
       key: 'models',
       icon: <Bot size={16} />,
       label: (
-        <div className="flex items-center justify-between">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span>模型管理</span>
           <Badge 
             count={providers.reduce((sum, p) => sum + p.models.filter(m => m.enabled).length, 0)} 
@@ -235,13 +237,21 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate }) => {
         )
       case 'data':
         return (
-          <div className="p-6">
-            <div className="mb-6">
-              <Title level={3} className="!text-white !mb-2 flex items-center">
-                <Database className="mr-3" size={24} />
+          <div style={{ padding: '24px' }}>
+            <div style={{ marginBottom: '24px' }}>
+              <Title 
+                level={3} 
+                style={{ 
+                  color: isDarkTheme ? '#ffffff' : '#1f2937',
+                  marginBottom: '8px',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+              >
+                <Database style={{ marginRight: '12px' }} size={24} />
                 数据管理
               </Title>
-              <Text className="text-gray-400">
+              <Text style={{ color: isDarkTheme ? '#9ca3af' : '#6b7280' }}>
                 管理您的聊天记录、导入导出数据和清理缓存
               </Text>
             </div>
@@ -249,17 +259,20 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate }) => {
             <Row gutter={[24, 24]}>
               <Col xs={24} sm={12} lg={8}>
                 <Card 
-                  className="bg-gray-900 border-gray-700"
+                  style={{
+                    background: isDarkTheme ? '#374151' : '#ffffff',
+                    borderColor: isDarkTheme ? '#4b5563' : '#e5e7eb',
+                  }}
                   bodyStyle={{ padding: '20px' }}
                 >
                   <Statistic
-                    title={<span className="text-gray-400">聊天记录</span>}
+                    title={<span style={{ color: isDarkTheme ? '#9ca3af' : '#6b7280' }}>聊天记录</span>}
                     value={1234}
                     suffix="条"
                     valueStyle={{ color: '#1890ff' }}
                     prefix={<Activity size={16} />}
                   />
-                  <div className="mt-4">
+                  <div style={{ marginTop: '16px' }}>
                     <Button type="primary" size="small" ghost>
                       导出记录
                     </Button>
@@ -269,17 +282,20 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate }) => {
 
               <Col xs={24} sm={12} lg={8}>
                 <Card 
-                  className="bg-gray-900 border-gray-700"
+                  style={{
+                    background: isDarkTheme ? '#374151' : '#ffffff',
+                    borderColor: isDarkTheme ? '#4b5563' : '#e5e7eb',
+                  }}
                   bodyStyle={{ padding: '20px' }}
                 >
                   <Statistic
-                    title={<span className="text-gray-400">缓存大小</span>}
+                    title={<span style={{ color: isDarkTheme ? '#9ca3af' : '#6b7280' }}>缓存大小</span>}
                     value={256}
                     suffix="MB"
                     valueStyle={{ color: '#52c41a' }}
                     prefix={<Database size={16} />}
                   />
-                  <div className="mt-4">
+                  <div style={{ marginTop: '16px' }}>
                     <Button type="primary" size="small" danger ghost>
                       清理缓存
                     </Button>
@@ -289,17 +305,20 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate }) => {
 
               <Col xs={24} sm={12} lg={8}>
                 <Card 
-                  className="bg-gray-900 border-gray-700"
+                  style={{
+                    background: isDarkTheme ? '#374151' : '#ffffff',
+                    borderColor: isDarkTheme ? '#4b5563' : '#e5e7eb',
+                  }}
                   bodyStyle={{ padding: '20px' }}
                 >
                   <Statistic
-                    title={<span className="text-gray-400">备份文件</span>}
+                    title={<span style={{ color: isDarkTheme ? '#9ca3af' : '#6b7280' }}>备份文件</span>}
                     value={5}
                     suffix="个"
                     valueStyle={{ color: '#faad14' }}
                     prefix={<Shield size={16} />}
                   />
-                  <div className="mt-4">
+                  <div style={{ marginTop: '16px' }}>
                     <Button type="primary" size="small" ghost>
                       创建备份
                     </Button>
@@ -308,7 +327,10 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate }) => {
               </Col>
             </Row>
 
-            <Divider className="border-gray-700 my-8" />
+            <Divider style={{ 
+              borderColor: isDarkTheme ? '#4b5563' : '#e5e7eb',
+              margin: '32px 0' 
+            }} />
 
             <Alert
               message="数据安全提醒"
@@ -316,19 +338,30 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate }) => {
               type="info"
               showIcon
               icon={<Info size={16} />}
-              className="bg-blue-900/20 border-blue-700"
+              style={{
+                background: isDarkTheme ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.05)',
+                borderColor: isDarkTheme ? '#3b82f6' : '#93c5fd',
+              }}
             />
           </div>
         )
       case 'appearance':
         return (
-          <div className="p-6">
-            <div className="mb-6">
-              <Title level={3} className="!text-white !mb-2 flex items-center">
-                <Palette className="mr-3" size={24} />
+          <div style={{ padding: '24px' }}>
+            <div style={{ marginBottom: '24px' }}>
+              <Title 
+                level={3} 
+                style={{ 
+                  color: isDarkTheme ? '#ffffff' : '#1f2937',
+                  marginBottom: '8px',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+              >
+                <Palette style={{ marginRight: '12px' }} size={24} />
                 外观设置
               </Title>
-              <Text className="text-gray-400">
+              <Text style={{ color: isDarkTheme ? '#9ca3af' : '#6b7280' }}>
                 自定义应用的外观和主题设置
               </Text>
             </div>
@@ -337,38 +370,63 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate }) => {
               <Col xs={24} lg={12}>
                 <Card 
                   title={
-                    <span className="text-white flex items-center">
-                      <Palette className="mr-2" size={16} />
+                    <span style={{ 
+                      color: isDarkTheme ? '#ffffff' : '#1f2937',
+                      display: 'flex',
+                      alignItems: 'center'
+                    }}>
+                      <Palette style={{ marginRight: '8px' }} size={16} />
                       主题设置
                     </span>
                   }
-                  className="bg-gray-900 border-gray-700"
+                  style={{
+                    background: isDarkTheme ? '#374151' : '#ffffff',
+                    borderColor: isDarkTheme ? '#4b5563' : '#e5e7eb',
+                  }}
                 >
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <div>
-                        <Text className="text-white block">深色模式</Text>
-                        <Text className="text-gray-400 text-sm">使用深色主题界面</Text>
+                        <Text style={{ 
+                          color: isDarkTheme ? '#ffffff' : '#1f2937',
+                          display: 'block'
+                        }}>深色模式</Text>
+                        <Text style={{ 
+                          color: isDarkTheme ? '#9ca3af' : '#6b7280',
+                          fontSize: '14px'
+                        }}>使用深色主题界面</Text>
                       </div>
                       <Switch checked={isDarkTheme} />
                     </div>
                     
-                    <Divider className="border-gray-700" />
+                    <Divider style={{ borderColor: isDarkTheme ? '#4b5563' : '#e5e7eb' }} />
                     
-                    <div className="flex items-center justify-between">
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <div>
-                        <Text className="text-white block">紧凑模式</Text>
-                        <Text className="text-gray-400 text-sm">减少界面元素间距</Text>
+                        <Text style={{ 
+                          color: isDarkTheme ? '#ffffff' : '#1f2937',
+                          display: 'block'
+                        }}>紧凑模式</Text>
+                        <Text style={{ 
+                          color: isDarkTheme ? '#9ca3af' : '#6b7280',
+                          fontSize: '14px'
+                        }}>减少界面元素间距</Text>
                       </div>
                       <Switch />
                     </div>
                     
-                    <Divider className="border-gray-700" />
+                    <Divider style={{ borderColor: isDarkTheme ? '#4b5563' : '#e5e7eb' }} />
                     
-                    <div className="flex items-center justify-between">
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <div>
-                        <Text className="text-white block">动画效果</Text>
-                        <Text className="text-gray-400 text-sm">启用界面过渡动画</Text>
+                        <Text style={{ 
+                          color: isDarkTheme ? '#ffffff' : '#1f2937',
+                          display: 'block'
+                        }}>动画效果</Text>
+                        <Text style={{ 
+                          color: isDarkTheme ? '#9ca3af' : '#6b7280',
+                          fontSize: '14px'
+                        }}>启用界面过渡动画</Text>
                       </div>
                       <Switch defaultChecked />
                     </div>
@@ -379,17 +437,32 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate }) => {
               <Col xs={24} lg={12}>
                 <Card 
                   title={
-                    <span className="text-white flex items-center">
-                      <Globe className="mr-2" size={16} />
+                    <span style={{ 
+                      color: isDarkTheme ? '#ffffff' : '#1f2937',
+                      display: 'flex',
+                      alignItems: 'center'
+                    }}>
+                      <Globe style={{ marginRight: '8px' }} size={16} />
                       语言设置
                     </span>
                   }
-                  className="bg-gray-900 border-gray-700"
+                  style={{
+                    background: isDarkTheme ? '#374151' : '#ffffff',
+                    borderColor: isDarkTheme ? '#4b5563' : '#e5e7eb',
+                  }}
                 >
-                  <div className="space-y-4">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     <div>
-                      <Text className="text-white block mb-2">界面语言</Text>
-                      <div className="grid grid-cols-2 gap-2">
+                      <Text style={{ 
+                        color: isDarkTheme ? '#ffffff' : '#1f2937',
+                        display: 'block',
+                        marginBottom: '8px'
+                      }}>界面语言</Text>
+                      <div style={{ 
+                        display: 'grid', 
+                        gridTemplateColumns: 'repeat(2, 1fr)', 
+                        gap: '8px' 
+                      }}>
                         <Button type="primary" size="small">简体中文</Button>
                         <Button size="small" ghost>English</Button>
                         <Button size="small" ghost>日本語</Button>
@@ -404,13 +477,21 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate }) => {
         )
       case 'privacy':
         return (
-          <div className="p-6">
-            <div className="mb-6">
-              <Title level={3} className="!text-white !mb-2 flex items-center">
-                <Shield className="mr-3" size={24} />
+          <div style={{ padding: '24px' }}>
+            <div style={{ marginBottom: '24px' }}>
+              <Title 
+                level={3} 
+                style={{ 
+                  color: isDarkTheme ? '#ffffff' : '#1f2937',
+                  marginBottom: '8px',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+              >
+                <Shield style={{ marginRight: '12px' }} size={24} />
                 隐私安全
               </Title>
-              <Text className="text-gray-400">
+              <Text style={{ color: isDarkTheme ? '#9ca3af' : '#6b7280' }}>
                 保护您的隐私和数据安全
               </Text>
             </div>
@@ -419,38 +500,63 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate }) => {
               <Col xs={24}>
                 <Card 
                   title={
-                    <span className="text-white flex items-center">
-                      <Shield className="mr-2" size={16} />
+                    <span style={{ 
+                      color: isDarkTheme ? '#ffffff' : '#1f2937',
+                      display: 'flex',
+                      alignItems: 'center'
+                    }}>
+                      <Shield style={{ marginRight: '8px' }} size={16} />
                       隐私保护
                     </span>
                   }
-                  className="bg-gray-900 border-gray-700"
+                  style={{
+                    background: isDarkTheme ? '#374151' : '#ffffff',
+                    borderColor: isDarkTheme ? '#4b5563' : '#e5e7eb',
+                  }}
                 >
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <div>
-                        <Text className="text-white block">本地存储</Text>
-                        <Text className="text-gray-400 text-sm">所有数据仅存储在本地设备</Text>
+                        <Text style={{ 
+                          color: isDarkTheme ? '#ffffff' : '#1f2937',
+                          display: 'block'
+                        }}>本地存储</Text>
+                        <Text style={{ 
+                          color: isDarkTheme ? '#9ca3af' : '#6b7280',
+                          fontSize: '14px'
+                        }}>所有数据仅存储在本地设备</Text>
                       </div>
-                      <CheckCircle className="text-green-400" size={20} />
+                      <CheckCircle style={{ color: '#10b981' }} size={20} />
                     </div>
                     
-                    <Divider className="border-gray-700" />
+                    <Divider style={{ borderColor: isDarkTheme ? '#4b5563' : '#e5e7eb' }} />
                     
-                    <div className="flex items-center justify-between">
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <div>
-                        <Text className="text-white block">数据加密</Text>
-                        <Text className="text-gray-400 text-sm">敏感数据使用AES加密存储</Text>
+                        <Text style={{ 
+                          color: isDarkTheme ? '#ffffff' : '#1f2937',
+                          display: 'block'
+                        }}>数据加密</Text>
+                        <Text style={{ 
+                          color: isDarkTheme ? '#9ca3af' : '#6b7280',
+                          fontSize: '14px'
+                        }}>敏感数据使用AES加密存储</Text>
                       </div>
-                      <CheckCircle className="text-green-400" size={20} />
+                      <CheckCircle style={{ color: '#10b981' }} size={20} />
                     </div>
                     
-                    <Divider className="border-gray-700" />
+                    <Divider style={{ borderColor: isDarkTheme ? '#4b5563' : '#e5e7eb' }} />
                     
-                    <div className="flex items-center justify-between">
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <div>
-                        <Text className="text-white block">匿名使用统计</Text>
-                        <Text className="text-gray-400 text-sm">帮助改进产品体验</Text>
+                        <Text style={{ 
+                          color: isDarkTheme ? '#ffffff' : '#1f2937',
+                          display: 'block'
+                        }}>匿名使用统计</Text>
+                        <Text style={{ 
+                          color: isDarkTheme ? '#9ca3af' : '#6b7280',
+                          fontSize: '14px'
+                        }}>帮助改进产品体验</Text>
                       </div>
                       <Switch />
                     </div>
@@ -459,30 +565,49 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate }) => {
               </Col>
             </Row>
 
-            <div className="mt-6">
+            <div style={{ marginTop: '24px' }}>
               <Alert
                 message="隐私承诺"
                 description="我们承诺不会收集、存储或传输您的任何个人数据。所有AI对话和设置信息都安全地存储在您的本地设备上。"
                 type="success"
                 showIcon
                 icon={<CheckCircle size={16} />}
-                className="bg-green-900/20 border-green-700"
+                style={{
+                  background: isDarkTheme ? 'rgba(16, 185, 129, 0.1)' : 'rgba(16, 185, 129, 0.05)',
+                  borderColor: isDarkTheme ? '#10b981' : '#6ee7b7',
+                }}
               />
             </div>
           </div>
         )
       case 'about':
         return (
-          <div className="p-6">
-            <div className="text-center mb-8">
+          <div style={{ padding: '24px' }}>
+            <div style={{ 
+              textAlign: 'center', 
+              marginBottom: '32px' 
+            }}>
               <Avatar 
                 size={80} 
-                className="bg-blue-600 mb-4"
+                style={{
+                  background: '#3b82f6',
+                  marginBottom: '16px'
+                }}
                 icon={<Bot size={40} />}
               />
-              <Title level={2} className="!text-white !mb-2">Koala Desktop</Title>
-              <Tag color="blue" className="mb-4">v1.0.0</Tag>
-              <Paragraph className="text-gray-400 max-w-md mx-auto">
+              <Title 
+                level={2} 
+                style={{ 
+                  color: isDarkTheme ? '#ffffff' : '#1f2937',
+                  marginBottom: '8px'
+                }}
+              >Koala Desktop</Title>
+              <Tag color="blue" style={{ marginBottom: '16px' }}>v1.0.0</Tag>
+              <Paragraph style={{ 
+                color: isDarkTheme ? '#9ca3af' : '#6b7280',
+                maxWidth: '448px',
+                margin: '0 auto'
+              }}>
                 基于 Electron + React + TypeScript 构建的现代化桌面AI助手应用
               </Paragraph>
             </div>
@@ -490,12 +615,23 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate }) => {
             <Row gutter={[24, 24]}>
               <Col xs={24} md={8}>
                 <Card 
-                  className="bg-gray-900 border-gray-700 text-center"
+                  style={{
+                    background: isDarkTheme ? '#374151' : '#ffffff',
+                    borderColor: isDarkTheme ? '#4b5563' : '#e5e7eb',
+                    textAlign: 'center'
+                  }}
                   bodyStyle={{ padding: '24px' }}
                 >
-                  <TrendingUp className="text-blue-400 mx-auto mb-3" size={32} />
+                  <TrendingUp 
+                    style={{ 
+                      color: '#3b82f6',
+                      margin: '0 auto 12px',
+                      display: 'block'
+                    }} 
+                    size={32} 
+                  />
                   <Statistic
-                    title={<span className="text-gray-400">支持的模型</span>}
+                    title={<span style={{ color: isDarkTheme ? '#9ca3af' : '#6b7280' }}>支持的模型</span>}
                     value={stats.totalProviders}
                     suffix="个提供商"
                     valueStyle={{ color: '#1890ff', fontSize: '20px' }}
@@ -505,12 +641,23 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate }) => {
 
               <Col xs={24} md={8}>
                 <Card 
-                  className="bg-gray-900 border-gray-700 text-center"
+                  style={{
+                    background: isDarkTheme ? '#374151' : '#ffffff',
+                    borderColor: isDarkTheme ? '#4b5563' : '#e5e7eb',
+                    textAlign: 'center'
+                  }}
                   bodyStyle={{ padding: '24px' }}
                 >
-                  <Zap className="text-green-400 mx-auto mb-3" size={32} />
+                  <Zap 
+                    style={{ 
+                      color: '#10b981',
+                      margin: '0 auto 12px',
+                      display: 'block'
+                    }} 
+                    size={32} 
+                  />
                   <Statistic
-                    title={<span className="text-gray-400">活跃模型</span>}
+                    title={<span style={{ color: isDarkTheme ? '#9ca3af' : '#6b7280' }}>活跃模型</span>}
                     value={stats.enabledModels}
                     suffix="个"
                     valueStyle={{ color: '#52c41a', fontSize: '20px' }}
@@ -520,56 +667,77 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate }) => {
 
               <Col xs={24} md={8}>
                 <Card 
-                  className="bg-gray-900 border-gray-700 text-center"
+                  style={{
+                    background: isDarkTheme ? '#374151' : '#ffffff',
+                    borderColor: isDarkTheme ? '#4b5563' : '#e5e7eb',
+                    textAlign: 'center'
+                  }}
                   bodyStyle={{ padding: '24px' }}
                 >
-                  <Heart className="text-red-400 mx-auto mb-3" size={32} />
-                  <div className="text-red-400 text-xl font-semibold mb-1">开源</div>
-                  <Text className="text-gray-400">MIT 许可证</Text>
+                  <Heart 
+                    style={{ 
+                      color: '#ef4444',
+                      margin: '0 auto 12px',
+                      display: 'block'
+                    }} 
+                    size={32} 
+                  />
+                  <div style={{ 
+                    color: '#ef4444',
+                    fontSize: '20px',
+                    fontWeight: 600,
+                    marginBottom: '4px'
+                  }}>开源</div>
+                  <Text style={{ color: isDarkTheme ? '#9ca3af' : '#6b7280' }}>MIT 许可证</Text>
                 </Card>
               </Col>
             </Row>
 
-            <Divider className="border-gray-700 my-8" />
+            <Divider style={{ 
+              borderColor: isDarkTheme ? '#4b5563' : '#e5e7eb',
+              margin: '32px 0' 
+            }} />
 
             <Descriptions 
-              title={<span className="text-white">技术信息</span>}
+              title={<span style={{ color: isDarkTheme ? '#ffffff' : '#1f2937' }}>技术信息</span>}
               bordered
               column={1}
               size="small"
-              className="bg-gray-900"
+              style={{
+                background: isDarkTheme ? '#374151' : '#ffffff',
+              }}
             >
               <Descriptions.Item 
-                label={<span className="text-gray-400">框架</span>}
-                labelStyle={{ color: '#9ca3af' }}
-                contentStyle={{ color: '#ffffff' }}
+                label={<span style={{ color: isDarkTheme ? '#9ca3af' : '#6b7280' }}>框架</span>}
+                labelStyle={{ color: isDarkTheme ? '#9ca3af' : '#6b7280' }}
+                contentStyle={{ color: isDarkTheme ? '#ffffff' : '#1f2937' }}
               >
                 Electron 28.0.0
               </Descriptions.Item>
               <Descriptions.Item 
-                label={<span className="text-gray-400">前端</span>}
-                labelStyle={{ color: '#9ca3af' }}
-                contentStyle={{ color: '#ffffff' }}
+                label={<span style={{ color: isDarkTheme ? '#9ca3af' : '#6b7280' }}>前端</span>}
+                labelStyle={{ color: isDarkTheme ? '#9ca3af' : '#6b7280' }}
+                contentStyle={{ color: isDarkTheme ? '#ffffff' : '#1f2937' }}
               >
                 React 18 + TypeScript
               </Descriptions.Item>
               <Descriptions.Item 
-                label={<span className="text-gray-400">UI库</span>}
-                labelStyle={{ color: '#9ca3af' }}
-                contentStyle={{ color: '#ffffff' }}
+                label={<span style={{ color: isDarkTheme ? '#9ca3af' : '#6b7280' }}>UI库</span>}
+                labelStyle={{ color: isDarkTheme ? '#9ca3af' : '#6b7280' }}
+                contentStyle={{ color: isDarkTheme ? '#ffffff' : '#1f2937' }}
               >
-                Ant Design + Tailwind CSS
+                Ant Design + CSS-in-JS
               </Descriptions.Item>
               <Descriptions.Item 
-                label={<span className="text-gray-400">构建工具</span>}
-                labelStyle={{ color: '#9ca3af' }}
-                contentStyle={{ color: '#ffffff' }}
+                label={<span style={{ color: isDarkTheme ? '#9ca3af' : '#6b7280' }}>构建工具</span>}
+                labelStyle={{ color: isDarkTheme ? '#9ca3af' : '#6b7280' }}
+                contentStyle={{ color: isDarkTheme ? '#ffffff' : '#1f2937' }}
               >
                 Vite + Electron Builder
               </Descriptions.Item>
             </Descriptions>
 
-            <div className="text-center mt-8">
+            <div style={{ textAlign: 'center', marginTop: '32px' }}>
               <Space size="large">
                 <Button type="primary" icon={<Star size={16} />} ghost>
                   GitHub 仓库
@@ -590,36 +758,61 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate }) => {
   }
 
   return (
-    <Layout className="h-full bg-black setting-layout">
+    <Layout style={{ 
+      height: '100%', 
+      background: isDarkTheme ? '#0a0a0f' : '#f5f5f5',
+      overflow: 'hidden'
+    }}>
       <Sider
         width={260}
-        className="bg-gray-900 border-r border-gray-800"
+        style={{
+          background: isDarkTheme ? '#1a1a24' : '#ffffff',
+          borderRight: `1px solid ${isDarkTheme ? '#3a3a4a' : '#e5e7eb'}`,
+        }}
       >
-        <div className="p-4">
-          <div className="mb-6 text-center">
+        <div style={{ padding: '16px' }}>
+          <div style={{ 
+            marginBottom: '24px', 
+            textAlign: 'center' 
+          }}>
             <Avatar 
               size={48} 
-              className="bg-blue-600 mb-3"
+              style={{
+                background: '#6366f1',
+                marginBottom: '12px'
+              }}
               icon={<SettingsIcon size={24} />}
             />
-            <Title level={4} className="!text-white !mb-1">设置中心</Title>
-            <Text className="text-gray-400 text-sm">个性化您的体验</Text>
+            <Title 
+              level={4} 
+              style={{ 
+                color: isDarkTheme ? '#ffffff' : '#1f2937',
+                marginBottom: '4px'
+              }}
+            >设置中心</Title>
+            <Text style={{ 
+              color: isDarkTheme ? '#808090' : '#6b7280',
+              fontSize: '14px'
+            }}>个性化您的体验</Text>
           </div>
           
           <Menu
             mode="inline"
             selectedKeys={[selectedKey]}
             onClick={({ key }) => setSelectedKey(key)}
-            className="bg-transparent border-none"
+            style={{
+              background: 'transparent',
+              border: 'none'
+            }}
             items={menuItems}
-            theme="dark"
+            theme={isDarkTheme ? "dark" : "light"}
           />
         </div>
       </Sider>
 
       <Content style={{
-        overflow: 'hidden'
-      }} className="bg-black overflow-auto">
+        background: isDarkTheme ? '#0a0a0f' : '#f5f5f5',
+      }}>
         {renderContent()}
       </Content>
     </Layout>

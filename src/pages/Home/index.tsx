@@ -20,7 +20,8 @@ import ModelSelector from '@/components/ModelSelector'
 import { Message } from '@/types/chat'
 import { chatSessionDB, ChatSession } from '@/utils/indexedDB'
 import { Provider } from '@/types/model'
-import { processModelData } from '@/utils/modelDataProcessor'
+import { providerDB } from '@/utils/providerDB'
+import { createStyles } from '@/theme'
 
 const { Sider, Content } = Layout
 const { Title, Text } = Typography
@@ -54,55 +55,105 @@ const Home: React.FC<HomeProps> = ({ isDarkTheme, addSettingsTab, sessionId: pro
   const [isLoading, setIsLoading] = useState(false)
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([])
   const [isInitialized, setIsInitialized] = useState(false)
-  const [selectedModel, setSelectedModel] = useState('gpt-4-turbo')
+  const [selectedModel, setSelectedModel] = useState('')
   const [providers, setProviders] = useState<Provider[]>([])
+  const [providersVersion, setProvidersVersion] = useState(0) // 用于强制重新加载providers
+
+  const styles = createStyles(isDarkTheme);
 
   // 判断是否在欢迎页面模式
   const isWelcomeMode = !sessionId
 
-  // 初始化默认服务商数据
+  // 初始化服务商数据 - 从数据库加载用户配置
   useEffect(() => {
-    try {
-      // 使用 processModelData 函数生成完整的 providers 数据
-      const generatedProviders = processModelData()
-      setProviders(generatedProviders)
-      console.log('已加载提供商数据:', generatedProviders.length, '个提供商')
-      console.log('提供商列表:', generatedProviders.map((p: Provider) => `${p.displayName} (${p.models.length} 个模型)`))
-    } catch (error) {
-      console.error('Failed to process model data:', error)
-      message.error('模型数据处理失败')
-      
-      // 如果处理失败，使用默认的 OpenAI 提供商
-      const fallbackProviders: Provider[] = [
-        {
-          id: 'openai',
-          name: 'openai',
-          displayName: 'OpenAI',
-          description: 'OpenAI 官方 API 服务',
-          apiUrl: 'https://api.openai.com/v1',
-          apiKey: '',
-          enabled: true,
-          icon: 'OpenAI',
-          website: 'https://openai.com',
-          models: [
-            {
-              id: 'gpt-4-turbo',
-              displayName: 'GPT-4 Turbo',
-              description: '最新的 GPT-4 Turbo 模型具备视觉功能',
-              provider: 'openai',
-              type: 'chat',
-              enabled: true,
-              contextWindowTokens: 128000,
-              maxOutput: 4096,
-              abilities: {
-                functionCall: true,
-                vision: true
-              }
-            }
-          ]
+    const loadProviders = async () => {
+      try {
+        // 首先尝试从数据库加载用户配置的提供商
+        let dbProviders = await providerDB.getAllProviders()
+        
+        // 如果数据库为空，初始化默认提供商
+        if (dbProviders.length === 0) {
+          console.log('数据库为空，初始化默认提供商...')
+          dbProviders = await providerDB.initializeDefaultProviders()
         }
-      ]
-      setProviders(fallbackProviders)
+        
+        // 只保留启用的提供商，并且只保留启用的模型
+        const enabledProviders = dbProviders
+          .filter(provider => provider.enabled)
+          .map(provider => ({
+            ...provider,
+            models: provider.models.filter(model => model.enabled)
+          }))
+          .filter(provider => provider.models.length > 0) // 只保留有启用模型的提供商
+        
+        setProviders(enabledProviders)
+        
+        // 如果当前没有选中模型，或者选中的模型不在启用列表中，自动选择第一个可用模型
+        const allEnabledModels = enabledProviders.flatMap(p => p.models)
+        if (!selectedModel || !allEnabledModels.find(m => m.id === selectedModel)) {
+          if (allEnabledModels.length > 0) {
+            setSelectedModel(allEnabledModels[0].id)
+            console.log('自动选择模型:', allEnabledModels[0].displayName)
+          }
+        }
+        
+        console.log('已加载启用的提供商数据:', enabledProviders.length, '个提供商')
+        console.log('启用的提供商列表:', enabledProviders.map((p: Provider) => 
+          `${p.displayName} (${p.models.length} 个启用模型)`
+        ))
+      } catch (error) {
+        console.error('Failed to load provider data:', error)
+        message.error('加载提供商数据失败')
+        
+        // 如果加载失败，使用默认的 OpenAI 提供商作为回退
+        const fallbackProviders: Provider[] = [
+          {
+            id: 'openai',
+            name: 'openai',
+            displayName: 'OpenAI',
+            description: 'OpenAI 官方 API 服务',
+            apiUrl: 'https://api.openai.com/v1',
+            apiKey: '',
+            enabled: true,
+            icon: 'OpenAI',
+            website: 'https://openai.com',
+            models: [
+              {
+                id: 'gpt-4-turbo',
+                displayName: 'GPT-4 Turbo',
+                description: '最新的 GPT-4 Turbo 模型具备视觉功能',
+                provider: 'openai',
+                type: 'chat',
+                enabled: true,
+                contextWindowTokens: 128000,
+                maxOutput: 4096,
+                abilities: {
+                  functionCall: true,
+                  vision: true
+                }
+              }
+            ]
+          }
+        ]
+        setProviders(fallbackProviders)
+      }
+    }
+
+    loadProviders()
+  }, [providersVersion]) // 当providersVersion变化时重新加载
+
+  // 监听窗口焦点事件，当从设置页面返回时重新加载providers
+  useEffect(() => {
+    const handleFocus = () => {
+      // 延迟一点时间再重新加载，确保设置页面的数据已经保存
+      setTimeout(() => {
+        setProvidersVersion(prev => prev + 1)
+      }, 100)
+    }
+
+    window.addEventListener('focus', handleFocus)
+    return () => {
+      window.removeEventListener('focus', handleFocus)
     }
   }, [])
 
@@ -138,6 +189,12 @@ const Home: React.FC<HomeProps> = ({ isDarkTheme, addSettingsTab, sessionId: pro
 
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return
+
+    // 检查是否有可用的模型
+    if (!selectedModel || providers.length === 0 || providers.every(p => p.models.length === 0)) {
+      message.error('请先在设置中启用至少一个模型')
+      return
+    }
 
     let targetSessionId = sessionId
 
@@ -356,64 +413,118 @@ const Home: React.FC<HomeProps> = ({ isDarkTheme, addSettingsTab, sessionId: pro
   // 如果还没有初始化完成，显示加载状态
   if (!isInitialized) {
     return (
-      <div className="h-full bg-black flex items-center justify-center">
-        <div className="text-white">加载中...</div>
+      <div style={{
+        height: '100%',
+        background: isDarkTheme ? '#0a0a0f' : '#f5f5f5',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+        <div style={{ color: isDarkTheme ? '#ffffff' : '#1f2937' }}>加载中...</div>
       </div>
     )
   }
 
   // 欢迎页面模式 - 输入框在中间
   if (isWelcomeMode) {
+    const siderStyle = {
+      overflow: 'hidden' as const,
+      height: '100%',
+      transition: 'all 0.3s ease',
+      background: isDarkTheme ? '#1a1a24' : '#ffffff',
+      borderRight: `1px solid ${isDarkTheme ? '#3a3a4a' : '#e5e7eb'}`,
+    };
+
     return (
-      <Layout className="h-full bg-black">
+      <Layout style={{ height: '100%', background: isDarkTheme ? '#0a0a0f' : '#f5f5f5' }}>
         {/* 左侧会话列表 */}
         <Sider
           width={280}
           collapsed={collapsed}
           collapsedWidth={0}
           trigger={null}
-          className="transition-all duration-300 bg-gray-900 border-r border-gray-800"
-          style={{
-            overflow: 'hidden',
-            height: '100%',
-          }}
+          style={siderStyle}
         >
-          <div className="h-full flex flex-col">
+          <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
             {/* 顶部新会话按钮 */}
-            <div className="p-4">
+            <div style={{ padding: '16px' }}>
               <Button
                 onClick={handleNewChat}
-                className="w-full bg-gray-800 hover:bg-gray-700 border-gray-700 text-white rounded-lg h-10 flex items-center justify-start px-3"
-                icon={<Edit3 size={16} className="text-gray-400" />}
+                style={{
+                  width: '100%',
+                  background: isDarkTheme ? '#2a2a3a' : '#ffffff',
+                  borderColor: isDarkTheme ? '#3a3a4a' : '#d1d5db',
+                  color: isDarkTheme ? '#ffffff' : '#1f2937',
+                  borderRadius: '8px',
+                  height: '40px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'flex-start',
+                  padding: '0 12px',
+                }}
+                icon={<Edit3 size={16} style={{ color: isDarkTheme ? '#9ca3af' : '#6b7280' }} />}
               >
-                <span className="ml-2 text-gray-300">新会话</span>
+                <span style={{ 
+                  marginLeft: '8px', 
+                  color: isDarkTheme ? '#e0e0e8' : '#6b7280' 
+                }}>新会话</span>
               </Button>
             </div>
 
             {/* 会话列表 */}
-            <div className="flex-1 overflow-y-auto px-4">
+            <div style={{ 
+              flex: 1, 
+              overflowY: 'auto', 
+              padding: '0 16px',
+              ...styles.scrollbar 
+            }}>
               {Object.entries(sessionGroups).map(([date, sessions]) => (
-                <div key={date} className="mb-4">
-                  <div className="text-xs text-gray-500 mb-2 px-2">
+                <div key={date} style={{ marginBottom: '16px' }}>
+                  <div style={{
+                    fontSize: '12px',
+                    color: isDarkTheme ? '#9ca3af' : '#6b7280',
+                    marginBottom: '8px',
+                    padding: '0 8px',
+                  }}>
                     {date}
                   </div>
                   
-                  <div className="space-y-2">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {sessions.map((session) => (
                       <div
                         key={session.id}
-                        className="group relative cursor-pointer transition-all duration-200 bg-gray-800 hover:bg-gray-700 rounded-lg p-3"
+                        style={{
+                          position: 'relative',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          background: isDarkTheme ? '#374151' : '#f3f4f6',
+                          borderRadius: '8px',
+                          padding: '12px',
+                        }}
                         onClick={() => handleSessionClick(session.id)}
                       >
-                        <div className="flex items-center justify-between">
+                        <div style={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'space-between' 
+                        }}>
                           <Text 
-                            className="text-sm flex-1 text-gray-300"
-                            ellipsis
+                            style={{
+                              fontSize: '14px',
+                              flex: 1,
+                              color: isDarkTheme ? '#d1d5db' : '#374151',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                            }}
                           >
                             {session.title}
                           </Text>
                           
-                          <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                          <div style={{
+                            opacity: 0,
+                            transition: 'opacity 0.2s ease',
+                          }}>
                             <SessionMenu
                               session={session}
                               onEdit={handleEditSession}
@@ -429,79 +540,150 @@ const Home: React.FC<HomeProps> = ({ isDarkTheme, addSettingsTab, sessionId: pro
             </div>
 
             {/* 底部设置按钮 */}
-            <div className="p-4 border-t border-gray-800">
+            <div style={{ 
+              padding: '16px', 
+              borderTop: `1px solid ${isDarkTheme ? '#3a3a4a' : '#e5e7eb'}` 
+            }}>
               <Button
                 type="text"
-                icon={<Settings size={16} className="text-gray-400" />}
-                className="w-full text-left text-gray-300 hover:bg-gray-800 rounded-lg h-10 flex items-center justify-start px-3"
+                icon={<Settings size={16} style={{ color: isDarkTheme ? '#9ca3af' : '#6b7280' }} />}
+                style={{
+                  width: '100%',
+                  textAlign: 'left',
+                  color: isDarkTheme ? '#e0e0e8' : '#6b7280',
+                  borderRadius: '8px',
+                  height: '40px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'flex-start',
+                  padding: '0 12px',
+                }}
                 onClick={handleOpenSettings}
               >
-                <span className="ml-2">设置</span>
+                <span style={{ marginLeft: '8px' }}>设置</span>
               </Button>
             </div>
           </div>
         </Sider>
 
         {/* 主内容区域 - 欢迎页面 */}
-        <Layout className="flex-1">
-          <Content className="flex flex-col h-full bg-black">
+        <Layout style={{ flex: 1 }}>
+          <Content style={{ 
+            display: 'flex', 
+            flexDirection: 'column', 
+            height: '100%', 
+            background: isDarkTheme ? '#0a0a0f' : '#f9fafb' 
+          }}>
             {/* 顶部工具栏 */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-800 bg-black">
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '16px',
+              borderBottom: `1px solid ${isDarkTheme ? '#3a3a4a' : '#e5e7eb'}`,
+              background: isDarkTheme ? '#0a0a0f' : '#ffffff',
+            }}>
               <Space>
                 <Tooltip title={collapsed ? "展开菜单" : "收起菜单"}>
                   <Button
                     type="text"
-                    icon={collapsed ? <PanelLeftOpen size={20} className="text-gray-400" /> : <PanelLeftClose size={20} className="text-gray-400" />}
+                    icon={collapsed ? 
+                      <PanelLeftOpen size={20} style={{ color: isDarkTheme ? '#9ca3af' : '#6b7280' }} /> : 
+                      <PanelLeftClose size={20} style={{ color: isDarkTheme ? '#9ca3af' : '#6b7280' }} />
+                    }
                     onClick={() => setCollapsed(!collapsed)}
-                    className="flex items-center justify-center hover:bg-gray-800"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
                   />
                 </Tooltip>
               </Space>
             </div>
 
-            <div className="flex-1 flex flex-col items-center justify-center px-6">
+            <div style={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '0 24px',
+            }}>
 
-              <Title level={1} className="!text-5xl !font-bold !mb-4 !text-white text-center">
+              <Title 
+                level={1} 
+                style={{
+                  fontSize: '48px',
+                  fontWeight: 'bold',
+                  marginBottom: '16px',
+                  color: isDarkTheme ? '#ffffff' : '#1f2937',
+                  textAlign: 'center',
+                }}
+              >
                 你好呀
               </Title>
               
-              <Text className="text-xl text-gray-300 mb-12 text-center">
+              <Text style={{
+                fontSize: '20px',
+                color: isDarkTheme ? '#d1d5db' : '#6b7280',
+                marginBottom: '48px',
+                textAlign: 'center',
+              }}>
                 今天你想问点什么？
               </Text>
 
-              <div className="w-full max-w-4xl">
-                <div className="relative">
-                  <div className="bg-gray-800 rounded-2xl border border-gray-700 p-4">
+              <div style={{ width: '100%', maxWidth: '1024px' }}>
+                <div style={{ position: 'relative' }}>
+                  <div style={{
+                    background: isDarkTheme ? '#374151' : '#ffffff',
+                    borderRadius: '16px',
+                    border: `1px solid ${isDarkTheme ? '#4b5563' : '#d1d5db'}`,
+                    padding: '16px',
+                  }}>
                     <TextArea
                       value={inputValue}
                       onChange={(e) => setInputValue(e.target.value)}
                       onKeyPress={handleKeyPress}
                       placeholder="问点什么？可以通过@来引用工具、文件、资源..."
                       autoSize={{ minRows: 1, maxRows: 6 }}
-                      className="!bg-transparent !border-none !resize-none text-white placeholder-gray-400 !p-0"
                       style={{
-                        boxShadow: 'none'
+                        background: 'transparent',
+                        border: 'none',
+                        resize: 'none',
+                        color: isDarkTheme ? '#ffffff' : '#1f2937',
+                        padding: 0,
+                        boxShadow: 'none',
                       }}
                     />
                     
                     {/* 底部操作栏 */}
-                    <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-700">
-                      <div className="flex items-center space-x-2">
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginTop: '12px',
+                      paddingTop: '12px',
+                      borderTop: `1px solid ${isDarkTheme ? '#4b5563' : '#e5e7eb'}`,
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <Button
                           type="text"
                           size="small"
-                          icon={<Paperclip size={16} className="text-gray-400" />}
-                          className="text-gray-400 hover:text-white hover:bg-gray-700"
+                          icon={<Paperclip size={16} style={{ color: isDarkTheme ? '#9ca3af' : '#6b7280' }} />}
+                          style={{
+                            color: isDarkTheme ? '#9ca3af' : '#6b7280',
+                          }}
                         />
                       </div>
                       
-                      <div className="flex items-center space-x-2">
-                        <div className="w-32">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ width: '128px' }}>
                           <ModelSelector
                             selectedModel={selectedModel}
                             onModelChange={setSelectedModel}
                             providers={providers}
-                            className="text-xs"
+                            disabled={providers.length === 0 || providers.every(p => p.models.length === 0)}
                           />
                         </div>
                         <Button
@@ -510,7 +692,11 @@ const Home: React.FC<HomeProps> = ({ isDarkTheme, addSettingsTab, sessionId: pro
                           onClick={handleSendMessage}
                           disabled={!inputValue.trim() || isLoading}
                           loading={isLoading}
-                          className="bg-blue-600 hover:bg-blue-700 border-blue-600 rounded-lg"
+                          style={{
+                            background: '#3b82f6',
+                            borderColor: '#3b82f6',
+                            borderRadius: '8px',
+                          }}
                           size="small"
                         />
                       </div>
@@ -526,62 +712,108 @@ const Home: React.FC<HomeProps> = ({ isDarkTheme, addSettingsTab, sessionId: pro
   }
 
   // 会话模式 - 输入框在底部
+  const sessionSiderStyle = {
+    overflow: 'hidden' as const,
+    height: '100%',
+    transition: 'all 0.3s ease',
+    background: isDarkTheme ? '#374151' : '#ffffff',
+    borderRight: `1px solid ${isDarkTheme ? '#4b5563' : '#e5e7eb'}`,
+  };
+
   return (
-    <Layout className="h-full bg-black">
+    <Layout style={{ height: '100%', background: isDarkTheme ? '#0a0a0f' : '#f5f5f5' }}>
       {/* 左侧会话列表 */}
       <Sider
         width={280}
         collapsed={collapsed}
         collapsedWidth={0}
         trigger={null}
-        className="transition-all duration-300 bg-gray-900 border-r border-gray-800"
-        style={{
-          overflow: 'hidden',
-          height: '100%',
-        }}
+        style={sessionSiderStyle}
       >
-        <div className="h-full flex flex-col">
+        <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
           {/* 顶部新会话按钮 */}
-          <div className="p-4">
+          <div style={{ padding: '16px' }}>
             <Button
               onClick={handleNewChat}
-              className="w-full bg-gray-800 hover:bg-gray-700 border-gray-700 text-white rounded-lg h-10 flex items-center justify-start px-3"
-              icon={<Edit3 size={16} className="text-gray-400" />}
+              style={{
+                width: '100%',
+                background: isDarkTheme ? '#4b5563' : '#ffffff',
+                borderColor: isDarkTheme ? '#6b7280' : '#d1d5db',
+                color: isDarkTheme ? '#ffffff' : '#1f2937',
+                borderRadius: '8px',
+                height: '40px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'flex-start',
+                padding: '0 12px',
+              }}
+              icon={<Edit3 size={16} style={{ color: isDarkTheme ? '#9ca3af' : '#6b7280' }} />}
             >
-              <span className="ml-2 text-gray-300">新会话</span>
+              <span style={{ 
+                marginLeft: '8px', 
+                color: isDarkTheme ? '#d1d5db' : '#6b7280' 
+              }}>新会话</span>
             </Button>
           </div>
 
           {/* 会话列表 */}
-          <div className="flex-1 overflow-y-auto px-4">
+          <div style={{ 
+            flex: 1, 
+            overflowY: 'auto', 
+            padding: '0 16px',
+            ...styles.scrollbar 
+          }}>
             {Object.entries(sessionGroups).map(([date, sessions]) => (
-              <div key={date} className="mb-4">
-                <div className="text-xs text-gray-500 mb-2 px-2">
+              <div key={date} style={{ marginBottom: '16px' }}>
+                <div style={{
+                  fontSize: '12px',
+                  color: isDarkTheme ? '#9ca3af' : '#6b7280',
+                  marginBottom: '8px',
+                  padding: '0 8px',
+                }}>
                   {date}
                 </div>
                 
-                <div className="space-y-2">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {sessions.map((session) => (
                     <div
                       key={session.id}
-                      className={`group relative cursor-pointer transition-all duration-200 ${
-                        sessionId === session.id
-                          ? 'bg-gray-700'
-                          : 'bg-gray-800 hover:bg-gray-700'
-                      } rounded-lg p-3`}
+                      style={{
+                        position: 'relative',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        background: sessionId === session.id
+                          ? (isDarkTheme ? '#6b7280' : '#e5e7eb')
+                          : (isDarkTheme ? '#4b5563' : '#f3f4f6'),
+                        borderRadius: '8px',
+                        padding: '12px',
+                      }}
                       onClick={() => handleSessionClick(session.id)}
                     >
-                      <div className="flex items-center justify-between">
+                      <div style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'space-between' 
+                      }}>
                         <Text 
-                          className={`text-sm flex-1 ${
-                            sessionId === session.id ? 'text-white' : 'text-gray-300'
-                          }`}
-                          ellipsis
+                          style={{
+                            fontSize: '14px',
+                            flex: 1,
+                            color: sessionId === session.id 
+                              ? (isDarkTheme ? '#ffffff' : '#1f2937')
+                              : (isDarkTheme ? '#d1d5db' : '#374151'),
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
                         >
                           {session.title}
                         </Text>
                         
-                        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        <div style={{
+                          opacity: 0,
+                          transition: 'opacity 0.2s ease',
+                        }}>
                           <SessionMenu
                             session={session}
                             onEdit={handleEditSession}
@@ -597,34 +829,72 @@ const Home: React.FC<HomeProps> = ({ isDarkTheme, addSettingsTab, sessionId: pro
           </div>
 
           {/* 底部设置按钮 */}
-          <div className="p-4 border-t border-gray-800">
+          <div style={{ 
+            padding: '16px', 
+            borderTop: `1px solid ${isDarkTheme ? '#4b5563' : '#e5e7eb'}` 
+          }}>
             <Button
               type="text"
-              icon={<Settings size={16} className="text-gray-400" />}
-              className="w-full text-left text-gray-300 hover:bg-gray-800 rounded-lg h-10 flex items-center justify-start px-3"
+              icon={<Settings size={16} style={{ color: isDarkTheme ? '#9ca3af' : '#6b7280' }} />}
+              style={{
+                width: '100%',
+                textAlign: 'left',
+                color: isDarkTheme ? '#d1d5db' : '#6b7280',
+                borderRadius: '8px',
+                height: '40px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'flex-start',
+                padding: '0 12px',
+              }}
               onClick={handleOpenSettings}
             >
-              <span className="ml-2">设置</span>
+              <span style={{ marginLeft: '8px' }}>设置</span>
             </Button>
           </div>
         </div>
       </Sider>
 
       {/* 主内容区域 - 会话模式 */}
-      <Layout className="flex-1">
-        <Content className="flex flex-col h-full bg-black">
+      <Layout style={{ flex: 1 }}>
+        <Content style={{ 
+          display: 'flex', 
+          flexDirection: 'column', 
+          height: '100%', 
+          background: isDarkTheme ? '#0a0a0f' : '#f9fafb' 
+        }}>
           {/* 顶部工具栏 */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-800 bg-black">
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '16px',
+            borderBottom: `1px solid ${isDarkTheme ? '#4b5563' : '#e5e7eb'}`,
+            background: isDarkTheme ? '#0a0a0f' : '#ffffff',
+          }}>
             <Space>
               <Tooltip title={collapsed ? "展开菜单" : "收起菜单"}>
                 <Button
                   type="text"
-                  icon={collapsed ? <PanelLeftOpen size={20} className="text-gray-400" /> : <PanelLeftClose size={20} className="text-gray-400" />}
+                  icon={collapsed ? 
+                    <PanelLeftOpen size={20} style={{ color: isDarkTheme ? '#9ca3af' : '#6b7280' }} /> : 
+                    <PanelLeftClose size={20} style={{ color: isDarkTheme ? '#9ca3af' : '#6b7280' }} />
+                  }
                   onClick={() => setCollapsed(!collapsed)}
-                  className="flex items-center justify-center hover:bg-gray-800"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
                 />
               </Tooltip>
-              <Title level={5} className="!mb-0 text-white">
+              <Title 
+                level={5} 
+                style={{ 
+                  marginBottom: 0,
+                  color: isDarkTheme ? '#ffffff' : '#1f2937'
+                }}
+              >
                 {currentSession?.title || '会话不存在'}
               </Title>
             </Space>
@@ -634,7 +904,10 @@ const Home: React.FC<HomeProps> = ({ isDarkTheme, addSettingsTab, sessionId: pro
               <Button
                 type="primary"
                 onClick={() => navigate('/')}
-                className="bg-blue-600 hover:bg-blue-700"
+                style={{
+                  background: '#3b82f6',
+                  borderColor: '#3b82f6',
+                }}
               >
                 回到首页
               </Button>
@@ -649,15 +922,28 @@ const Home: React.FC<HomeProps> = ({ isDarkTheme, addSettingsTab, sessionId: pro
               isLoading={isLoading}
             />
           ) : (
-            <div className="flex-1 flex items-center justify-center bg-black">
-              <div className="text-center">
-                <Text className="text-gray-500 block mb-4">
+            <div style={{
+              flex: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: isDarkTheme ? '#0a0a0f' : '#f9fafb',
+            }}>
+              <div style={{ textAlign: 'center' }}>
+                <Text style={{ 
+                  color: isDarkTheme ? '#9ca3af' : '#6b7280',
+                  display: 'block',
+                  marginBottom: '16px'
+                }}>
                   会话不存在或已被删除
                 </Text>
                 <Button
                   type="primary"
                   onClick={() => navigate('/')}
-                  className="bg-blue-600 hover:bg-blue-700"
+                  style={{
+                    background: '#3b82f6',
+                    borderColor: '#3b82f6',
+                  }}
                 >
                   回到首页
                 </Button>
@@ -667,40 +953,61 @@ const Home: React.FC<HomeProps> = ({ isDarkTheme, addSettingsTab, sessionId: pro
 
           {/* 底部输入区域 - 只有在会话存在时才显示 */}
           {currentSession && (
-            <div className="p-6 bg-black">
-              <div className="max-w-4xl mx-auto">
-                <div className="relative">
-                  <div className="bg-gray-800 rounded-2xl border border-gray-700 p-4">
+            <div style={{ 
+              padding: '24px', 
+              background: isDarkTheme ? '#0a0a0f' : '#f9fafb' 
+            }}>
+              <div style={{ maxWidth: '1024px', margin: '0 auto' }}>
+                <div style={{ position: 'relative' }}>
+                  <div style={{
+                    background: isDarkTheme ? '#374151' : '#ffffff',
+                    borderRadius: '16px',
+                    border: `1px solid ${isDarkTheme ? '#4b5563' : '#d1d5db'}`,
+                    padding: '16px',
+                  }}>
                     <TextArea
                       value={inputValue}
                       onChange={(e) => setInputValue(e.target.value)}
                       onKeyPress={handleKeyPress}
                       placeholder="问点什么？可以通过@来引用工具、文件、资源..."
                       autoSize={{ minRows: 1, maxRows: 6 }}
-                      className="!bg-transparent !border-none !resize-none text-white placeholder-gray-400 !p-0"
                       style={{
-                        boxShadow: 'none'
+                        background: 'transparent',
+                        border: 'none',
+                        resize: 'none',
+                        color: isDarkTheme ? '#ffffff' : '#1f2937',
+                        padding: 0,
+                        boxShadow: 'none',
                       }}
                     />
                     
                     {/* 底部操作栏 */}
-                    <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-700">
-                      <div className="flex items-center space-x-2">
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginTop: '12px',
+                      paddingTop: '12px',
+                      borderTop: `1px solid ${isDarkTheme ? '#4b5563' : '#e5e7eb'}`,
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <Button
                           type="text"
                           size="small"
-                          icon={<Paperclip size={16} className="text-gray-400" />}
-                          className="text-gray-400 hover:text-white hover:bg-gray-700"
+                          icon={<Paperclip size={16} style={{ color: isDarkTheme ? '#9ca3af' : '#6b7280' }} />}
+                          style={{
+                            color: isDarkTheme ? '#9ca3af' : '#6b7280',
+                          }}
                         />
                       </div>
                       
-                      <div className="flex items-center space-x-2">
-                        <div className="w-32">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ width: '128px' }}>
                           <ModelSelector
                             selectedModel={selectedModel}
                             onModelChange={setSelectedModel}
                             providers={providers}
-                            className="text-xs"
+                            disabled={providers.length === 0 || providers.every(p => p.models.length === 0)}
                           />
                         </div>
                         <Button
@@ -709,7 +1016,11 @@ const Home: React.FC<HomeProps> = ({ isDarkTheme, addSettingsTab, sessionId: pro
                           onClick={handleSendMessage}
                           disabled={!inputValue.trim() || isLoading}
                           loading={isLoading}
-                          className="bg-blue-600 hover:bg-blue-700 border-blue-600 rounded-lg"
+                          style={{
+                            background: '#3b82f6',
+                            borderColor: '#3b82f6',
+                            borderRadius: '8px',
+                          }}
                           size="small"
                         />
                       </div>

@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react'
 import { X, Plus } from 'lucide-react'
 import { Button } from 'antd'
+import { createStyles } from '@/theme'
 
 export interface Tab {
   id: string
@@ -31,6 +32,8 @@ const TabBar: React.FC<TabBarProps> = ({
 }) => {
   const [draggedTab, setDraggedTab] = useState<string | null>(null)
   const [hoveredTab, setHoveredTab] = useState<string | null>(null)
+
+  const styles = createStyles(isDarkTheme);
 
   // 计算标签页宽度
   const calculateTabWidth = useCallback((isHovered: boolean = false) => {
@@ -64,80 +67,152 @@ const TabBar: React.FC<TabBarProps> = ({
     setHoveredTab(null)
   }
 
+  const tabBarContainerStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    height: '100%',
+    background: isDarkTheme 
+      ? 'rgba(255, 255, 255, 0.03)' 
+      : 'rgba(255, 255, 255, 0.8)',
+    backdropFilter: 'blur(10px)',
+    borderBottom: `1px solid ${isDarkTheme ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.2)'}`,
+  };
+
+  const tabsContainerStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    height: '100%',
+    overflow: 'hidden',
+  };
+
+  const getTabStyle = (tab: Tab, isHovered: boolean, index: number) => {
+    const tabWidth = calculateTabWidth(isHovered);
+    
+    return {
+      position: 'relative' as const,
+      display: 'flex',
+      alignItems: 'center',
+      height: '100%',
+      cursor: 'pointer',
+      transition: 'all 0.3s ease-out',
+      width: `${tabWidth}px`,
+      minWidth: `${minTabWidth}px`,
+      maxWidth: `${maxTabWidth + 30}px`,
+      background: tab.isActive 
+        ? (isDarkTheme ? 'rgba(255, 255, 255, 0.06)' : 'rgba(255, 255, 255, 0.9)')
+        : (isDarkTheme ? 'rgba(255, 255, 255, 0.03)' : 'rgba(255, 255, 255, 0.6)'),
+      backdropFilter: 'blur(10px)',
+      borderLeft: index > 0 ? `1px solid ${isDarkTheme ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.2)'}` : 'none',
+      borderRadius: tab.isActive ? '8px 8px 0 0' : '0',
+      boxShadow: tab.isActive ? '0 4px 6px rgba(0, 0, 0, 0.1)' : 'none',
+    };
+  };
+
+  const tabContentStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    padding: '12px 16px',
+    position: 'relative' as const,
+    zIndex: 10,
+  };
+
+  const tabTextContainerStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    flex: 1,
+    minWidth: 0,
+    paddingRight: '8px',
+  };
+
+  const getTabTextStyle = (tab: Tab) => ({
+    fontSize: '14px',
+    fontWeight: 500,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap' as const,
+    flex: 1,
+    transition: 'all 0.3s ease-out',
+    color: tab.isActive 
+      ? (isDarkTheme ? '#ffffff' : '#1f2937')
+      : (isDarkTheme ? '#b0b0c0' : '#6b7280'),
+    textShadow: tab.isActive ? '0 1px 2px rgba(0, 0, 0, 0.1)' : 'none',
+  });
+
+  const getCloseButtonContainerStyle = (isHovered: boolean) => ({
+    flexShrink: 0,
+    transition: 'all 0.3s ease-out',
+    opacity: isHovered ? 1 : 0,
+    transform: isHovered ? 'translateX(0) scale(1)' : 'translateX(8px) scale(0.75)',
+    pointerEvents: isHovered ? 'auto' as const : 'none' as const,
+  });
+
+  const closeButtonStyle = {
+    minWidth: '24px',
+    height: '24px',
+    padding: '0',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    border: 'none',
+    borderRadius: '4px',
+    transition: 'all 0.2s ease-out',
+  };
+
+  const activeIndicatorStyle = {
+    position: 'absolute' as const,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: '2px',
+    background: 'linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%)',
+    boxShadow: '0 1px 2px rgba(99, 102, 241, 0.3)',
+  };
+
+  const hoverEffectStyle = {
+    position: 'absolute' as const,
+    inset: 0,
+    opacity: 0,
+    transition: 'all 0.3s ease-out',
+    background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, transparent 100%)',
+    borderRadius: '8px 8px 0 0',
+  };
+
   return (
-    <div className="flex items-center h-full bg-black/20 backdrop-blur-sm border-b border-white/10">
+    <div style={tabBarContainerStyle}>
       {/* 标签页容器 */}
-      <div className="flex items-center h-full overflow-hidden">
+      <div style={tabsContainerStyle}>
         {tabs.map((tab, index) => {
-          const isHovered = hoveredTab === tab.id
-          const tabWidth = calculateTabWidth(isHovered)
+          const isHovered = hoveredTab === tab.id;
           
           return (
             <div
               key={tab.id}
-              className={`
-                relative flex items-center h-full cursor-pointer group
-                transition-all duration-300 ease-out
-                ${tab.isActive 
-                  ? 'bg-white/10 backdrop-blur-md border-t-2 border-blue-400 shadow-lg' 
-                  : 'bg-white/5 hover:bg-white/8 backdrop-blur-sm'
-                }
-                ${index > 0 ? 'border-l border-white/10' : ''}
-              `}
-              style={{ 
-                width: `${tabWidth}px`,
-                minWidth: `${minTabWidth}px`,
-                maxWidth: `${maxTabWidth + 30}px`,
-                borderRadius: tab.isActive ? '8px 8px 0 0' : '0'
-              }}
+              style={getTabStyle(tab, isHovered, index)}
               onClick={() => handleTabClick(tab.id)}
               onMouseEnter={() => handleTabMouseEnter(tab.id)}
               onMouseLeave={handleTabMouseLeave}
               title={tab.title}
             >
               {/* 标签页内容 */}
-              <div className="flex items-center justify-between w-full px-4 py-3 relative z-10">
-                <div className="flex items-center flex-1 min-w-0 pr-2">
-                  <span className={`
-                    text-sm truncate flex-1 font-medium
-                    transition-all duration-300 ease-out
-                    ${tab.isActive 
-                      ? 'text-white drop-shadow-sm' 
-                      : 'text-gray-300 group-hover:text-white'
-                    }
-                  `}>
+              <div style={tabContentStyle}>
+                <div style={tabTextContainerStyle}>
+                  <span style={getTabTextStyle(tab)}>
                     {tab.title}
                   </span>
                 </div>
 
                 {/* 关闭按钮 - 默认隐藏，悬停时显示 */}
                 {(tab.canClose !== false) && (
-                  <div className={`
-                    flex-shrink-0 transition-all duration-300 ease-out
-                    ${isHovered 
-                      ? 'opacity-100 translate-x-0 scale-100' 
-                      : 'opacity-0 translate-x-2 scale-75 pointer-events-none'
-                    }
-                  `}>
+                  <div style={getCloseButtonContainerStyle(isHovered)}>
                     <Button
                       type='text'
                       size='small'
                       icon={<X size={14} />}
                       onClick={(e) => handleTabClose(e, tab.id)}
                       title="关闭标签页"
-                      className={`
-                        hover:bg-red-500/20 hover:text-red-400 
-                        transition-all duration-200 ease-out
-                        ${isHovered ? 'visible' : 'invisible'}
-                      `}
-                      style={{
-                        minWidth: '24px',
-                        height: '24px',
-                        padding: '0',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}
+                      style={closeButtonStyle}
                     />
                   </div>
                 )}
@@ -145,17 +220,18 @@ const TabBar: React.FC<TabBarProps> = ({
               
               {/* 活跃标签页底部指示器 */}
               {tab.isActive && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-400 to-blue-600 shadow-sm" />
+                <div style={activeIndicatorStyle} />
               )}
 
               {/* 悬停效果光晕 */}
-              <div className={`
-                absolute inset-0 opacity-0 group-hover:opacity-100 
-                transition-all duration-300 ease-out
-                bg-gradient-to-b from-white/5 to-transparent
-                ${tab.isActive ? 'hidden' : ''}
-                rounded-t-lg
-              `} />
+              {!tab.isActive && (
+                <div 
+                  style={{
+                    ...hoverEffectStyle,
+                    opacity: isHovered ? 1 : 0,
+                  }} 
+                />
+              )}
             </div>
           )
         })}
