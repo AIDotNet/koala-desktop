@@ -111,27 +111,8 @@ const ChatInput: React.FC<ChatInputProps> = ({
         return
       }
 
-      // 处理选中的文件
-      const newFiles: { name: string; path: string; size: number }[] = []
-      
-      for (const filePath of result.filePaths) {
-        try {
-          // 获取文件信息
-          const fileName = filePath.split(/[/\\]/).pop() || filePath
-          
-          // 这里我们暂时设置一个默认大小，实际大小可以通过文件系统 API 获取
-          // 或者在主进程中一并返回文件信息
-          const fileInfo = {
-            name: fileName,
-            path: filePath,
-            size: 0 // 暂时设为0，后续可以优化
-          }
-          
-          newFiles.push(fileInfo)
-        } catch (error) {
-          console.error(`处理文件 ${filePath} 失败:`, error)
-        }
-      }
+      // 使用返回的文件信息
+      const newFiles = result.files || []
 
       if (newFiles.length > 0) {
         const allFiles = [...uploadedFiles, ...newFiles]

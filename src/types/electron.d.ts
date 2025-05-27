@@ -8,7 +8,11 @@ export interface ElectronAPI {
     title?: string
     filters?: Array<{ name: string; extensions: string[] }>
     properties?: Array<'openFile' | 'multiSelections'>
-  }) => Promise<{ canceled: boolean; filePaths: string[] }>
+  }) => Promise<{ 
+    canceled: boolean; 
+    filePaths: string[];
+    files: Array<{ name: string; path: string; size: number }>
+  }>
   readFile: (filePath: string) => Promise<{ success: boolean; content?: string; error?: string }>
 }
 

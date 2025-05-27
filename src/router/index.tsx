@@ -2,7 +2,6 @@ import React from 'react'
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import Home from '../pages/Home/index'
 import Settings from '../pages/Settings'
-import ProviderDemo from '../components/ProviderDemo'
 import ZustandTestPage from '../pages/Home/ZustandTestPage'
 import SessionManagerExample from '../pages/Home/SessionManagerExample'
 
@@ -42,10 +41,6 @@ export const createAppRouter = (isDarkTheme: boolean, onThemeChange: (isDark: bo
           <Settings isDarkTheme={isDarkTheme} />
         </RouteWrapper>
       )
-    },
-    {
-      path: '/providers',
-      element: <ProviderDemo />
     },
     {
       path: '/zustand-test',

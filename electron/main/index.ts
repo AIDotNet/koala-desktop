@@ -222,10 +222,43 @@ ipcMain.handle('select-files', async (_, options = {}) => {
     }
 
     const result = await dialog.showOpenDialog(win!, mergedOptions)
-    return result
+    
+    if (result.canceled) {
+      return { canceled: true, filePaths: [], files: [] }
+    }
+
+    // 获取文件详细信息
+    const filesWithInfo = []
+    for (const filePath of result.filePaths) {
+      try {
+        const stats = await fs.stat(filePath)
+        const fileName = path.basename(filePath)
+        
+        filesWithInfo.push({
+          name: fileName,
+          path: filePath,
+          size: stats.size
+        })
+      } catch (error) {
+        console.error(`获取文件信息失败 ${filePath}:`, error)
+        // 如果获取文件信息失败，仍然添加基本信息
+        const fileName = path.basename(filePath)
+        filesWithInfo.push({
+          name: fileName,
+          path: filePath,
+          size: 0
+        })
+      }
+    }
+
+    return { 
+      canceled: false, 
+      filePaths: result.filePaths,
+      files: filesWithInfo
+    }
   } catch (error) {
     console.error('文件选择失败:', error)
-    return { canceled: true, filePaths: [] }
+    return { canceled: true, filePaths: [], files: [] }
   }
 })
 

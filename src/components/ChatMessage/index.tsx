@@ -71,7 +71,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
       <AssistantMessage
         message={message as AssistantMessageType}
         isDarkTheme={isDarkTheme}
-        isLoading={isLoading}
+        isLoading={isLoading || false}
         isEditing={isEditing}
         editingContent={editingContent}
         onCopy={onCopy}
