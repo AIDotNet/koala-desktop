@@ -1,102 +1,86 @@
-/* 模型选择器下拉框样式优化 */
-.model-selector-dropdown {
-  /* 基础样式 */
+/* 模型选择器样式优化 - 与整体设计保持一致 */
+
+/* 模型选择器容器 */
+.model-selector {
+  position: relative;
+  width: 100%;
+}
+
+/* 选择器输入框样式 */
+.model-selector .ant-select-selector {
   border-radius: 12px !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12) !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  background: linear-gradient(135deg, rgba(30, 30, 40, 0.95) 0%, rgba(20, 20, 30, 0.95) 100%) !important;
+  background: rgba(255, 255, 255, 0.05) !important;
   backdrop-filter: blur(10px) !important;
-  overflow: hidden !important;
-  max-height: 450px !important;
-  min-width: 480px !important;
-  max-width: 600px !important;
-  padding: 0 !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  padding: 8px 12px !important;
+  min-height: 44px !important;
 }
 
-/* 下拉框内容容器 */
-.model-selector-dropdown-content {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-/* 搜索区域 */
-.model-selector-search {
-  padding: 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.02);
-}
-
-/* 搜索输入框 */
-.model-selector-search .search-input {
+.model-selector .ant-select-selector:hover {
+  border-color: rgba(24, 144, 255, 0.4) !important;
   background: rgba(255, 255, 255, 0.08) !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.1) !important;
+}
+
+.model-selector .ant-select-focused .ant-select-selector {
+  border-color: rgba(24, 144, 255, 0.6) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 0 0 3px rgba(24, 144, 255, 0.15) !important;
+}
+
+/* 选择器文本样式 */
+.model-selector .ant-select-selection-item {
   color: rgba(255, 255, 255, 0.9) !important;
+  font-weight: 500 !important;
+  font-size: 14px !important;
 }
 
-.model-selector-search .search-input:hover {
-  border-color: rgba(59, 130, 246, 0.5) !important;
-  background: rgba(255, 255, 255, 0.12) !important;
-}
-
-.model-selector-search .search-input:focus,
-.model-selector-search .search-input.ant-input-focused {
-  border-color: rgba(59, 130, 246, 0.8) !important;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1) !important;
-  background: rgba(255, 255, 255, 0.12) !important;
-}
-
-.model-selector-search .search-input .ant-input {
-  background: transparent !important;
-  color: rgba(255, 255, 255, 0.9) !important;
-}
-
-.model-selector-search .search-input .ant-input::placeholder {
+.model-selector .ant-select-selection-placeholder {
   color: rgba(255, 255, 255, 0.5) !important;
+  font-size: 14px !important;
 }
 
-/* 搜索统计信息 */
-.search-stats {
-  margin-top: 8px;
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.6);
-  text-align: center;
+/* 下拉箭头 */
+.model-selector .ant-select-arrow {
+  color: rgba(255, 255, 255, 0.6) !important;
+  transition: all 0.3s ease !important;
 }
 
-/* 模型菜单区域 */
-.model-selector-menu {
-  flex: 1;
-  overflow-y: auto;
-  padding: 8px;
+.model-selector .ant-select-open .ant-select-arrow {
+  transform: rotate(180deg) !important;
+  color: rgba(24, 144, 255, 0.8) !important;
 }
 
-/* 无结果状态 */
-.no-results {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 20px;
-  text-align: center;
+/* 下拉框容器 */
+.model-selector-dropdown {
+  border-radius: 16px !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background: linear-gradient(135deg, 
+    rgba(30, 30, 42, 0.95) 0%, 
+    rgba(20, 20, 30, 0.95) 100%) !important;
+  backdrop-filter: blur(20px) !important;
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.3),
+    0 8px 16px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  overflow: hidden !important;
+  max-height: 480px !important;
+  min-width: 520px !important;
+  max-width: 640px !important;
+  padding: 0 !important;
+  animation: dropdownFadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
-.no-results-icon {
-  font-size: 32px;
-  margin-bottom: 12px;
-  opacity: 0.6;
-}
-
-.no-results-text {
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 14px;
-  font-weight: 500;
-  margin-bottom: 4px;
-}
-
-.no-results-hint {
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 12px;
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 /* 下拉框内容区域 */
@@ -105,9 +89,13 @@
   background: transparent !important;
 }
 
-/* 分组样式 */
+/* 分组标签样式 */
 .model-selector-dropdown .ant-select-item-group {
   padding: 0 !important;
+  margin-bottom: 12px !important;
+}
+
+.model-selector-dropdown .ant-select-item-group:last-child {
   margin-bottom: 8px !important;
 }
 
@@ -115,178 +103,301 @@
   margin: 0 !important;
 }
 
-/* 分组标签样式 */
 .model-selector-dropdown .ant-select-item-group-label {
-  padding: 8px 12px 4px 12px !important;
-  background: rgba(255, 255, 255, 0.08) !important;
-  border-radius: 8px !important;
-  margin: 4px 0 8px 0 !important;
+  padding: 16px 20px 8px 20px !important;
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.08) 0%, 
+    rgba(255, 255, 255, 0.04) 100%) !important;
+  border-radius: 12px !important;
+  margin: 8px 12px 8px 12px !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  color: rgba(255, 255, 255, 0.9) !important;
+  color: rgba(255, 255, 255, 0.95) !important;
   font-weight: 600 !important;
-  font-size: 13px !important;
+  font-size: 14px !important;
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 10 !important;
+  backdrop-filter: blur(10px) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
 }
 
-/* 模型数量标签 */
+/* 提供商数量标签 */
 .model-count {
-  background: #52c41a;
-  color: white;
-  font-size: 10px;
-  padding: 2px 6px;
-  border-radius: 10px;
-  margin-left: 8px;
-  font-weight: 500;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  color: white !important;
+  font-size: 11px !important;
+  padding: 3px 8px !important;
+  border-radius: 12px !important;
+  margin-left: 12px !important;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3) !important;
 }
 
-/* 选项样式 */
+/* 模型选项样式 */
 .model-selector-dropdown .ant-select-item-option {
   padding: 0 !important;
-  margin: 2px 0 !important;
-  border-radius: 8px !important;
-  background: rgba(255, 255, 255, 0.05) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  transition: all 0.2s ease !important;
+  margin: 4px 12px !important;
+  border-radius: 12px !important;
+  background: rgba(255, 255, 255, 0.03) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
   min-height: auto !important;
+  overflow: hidden !important;
+  position: relative !important;
 }
 
-/* 选项悬停效果 */
+.model-selector-dropdown .ant-select-item-option::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, 
+    rgba(24, 144, 255, 0.05) 0%, 
+    rgba(24, 144, 255, 0.02) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+/* 悬停效果 */
 .model-selector-dropdown .ant-select-item-option:hover {
-  background: rgba(59, 130, 246, 0.15) !important;
-  border-color: rgba(59, 130, 246, 0.3) !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1) !important;
+  background: rgba(24, 144, 255, 0.08) !important;
+  border-color: rgba(24, 144, 255, 0.3) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 
+    0 8px 20px rgba(24, 144, 255, 0.15),
+    0 4px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+.model-selector-dropdown .ant-select-item-option:hover::before {
+  opacity: 1;
 }
 
 /* 选中状态 */
 .model-selector-dropdown .ant-select-item-option-selected {
-  background: rgba(59, 130, 246, 0.2) !important;
-  border-color: rgba(59, 130, 246, 0.5) !important;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1) !important;
+  background: linear-gradient(135deg, 
+    rgba(24, 144, 255, 0.15) 0%, 
+    rgba(24, 144, 255, 0.08) 100%) !important;
+  border-color: rgba(24, 144, 255, 0.5) !important;
+  box-shadow: 
+    0 0 0 2px rgba(24, 144, 255, 0.2),
+    0 4px 12px rgba(24, 144, 255, 0.1) !important;
 }
 
-/* 选中且悬停状态 */
 .model-selector-dropdown .ant-select-item-option-selected:hover {
-  background: rgba(59, 130, 246, 0.25) !important;
-  border-color: rgba(59, 130, 246, 0.6) !important;
+  background: linear-gradient(135deg, 
+    rgba(24, 144, 255, 0.2) 0%, 
+    rgba(24, 144, 255, 0.12) 100%) !important;
+  border-color: rgba(24, 144, 255, 0.6) !important;
 }
 
-/* 能力图标 */
-.ability-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: help;
+/* 模型内容区域样式优化 */
+.model-selector-dropdown .ant-select-item-option-content {
+  color: rgba(255, 255, 255, 0.9) !important;
+  padding: 16px !important;
 }
 
 /* 上下文窗口标签 */
 .context-window-badge {
-  background: #1890ff;
-  color: white;
-  font-size: 10px;
-  padding: 2px 6px;
-  border-radius: 9px;
-  font-weight: 500;
-  min-width: 18px;
-  text-align: center;
+  background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%) !important;
+  color: white !important;
+  font-size: 11px !important;
+  padding: 4px 10px !important;
+  border-radius: 12px !important;
+  font-weight: 600 !important;
+  min-width: 24px !important;
+  text-align: center !important;
+  box-shadow: 0 2px 6px rgba(24, 144, 255, 0.3) !important;
+  letter-spacing: 0.5px !important;
 }
 
-/* 滚动条样式 */
-.model-selector-menu::-webkit-scrollbar {
-  width: 6px;
-}
-
-.model-selector-menu::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
-}
-
-.model-selector-menu::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 3px;
-  transition: background 0.2s ease;
-}
-
-.model-selector-menu::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.5);
-}
-
-/* 模型选择器容器 */
-.model-selector {
-  position: relative;
-}
-
-/* 选择器输入框样式 */
-.model-selector .ant-select-selector {
-  border-radius: 8px !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  background: rgba(255, 255, 255, 0.05) !important;
+/* 能力图标样式 */
+.ability-icon {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: help !important;
+  padding: 2px !important;
+  border-radius: 6px !important;
   transition: all 0.2s ease !important;
 }
 
-.model-selector .ant-select-selector:hover {
-  border-color: rgba(59, 130, 246, 0.5) !important;
-  background: rgba(255, 255, 255, 0.08) !important;
+.ability-icon:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  transform: scale(1.1) !important;
 }
 
-.model-selector .ant-select-focused .ant-select-selector {
-  border-color: rgba(59, 130, 246, 0.8) !important;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1) !important;
+/* 无结果状态 */
+.no-results {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 60px 20px !important;
+  text-align: center !important;
 }
 
-/* 默认菜单背景颜色设置 */
-.ant-menu {
-  background: rgba(30, 30, 40, 0.95) !important;
-  color: rgba(255, 255, 255, 0.9) !important;
+.no-results-icon {
+  font-size: 48px !important;
+  margin-bottom: 16px !important;
+  opacity: 0.6 !important;
+  filter: grayscale(0.3) !important;
 }
 
-.ant-menu-item {
-  background: transparent !important;
+.no-results-text {
   color: rgba(255, 255, 255, 0.8) !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  margin-bottom: 8px !important;
 }
 
-.ant-menu-item:hover {
-  background: rgba(59, 130, 246, 0.15) !important;
-  color: rgba(255, 255, 255, 0.9) !important;
+.no-results-hint {
+  color: rgba(255, 255, 255, 0.5) !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
 }
 
-.ant-menu-item-selected {
-  background: rgba(59, 130, 246, 0.2) !important;
-  color: rgba(255, 255, 255, 1) !important;
+/* 滚动条样式 */
+.model-selector-dropdown .ant-select-dropdown-menu {
+  max-height: 400px !important;
+  overflow-y: auto !important;
+}
+
+.model-selector-dropdown .ant-select-dropdown-menu::-webkit-scrollbar {
+  width: 8px !important;
+}
+
+.model-selector-dropdown .ant-select-dropdown-menu::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-radius: 4px !important;
+  margin: 8px 0 !important;
+}
+
+.model-selector-dropdown .ant-select-dropdown-menu::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.2) 0%, 
+    rgba(255, 255, 255, 0.1) 100%) !important;
+  border-radius: 4px !important;
+  transition: background 0.3s ease !important;
+}
+
+.model-selector-dropdown .ant-select-dropdown-menu::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.3) 0%, 
+    rgba(255, 255, 255, 0.2) 100%) !important;
+}
+
+/* 禁用状态 */
+.model-selector .ant-select-disabled .ant-select-selector {
+  background: rgba(255, 255, 255, 0.02) !important;
+  border-color: rgba(255, 255, 255, 0.05) !important;
+  color: rgba(255, 255, 255, 0.3) !important;
+  cursor: not-allowed !important;
+}
+
+.model-selector .ant-select-disabled .ant-select-selection-item {
+  color: rgba(255, 255, 255, 0.3) !important;
 }
 
 /* 响应式设计 */
 @media (max-width: 768px) {
   .model-selector-dropdown {
-    min-width: 320px !important;
+    min-width: 360px !important;
     max-width: 90vw !important;
+    margin: 0 8px !important;
+  }
+  
+  .model-selector-dropdown .ant-select-item-group-label {
+    padding: 12px 16px 6px 16px !important;
+    font-size: 13px !important;
+    margin: 6px 8px !important;
+  }
+  
+  .model-selector-dropdown .ant-select-item-option {
+    margin: 3px 8px !important;
+  }
+  
+  .model-selector-dropdown .ant-select-item-option-content {
+    padding: 12px !important;
   }
 }
 
 @media (max-width: 480px) {
   .model-selector-dropdown {
-    min-width: 280px !important;
+    min-width: 320px !important;
     max-width: 95vw !important;
   }
   
   .model-selector-dropdown .ant-select-item-group-label {
-    padding: 6px 8px 3px 8px !important;
+    padding: 10px 12px 5px 12px !important;
     font-size: 12px !important;
+    margin: 4px 6px !important;
   }
   
-  .model-selector-search {
-    padding: 8px;
+  .model-selector-dropdown .ant-select-item-option {
+    margin: 2px 6px !important;
   }
 }
 
-/* 动画效果 */
-.model-selector-dropdown .ant-select-item-option {
-  animation: fadeInUp 0.2s ease-out;
+/* 亮色主题适配 */
+body:not(.dark) .model-selector .ant-select-selector {
+  background: rgba(255, 255, 255, 0.8) !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+  backdrop-filter: blur(10px) !important;
 }
 
-@keyframes fadeInUp {
+body:not(.dark) .model-selector .ant-select-selector:hover {
+  border-color: rgba(24, 144, 255, 0.4) !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+}
+
+body:not(.dark) .model-selector .ant-select-selection-item {
+  color: rgba(0, 0, 0, 0.85) !important;
+}
+
+body:not(.dark) .model-selector .ant-select-selection-placeholder {
+  color: rgba(0, 0, 0, 0.45) !important;
+}
+
+body:not(.dark) .model-selector-dropdown {
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.95) 0%, 
+    rgba(248, 250, 252, 0.95) 100%) !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.1),
+    0 8px 16px rgba(0, 0, 0, 0.05) !important;
+}
+
+body:not(.dark) .model-selector-dropdown .ant-select-item-group-label {
+  background: linear-gradient(135deg, 
+    rgba(0, 0, 0, 0.04) 0%, 
+    rgba(0, 0, 0, 0.02) 100%) !important;
+  color: rgba(0, 0, 0, 0.85) !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+body:not(.dark) .model-selector-dropdown .ant-select-item-option {
+  background: rgba(0, 0, 0, 0.02) !important;
+  border-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+body:not(.dark) .model-selector-dropdown .ant-select-item-option:hover {
+  background: rgba(24, 144, 255, 0.06) !important;
+  border-color: rgba(24, 144, 255, 0.2) !important;
+}
+
+body:not(.dark) .model-selector-dropdown .ant-select-item-option-content {
+  color: rgba(0, 0, 0, 0.85) !important;
+}
+
+/* 加载动画 */
+@keyframes modelItemFadeIn {
   from {
     opacity: 0;
-    transform: translateY(4px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
@@ -294,23 +405,17 @@
   }
 }
 
-/* 深色主题适配 */
-.model-selector-dropdown .ant-select-item-option-content {
-  color: rgba(255, 255, 255, 0.9) !important;
+.model-selector-dropdown .ant-select-item-option {
+  animation: modelItemFadeIn 0.3s ease-out !important;
 }
 
-/* 禁用状态 */
-.model-selector .ant-select-disabled .ant-select-selector {
-  background: rgba(255, 255, 255, 0.02) !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
-  color: rgba(255, 255, 255, 0.4) !important;
+/* 提升视觉层次 */
+.model-selector-dropdown .ant-select-item-option-selected {
+  position: relative !important;
+  z-index: 2 !important;
 }
 
-/* 清除按钮样式 */
-.model-selector-search .search-input .ant-input-clear-icon {
-  color: rgba(255, 255, 255, 0.5) !important;
-}
-
-.model-selector-search .search-input .ant-input-clear-icon:hover {
-  color: rgba(255, 255, 255, 0.8) !important;
+.model-selector-dropdown .ant-select-item-option:hover {
+  position: relative !important;
+  z-index: 1 !important;
 } 

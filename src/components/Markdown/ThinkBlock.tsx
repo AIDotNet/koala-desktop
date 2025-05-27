@@ -13,10 +13,14 @@ import { Button } from 'antd'
 interface ThinkBlockProps {
   content: string
   isDarkTheme?: boolean
+  isExpanded?: boolean
+  setIsExpanded: (isExpanded: boolean) => void
 }
 
-const ThinkBlock: React.FC<ThinkBlockProps> = ({ content, isDarkTheme = false }) => {
-  const [isExpanded, setIsExpanded] = useState(true)
+const ThinkBlock: React.FC<ThinkBlockProps> = ({ content, isDarkTheme = false,
+  isExpanded,
+  setIsExpanded
+}) => {
   const [contentHeight, setContentHeight] = useState(0)
   const contentRef = useRef<HTMLDivElement>(null)
 
@@ -48,8 +52,8 @@ const ThinkBlock: React.FC<ThinkBlockProps> = ({ content, isDarkTheme = false })
           {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
         </span>
       </Button>
-      
-      <div 
+
+      <div
         className={`think-content ${isExpanded ? 'expanded' : 'collapsed'}`}
         style={{
           maxHeight: isExpanded ? `${contentHeight + 32}px` : '0px',
@@ -67,7 +71,7 @@ const ThinkBlock: React.FC<ThinkBlockProps> = ({ content, isDarkTheme = false })
               code: ({ node, className, children, ...props }: any) => {
                 const match = /language-(\w+)/.exec(className || '')
                 const value = String(children).replace(/\n$/, '')
-                
+
                 if (!match) {
                   return (
                     <code className="inline-code" {...props}>

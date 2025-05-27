@@ -33,22 +33,23 @@ body:not(.dark) .assistant-message-container {
 }
 
 .user-message-bubble {
-  background-color: #6366f1;
+  background-color: #0099FF;
   color: white;
-  border-bottom-right-radius: 0.125rem;
+}
+
+body:not(.dark) .user-message-bubble .ant-typography{
+  background-color: #0099FF;
+  color: white !important; 
 }
 
 .assistant-message-bubble {
-  background-color: rgba(34, 34, 51, 0.9);
+  background-color: #3b3b3b ;
   color: white;
-  border-bottom-left-radius: 0.125rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 body:not(.dark) .assistant-message-bubble {
-  background-color: white;
-  color: #1f2937;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  background-color: #ffffff;
+  color: #000000;
 }
 
 .message-actions {

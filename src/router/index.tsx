@@ -3,7 +3,8 @@ import { createBrowserRouter, Navigate } from 'react-router-dom'
 import Home from '../pages/Home/index'
 import Settings from '../pages/Settings'
 import ProviderDemo from '../components/ProviderDemo'
-import MarkdownTest from '../components/Markdown/test'
+import ZustandTestPage from '../pages/Home/ZustandTestPage'
+import SessionManagerExample from '../pages/Home/SessionManagerExample'
 
 interface RouteWrapperProps {
   children: React.ReactElement
@@ -47,8 +48,12 @@ export const createAppRouter = (isDarkTheme: boolean, onThemeChange: (isDark: bo
       element: <ProviderDemo />
     },
     {
-      path: '/markdown-test',
-      element: <MarkdownTest />
+      path: '/zustand-test',
+      element: <ZustandTestPage />
+    },
+    {
+      path: '/session-example',
+      element: <SessionManagerExample />
     },
     {
       path: '/home',

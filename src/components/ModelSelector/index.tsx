@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Select } from 'antd'
-import { ChevronDown, Zap, Eye } from 'lucide-react'
+import { ChevronDown, Zap, Eye, Cpu, Sparkles } from 'lucide-react'
 import { Model, Provider, ModelSelectorProps } from '@/types/model'
 import { getIcon, IconName } from '@/utils/iconutils'
 import './ModelSelector.css'
@@ -57,11 +57,12 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
     
     return (
       <IconComponent 
-        size={16} 
+        size={18} 
         style={{ 
-          marginRight: '8px',
+          marginRight: '10px',
           flexShrink: 0,
-          color: 'inherit' 
+          color: 'inherit',
+          opacity: 0.9
         }}
       />
     )
@@ -76,13 +77,14 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
         <span 
           key="function" 
           title="支持函数调用" 
+          className="ability-icon"
           style={{
             display: 'inline-flex',
             alignItems: 'center',
-            marginRight: '4px'
+            marginRight: '6px'
           }}
         >
-          <Zap size={12} style={{ color: '#3b82f6' }} />
+          <Zap size={14} style={{ color: '#3b82f6' }} />
         </span>
       )
     }
@@ -92,13 +94,51 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
         <span 
           key="vision" 
           title="支持视觉识别" 
+          className="ability-icon"
           style={{
             display: 'inline-flex',
             alignItems: 'center',
-            marginRight: '4px'
+            marginRight: '6px'
           }}
         >
-          <Eye size={12} style={{ color: '#10b981' }} />
+          <Eye size={14} style={{ color: '#10b981' }} />
+        </span>
+      )
+    }
+
+    // 添加更多能力图标
+    if (model.contextWindowTokens >= 100000) {
+      abilities.push(
+        <span 
+          key="longContext" 
+          title="超长上下文" 
+          className="ability-icon"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            marginRight: '6px'
+          }}
+        >
+          <Cpu size={14} style={{ color: '#f59e0b' }} />
+        </span>
+      )
+    }
+
+    if (model.displayName.toLowerCase().includes('gpt-4') || 
+        model.displayName.toLowerCase().includes('claude-3') ||
+        model.displayName.toLowerCase().includes('gemini')) {
+      abilities.push(
+        <span 
+          key="premium" 
+          title="高级模型" 
+          className="ability-icon"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            marginRight: '6px'
+          }}
+        >
+          <Sparkles size={14} style={{ color: '#8b5cf6' }} />
         </span>
       )
     }
@@ -114,6 +154,26 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
       return `${(tokens / 1000).toFixed(0)}K`
     }
     return tokens.toString()
+  }
+
+  // 获取模型类型标签
+  const getModelTypeLabel = (model: Model): string => {
+    const name = model.displayName.toLowerCase()
+    if (name.includes('gpt-4o') || name.includes('claude-3.5')) return '最新'
+    if (name.includes('gpt-4') || name.includes('claude-3')) return '高级'
+    if (name.includes('gpt-3.5') || name.includes('claude-instant')) return '快速'
+    if (name.includes('gemini')) return '多模态'
+    return ''
+  }
+
+  // 获取模型类型颜色
+  const getModelTypeColor = (model: Model): string => {
+    const name = model.displayName.toLowerCase()
+    if (name.includes('gpt-4o') || name.includes('claude-3.5')) return '#8b5cf6'
+    if (name.includes('gpt-4') || name.includes('claude-3')) return '#3b82f6'
+    if (name.includes('gpt-3.5') || name.includes('claude-instant')) return '#10b981'
+    if (name.includes('gemini')) return '#f59e0b'
+    return '#6b7280'
   }
 
   // 处理下拉框打开状态变化
@@ -138,7 +198,7 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
     <div className="no-results">
       <div className="no-results-icon">🔍</div>
       <div className="no-results-text">未找到匹配的模型</div>
-      <div className="no-results-hint">尝试调整搜索关键词</div>
+      <div className="no-results-hint">尝试调整搜索关键词或检查模型是否已启用</div>
     </div>
   )
 
@@ -151,14 +211,14 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
         open={open}
         onDropdownVisibleChange={handleDropdownVisibleChange}
         style={{ width: '100%' }}
-        placeholder="搜索模型..."
-        suffixIcon={<ChevronDown size={14} style={{ color: '#9ca3af' }} />}
+        placeholder="选择 AI 模型..."
+        suffixIcon={<ChevronDown size={16} style={{ color: 'rgba(255, 255, 255, 0.6)' }} />}
         dropdownClassName="model-selector-dropdown"
         optionLabelProp="label"
         showSearch={true}
         filterOption={filterOption}
         virtual={true}
-        listHeight={350}
+        listHeight={400}
         notFoundContent={renderNoResults()}
         dropdownMatchSelectWidth={false}
         getPopupContainer={(trigger) => trigger.parentNode}
@@ -170,10 +230,13 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
               <div style={{ 
                 display: 'flex', 
                 alignItems: 'center', 
-                padding: '4px 0' 
+                padding: '4px 0',
+                justifyContent: 'space-between'
               }}>
-                {renderProviderIcon(provider)}
-                <span style={{ fontWeight: 500 }}>{providerName}</span>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  {renderProviderIcon(provider)}
+                  <span style={{ fontWeight: 600, fontSize: '14px' }}>{providerName}</span>
+                </div>
                 <span className="model-count">
                   {models.length}
                 </span>
@@ -186,53 +249,103 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
                 value={model.id}
                 label={model.displayName}
               >
-                <div style={{ padding: '12px' }}>
+                <div style={{ padding: '16px' }}>
+                  {/* 模型标题行 */}
                   <div style={{ 
                     display: 'flex', 
                     alignItems: 'center', 
                     justifyContent: 'space-between', 
-                    marginBottom: '8px' 
+                    marginBottom: '12px' 
                   }}>
                     <div style={{ 
                       display: 'flex', 
                       alignItems: 'center', 
-                      gap: '8px' 
+                      gap: '10px',
+                      flex: 1
                     }}>
                       <span style={{ 
-                        fontWeight: 500, 
-                        fontSize: '14px', 
-                        color: '#ffffff' 
+                        fontWeight: 600, 
+                        fontSize: '15px', 
+                        color: 'rgba(255, 255, 255, 0.95)',
+                        lineHeight: 1.2
                       }}>{model.displayName}</span>
-                      <div style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: '4px' 
-                      }}>
-                        {renderAbilities(model)}
-                      </div>
+                      
+                      {/* 模型类型标签 */}
+                      {getModelTypeLabel(model) && (
+                        <span style={{
+                          background: getModelTypeColor(model),
+                          color: 'white',
+                          fontSize: '10px',
+                          padding: '2px 6px',
+                          borderRadius: '8px',
+                          fontWeight: 600,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px'
+                        }}>
+                          {getModelTypeLabel(model)}
+                        </span>
+                      )}
                     </div>
+                    
                     <span className="context-window-badge">
                       {formatContextWindow(model.contextWindowTokens)}
                     </span>
                   </div>
+
+                  {/* 能力图标行 */}
+                  {renderAbilities(model).length > 0 && (
+                    <div style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '8px',
+                      marginBottom: '10px'
+                    }}>
+                      <span style={{
+                        fontSize: '12px',
+                        color: 'rgba(255, 255, 255, 0.6)',
+                        marginRight: '4px'
+                      }}>
+                        能力:
+                      </span>
+                      {renderAbilities(model)}
+                    </div>
+                  )}
+                  
+                  {/* 模型描述 */}
                   <div style={{ 
-                    fontSize: '12px', 
-                    color: '#d1d5db', 
-                    marginBottom: '4px',
+                    fontSize: '13px', 
+                    color: 'rgba(255, 255, 255, 0.7)', 
+                    marginBottom: '8px',
                     display: '-webkit-box',
                     WebkitLineClamp: 2,
                     WebkitBoxOrient: 'vertical',
-                    overflow: 'hidden'
+                    overflow: 'hidden',
+                    lineHeight: 1.4
                   }}>
-                    {model.description}
+                    {model.description || '暂无描述'}
                   </div>
+                  
+                  {/* 价格信息 */}
                   {model.pricing && (
                     <div style={{ 
                       fontSize: '12px', 
-                      color: '#9ca3af', 
-                      marginTop: '4px' 
+                      color: 'rgba(255, 255, 255, 0.5)', 
+                      marginTop: '8px',
+                      padding: '6px 10px',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(255, 255, 255, 0.1)'
                     }}>
-                      输入: ${model.pricing.input}/1M • 输出: ${model.pricing.output}/1M
+                      <span style={{ marginRight: '12px' }}>
+                        输入: <strong style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+                          ${model.pricing.input}/1M
+                        </strong>
+                      </span>
+                      <span>
+                        输出: <strong style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+                          ${model.pricing.output}/1M
+                        </strong>
+                      </span>
                     </div>
                   )}
                 </div>

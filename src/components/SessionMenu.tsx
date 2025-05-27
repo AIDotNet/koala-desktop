@@ -1,8 +1,9 @@
 import React, { useState } from 'react'
-import { Dropdown, Modal, Input, message } from 'antd'
+import { Dropdown, Modal, Input, message, theme } from 'antd'
 import { Edit3, Trash2, MoreHorizontal } from 'lucide-react'
 import type { MenuProps } from 'antd'
 import { ChatSession } from '@/utils/indexedDB'
+import { getThemeColors } from '@/theme'
 import './SessionMenu.css'
 
 interface SessionMenuProps {
@@ -10,17 +11,21 @@ interface SessionMenuProps {
   onEdit: (sessionId: string, newTitle: string) => Promise<void>
   onDelete: (sessionId: string) => Promise<void>
   className?: string
+  isDarkTheme?: boolean
 }
 
 const SessionMenu: React.FC<SessionMenuProps> = ({ 
   session, 
   onEdit, 
   onDelete, 
-  className = '' 
+  className = '',
+  isDarkTheme = true
 }) => {
   const [isEditModalVisible, setIsEditModalVisible] = useState(false)
   const [editTitle, setEditTitle] = useState(session.title)
   const [isLoading, setIsLoading] = useState(false)
+  const { token } = theme.useToken()
+  const themeColors = getThemeColors(isDarkTheme)
 
   const handleEdit = async () => {
     if (!editTitle.trim()) {
@@ -56,6 +61,17 @@ const SessionMenu: React.FC<SessionMenuProps> = ({
           message.error('删除失败')
           console.error('Delete session error:', error)
         }
+      },
+      className: 'session-confirm-modal',
+      style: {
+        top: '30%',
+      },
+      bodyStyle: {
+        background: isDarkTheme ? token.colorBgContainer : '#ffffff',
+        color: isDarkTheme ? token.colorText : '#1f2937',
+      },
+      maskStyle: {
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
       }
     })
   }
@@ -68,7 +84,8 @@ const SessionMenu: React.FC<SessionMenuProps> = ({
           display: 'flex', 
           alignItems: 'center', 
           gap: '8px', 
-          color: '#d1d5db' 
+          color: isDarkTheme ? themeColors.text.secondary : '#6b7280',
+          padding: '4px 0'
         }}>
           <Edit3 size={14} />
           <span>编辑标题</span>
@@ -86,7 +103,8 @@ const SessionMenu: React.FC<SessionMenuProps> = ({
           display: 'flex', 
           alignItems: 'center', 
           gap: '8px', 
-          color: '#f87171' 
+          color: isDarkTheme ? '#f87171' : '#ef4444',
+          padding: '4px 0'
         }}>
           <Trash2 size={14} />
           <span>删除会话</span>
@@ -102,18 +120,29 @@ const SessionMenu: React.FC<SessionMenuProps> = ({
         menu={{ items: menuItems }}
         trigger={['click']}
         placement="bottomRight"
-        overlayClassName="session-menu-dropdown"
+        overlayClassName={`session-menu-dropdown ${isDarkTheme ? 'dark-theme' : 'light-theme'}`}
       >
         <div
           style={{
             padding: '4px',
             borderRadius: '4px',
-            transition: 'background-color 0.2s ease',
+            transition: 'all 0.2s ease',
             cursor: 'pointer',
+            color: isDarkTheme ? themeColors.text.tertiary : '#9ca3af',
+            background: 'transparent',
           }}
+          className={`session-menu-trigger ${isDarkTheme ? 'dark-theme' : 'light-theme'}`}
           onClick={(e) => e.stopPropagation()}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = isDarkTheme 
+              ? 'rgba(255, 255, 255, 0.1)' 
+              : 'rgba(0, 0, 0, 0.05)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'transparent';
+          }}
         >
-          <MoreHorizontal size={14} style={{ color: '#9ca3af' }} />
+          <MoreHorizontal size={14} />
         </div>
       </Dropdown>
 
@@ -125,6 +154,13 @@ const SessionMenu: React.FC<SessionMenuProps> = ({
         okText="保存"
         cancelText="取消"
         confirmLoading={isLoading}
+        className={`session-edit-modal ${isDarkTheme ? 'dark-theme' : 'light-theme'}`}
+        style={{
+          top: '30%',
+        }}
+        maskStyle={{
+          backgroundColor: 'rgba(0, 0, 0, 0.6)',
+        }}
       >
         <div style={{ padding: '16px 0' }}>
           <Input
@@ -132,11 +168,6 @@ const SessionMenu: React.FC<SessionMenuProps> = ({
             onChange={(e) => setEditTitle(e.target.value)}
             placeholder="请输入会话标题"
             maxLength={50}
-            style={{
-              background: '#374151',
-              borderColor: '#4b5563',
-              color: '#ffffff',
-            }}
             onPressEnter={handleEdit}
             autoFocus
           />

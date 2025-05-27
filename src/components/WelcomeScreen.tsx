@@ -1,61 +1,28 @@
 import React, { useState } from 'react'
-import { Typography, Button, Space, Input } from 'antd'
-import { Bot, MessageSquare, Sparkles, GitBranch, Image, Code, Rocket, Send, Paperclip } from 'lucide-react'
+import { Typography, Button, Space } from 'antd'
+import { Bot, MessageSquare, Sparkles, GitBranch, Image, Code, Rocket } from 'lucide-react'
+import ChatInput from '@/components/ChatInput'
+import { Provider } from '@/types/model'
 import './WelcomeScreen.css'
 
 const { Title, Text } = Typography
-const { TextArea } = Input
 
 interface WelcomeScreenProps {
   isDarkTheme: boolean
   onNewChat?: () => void
+  selectedModel?: string
+  onModelChange?: (modelId: string) => void
+  providers?: Provider[]
 }
 
 const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ 
   isDarkTheme,
-  onNewChat
+  onNewChat,
+  selectedModel = '',
+  onModelChange = () => {},
+  providers = []
 }) => {
   const [inputValue, setInputValue] = useState('')
-  const [isInputFocused, setIsInputFocused] = useState(false)
-
-  // 主题颜色变量
-  const theme = {
-    colors: {
-      // 背景色系
-      bg: {
-        primary: isDarkTheme ? '#121218' : '#f9fafb',
-        secondary: isDarkTheme ? '#1e1e2a' : '#ffffff',
-        tertiary: isDarkTheme ? '#262636' : '#f3f4f6',
-        accent: isDarkTheme ? '#2a2a40' : '#e5e7eb',
-      },
-      // 文字色系
-      text: {
-        primary: isDarkTheme ? '#f0f0f8' : '#1f2937',
-        secondary: isDarkTheme ? '#c0c0cf' : '#6b7280',
-        tertiary: isDarkTheme ? '#8e8ea0' : '#9ca3af',
-        accent: isDarkTheme ? '#6366f1' : '#3b82f6',
-      },
-      // 边框色系
-      border: {
-        light: isDarkTheme ? 'rgba(255, 255, 255, 0.08)' : '#e5e7eb',
-        medium: isDarkTheme ? 'rgba(255, 255, 255, 0.12)' : '#d1d5db',
-      },
-      // 按钮颜色
-      button: {
-        primary: '#6366f1',
-        primaryHover: '#4f46e5',
-      }
-    },
-    // 阴影
-    shadow: {
-      card: isDarkTheme ? '0 4px 12px rgba(0, 0, 0, 0.5)' : '0 4px 12px rgba(0, 0, 0, 0.05)',
-    },
-    // 玻璃态效果
-    glass: {
-      background: isDarkTheme ? 'rgba(30, 30, 42, 0.7)' : 'rgba(255, 255, 255, 0.8)',
-      backdropFilter: 'blur(12px)',
-    }
-  };
 
   // 功能卡片数据
   const features = [
@@ -128,93 +95,17 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         
         {/* 输入框区域 */}
         <div className="input-area-container">
-          <div className="input-area-wrapper"
-            style={{
-              background: theme.glass.background,
-              backdropFilter: theme.glass.backdropFilter,
-              borderRadius: '16px',
-              border: `1px solid ${isInputFocused ? theme.colors.button.primary : theme.colors.border.medium}`,
-              padding: '16px',
-              boxShadow: isInputFocused ?
-                `0 0 0 2px ${isDarkTheme ? 'rgba(99, 102, 241, 0.3)' : 'rgba(99, 102, 241, 0.2)'}` :
-                theme.shadow.card,
-              transition: 'all 0.3s ease',
-            }}
-          >
-            <TextArea
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="问点什么？可以通过@来引用工具、文件、资源..."
-              autoSize={{ minRows: 1, maxRows: 6 }}
-              onFocus={() => setIsInputFocused(true)}
-              onBlur={() => setIsInputFocused(false)}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                resize: 'none',
-                color: theme.colors.text.primary,
-                padding: 0,
-                boxShadow: 'none',
-              }}
-            />
-
-            {/* 底部操作栏 */}
-            <div 
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginTop: '12px',
-                paddingTop: '12px',
-                borderTop: `1px solid ${theme.colors.border.light}`,
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Button
-                  type="text"
-                  size="small"
-                  icon={<Paperclip size={16} style={{ color: theme.colors.text.tertiary }} />}
-                  style={{
-                    color: theme.colors.text.tertiary,
-                  }}
-                />
-              </div>
-
-              <Button
-                type="primary"
-                icon={<Send size={16} />}
-                onClick={handleSend}
-                disabled={!inputValue.trim()}
-                style={{
-                  background: theme.colors.button.primary,
-                  borderColor: theme.colors.button.primary,
-                  borderRadius: '8px',
-                  boxShadow: '0 2px 8px rgba(99, 102, 241, 0.3)',
-                }}
-                size="small"
-              />
-            </div>
-          </div>
-        </div>
-        
-        <div className="welcome-footer">
-          <Space>
-            <Button 
-              type="text" 
-              icon={<GitBranch size={14} />}
-              className="footer-button"
-            >
-              版本 2.2.0
-            </Button>
-            <Button 
-              type="text" 
-              icon={<Rocket size={14} />}
-              className="footer-button"
-            >
-              新功能
-            </Button>
-          </Space>
+          <ChatInput
+            value={inputValue}
+            onChange={setInputValue}
+            onSend={handleSend}
+            onKeyPress={handleKeyPress}
+            selectedModel={selectedModel}
+            onModelChange={onModelChange}
+            providers={providers}
+            isDarkTheme={isDarkTheme}
+            placeholder="问点什么？可以通过@来引用工具、文件、资源..."
+          />
         </div>
       </div>
     </div>

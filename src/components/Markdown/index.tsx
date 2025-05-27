@@ -23,13 +23,15 @@ export interface MarkdownRendererProps {
   enableDrag?: boolean
   enableFullscreen?: boolean
   className?: string
+  reasoning_content?: string
+  reasoning_expanded?: boolean
   style?: React.CSSProperties
 }
 
 // Mermaid 图表组件
-const MermaidChart: React.FC<{ code: string; isDarkTheme?: boolean }> = ({ 
-  code, 
-  isDarkTheme = false 
+const MermaidChart: React.FC<{ code: string; isDarkTheme?: boolean }> = ({
+  code,
+  isDarkTheme = false
 }) => {
   const elementRef = useRef<HTMLDivElement>(null)
   const [svg, setSvg] = useState<string>('')
@@ -79,7 +81,7 @@ const MermaidChart: React.FC<{ code: string; isDarkTheme?: boolean }> = ({
   }
 
   return (
-    <div 
+    <div
       ref={elementRef}
       className="mermaid-container"
       dangerouslySetInnerHTML={{ __html: svg }}
@@ -197,18 +199,18 @@ const parseThinkContent = (content: string): { cleanContent: string; thinkBlocks
   // 检查是否还有未闭合的 <think> 标签（流式输出中的情况）
   const incompleteThinkRegex = /<think>(?![\s\S]*<\/think>)([\s\S]*)$/i
   const incompleteMatch = incompleteThinkRegex.exec(cleanContent)
-  
+
   if (incompleteMatch) {
     // 找到了未闭合的 <think> 标签
     const incompleteThinkContent = incompleteMatch[1].trim()
-    
+
     if (incompleteThinkContent) {
       // 如果有内容，添加到 think 块中
       thinkBlocks.push({
         content: incompleteThinkContent,
         index: index++
       })
-      
+
       // 替换未闭合的 <think> 及其后续内容为占位符
       cleanContent = cleanContent.replace(incompleteThinkRegex, `__THINK_PLACEHOLDER_${placeholderIndex}__`)
     } else {
@@ -234,21 +236,10 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [position, setPosition] = useState({ x: 0, y: 0 })
   const [size, setSize] = useState({ width: '100%', height: 'auto' })
+  const [isExpanded, setIsExpanded] = useState(true)
 
   // 解析 think 内容
   const { cleanContent, thinkBlocks } = parseThinkContent(content)
-
-  const handleDownload = useCallback(() => {
-    const blob = new Blob([content], { type: 'text/markdown' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = 'document.md'
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
-  }, [content])
 
   const handleFullscreen = useCallback(() => {
     setIsFullscreen(!isFullscreen)
@@ -258,26 +249,28 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
   const renderMarkdownContent = (markdownText: string) => {
     // 分割内容，处理 think 占位符
     const parts = markdownText.split(/(__THINK_PLACEHOLDER_\d+__)/g)
-    
+
     return parts.map((part, index) => {
       const thinkMatch = part.match(/^__THINK_PLACEHOLDER_(\d+)__$/)
-      
+
       if (thinkMatch) {
         const thinkIndex = parseInt(thinkMatch[1])
         const thinkBlock = thinkBlocks[thinkIndex]
-        
+
         if (thinkBlock) {
           return (
             <ThinkBlock
               key={`think-${index}`}
               content={thinkBlock.content}
               isDarkTheme={isDarkTheme}
+              isExpanded={isExpanded}
+              setIsExpanded={setIsExpanded}
             />
           )
         }
         return null
       }
-      
+
       // 渲染普通 markdown 内容
       if (part.trim()) {
         return (
@@ -289,7 +282,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
               code: ({ node, className, children, ...props }: any) => {
                 const match = /language-(\w+)/.exec(className || '')
                 const value = String(children).replace(/\n$/, '')
-                
+
                 if (!match) {
                   return (
                     <code className="inline-code" {...props}>
@@ -349,7 +342,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
           </ReactMarkdown>
         )
       }
-      
+
       return null
     })
   }

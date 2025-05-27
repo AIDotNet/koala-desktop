@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { Layout, Button, Typography, Input, Space, Tooltip, message } from 'antd'
+import { Layout, Button, Typography, Space, Tooltip, message } from 'antd'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import {
   MessageSquare,
@@ -7,17 +7,16 @@ import {
   Menu,
   Settings,
   User,
-  Send,
   PanelLeftClose,
   PanelLeftOpen,
-  Paperclip,
   Edit3,
   MoreHorizontal
 } from 'lucide-react'
 import ChatArea from '@/components/ChatArea/index'
 import SessionMenu from '@/components/SessionMenu'
 import ModelSelector from '@/components/ModelSelector'
-import { Message } from '@/types/chat'
+import ChatInput from '@/components/ChatInput'
+import { AssistantMessage, Message } from '@/types/chat'
 import { UserMessageContent } from '@/types/chat'
 import { chatSessionDB, ChatSession } from '@/utils/indexedDB'
 import { Provider } from '@/types/model'
@@ -28,7 +27,6 @@ import { AIMessageService } from '@/services/AIMessageService'
 
 const { Sider, Content } = Layout
 const { Title, Text } = Typography
-const { TextArea } = Input
 
 interface HomeProps {
   isDarkTheme: boolean
@@ -70,7 +68,7 @@ const Home: React.FC<HomeProps> = ({
     }
   }
 
-  const [collapsed, setCollapsed] = useState(false)
+  const [collapsed, setCollapsed] = useState(true)
   const [inputValue, setInputValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([])
@@ -78,47 +76,46 @@ const Home: React.FC<HomeProps> = ({
   const [selectedModel, setSelectedModel] = useState('')
   const [providers, setProviders] = useState<Provider[]>([])
   const [providersVersion, setProvidersVersion] = useState(0) // 用于强制重新加载providers
-  const [isInputFocused, setIsInputFocused] = useState(false)
   const [sessionMessages, setSessionMessages] = useState<Message[]>([]) // 新增：当前会话的消息列表
   const aiMessageService = AIMessageService.getInstance()
   const [streamingMessages, setStreamingMessages] = useState<{ [key: string]: Message }>({})
   const styles = createStyles(isDarkTheme);
 
-  // 优化的暗黑主题颜色变量
+  // 优化的暗黑主题颜色变量 - 参考新版QQ设计
   const theme = {
     colors: {
       // 背景色系
       bg: {
-        primary: isDarkTheme ? '#121218' : '#f9fafb',
-        secondary: isDarkTheme ? '#1e1e2a' : '#ffffff',
-        tertiary: isDarkTheme ? '#262636' : '#f3f4f6',
-        accent: isDarkTheme ? '#2a2a40' : '#e5e7eb',
+        primary: isDarkTheme ? '#0f0f0f' : '#f9fafb',
+        secondary: isDarkTheme ? '#1a1a1a' : '#ffffff',
+        tertiary: isDarkTheme ? '#2a2a2a' : '#f3f4f6',
+        accent: isDarkTheme ? '#333333' : '#e5e7eb',
       },
       // 文字色系
       text: {
-        primary: isDarkTheme ? '#f0f0f8' : '#1f2937',
-        secondary: isDarkTheme ? '#c0c0cf' : '#6b7280',
-        tertiary: isDarkTheme ? '#8e8ea0' : '#9ca3af',
-        accent: isDarkTheme ? '#6366f1' : '#3b82f6',
+        primary: isDarkTheme ? '#ffffff' : '#1f2937',
+        secondary: isDarkTheme ? '#b3b3b3' : '#6b7280',
+        tertiary: isDarkTheme ? '#808080' : '#9ca3af',
+        accent: isDarkTheme ? '#1890ff' : '#3b82f6',
       },
       // 边框色系
       border: {
-        light: isDarkTheme ? 'rgba(255, 255, 255, 0.08)' : '#e5e7eb',
-        medium: isDarkTheme ? 'rgba(255, 255, 255, 0.12)' : '#d1d5db',
+        light: isDarkTheme ? 'rgba(255, 255, 255, 0.06)' : '#e5e7eb',
+        medium: isDarkTheme ? 'rgba(255, 255, 255, 0.1)' : '#d1d5db',
       },
       // 按钮颜色
       button: {
-        primary: '#6366f1',
-        primaryHover: '#4f46e5',
+        primary: '#1890ff',
+        primaryHover: '#40a9ff',
       }
     },
     // 阴影
     shadow: {
-      card: isDarkTheme ? '0 4px 12px rgba(0, 0, 0, 0.5)' : '0 4px 12px rgba(0, 0, 0, 0.05)',
+      card: isDarkTheme ? '0 2px 8px rgba(0, 0, 0, 0.6)' : '0 4px 12px rgba(0, 0, 0, 0.05)',
     },
     // 玻璃态效果
     glass: {
-      background: isDarkTheme ? 'rgba(30, 30, 42, 0.7)' : 'rgba(255, 255, 255, 0.8)',
+      background: isDarkTheme ? 'rgba(26, 26, 26, 0.8)' : 'rgba(255, 255, 255, 0.8)',
       backdropFilter: 'blur(12px)',
     }
   };
@@ -141,7 +138,7 @@ const Home: React.FC<HomeProps> = ({
       // 先清空当前消息记录和流式消息
       setSessionMessages([])
       setStreamingMessages({})
-      
+
       const messages = await chatSessionDB.getMessagesForSession(sid)
       setSessionMessages(messages)
     } catch (error) {
@@ -270,13 +267,24 @@ const Home: React.FC<HomeProps> = ({
       } else {
         // 会话存在，加载该会话的消息
         loadSessionMessages(sessionId)
+
+        // 恢复该会话的模型选择
+        const currentSession = chatSessions.find(session => session.id === sessionId)
+        if (currentSession?.selectedModel && currentSession.selectedModel !== selectedModel) {
+          // 验证模型是否仍然可用
+          const allEnabledModels = providers.flatMap(p => p.models)
+          const modelExists = allEnabledModels.find(m => m.id === currentSession.selectedModel)
+          if (modelExists) {
+            setSelectedModel(currentSession.selectedModel)
+          }
+        }
       }
     } else if (isInitialized && !sessionId) {
       // 如果没有会话ID（在首页），清空消息记录
       setSessionMessages([])
       setStreamingMessages({})
     }
-  }, [isInitialized, sessionId, chatSessions, navigate, loadSessionMessages])
+  }, [isInitialized, sessionId, chatSessions, navigate, loadSessionMessages, providers, selectedModel])
 
   const currentSession = chatSessions.find(session => session.id === sessionId)
 
@@ -288,11 +296,10 @@ const Home: React.FC<HomeProps> = ({
       const initialMessage = params.get('q') || params.get('query') || initialQuery;
 
       if (initialMessage && initialMessage.trim() !== '') {
-        debugger;
         if (!sessionId) {
           // 如果没有活跃会话，创建一个新会话
           try {
-            const newSession = await chatSessionDB.createDefaultSession();
+            const newSession = await chatSessionDB.createDefaultSession(selectedModel);
             const newSessionId = newSession.id;
 
             // 更新会话列表
@@ -343,14 +350,12 @@ const Home: React.FC<HomeProps> = ({
       return;
     }
 
-    debugger;
-
     let targetSessionId = sessionId;
 
     // 如果在欢迎页面模式或没有会话ID，创建新会话
     if (isWelcomeMode || !targetSessionId) {
       try {
-        const newSession = await chatSessionDB.createDefaultSession();
+        const newSession = await chatSessionDB.createDefaultSession(selectedModel);
         targetSessionId = newSession.id;
 
         // 导航到新会话
@@ -442,7 +447,7 @@ const Home: React.FC<HomeProps> = ({
       const assistantMessageId = uuidv4();
 
       // 创建一个初始的助手消息对象，确保正确设置 conversationId
-      const initialAssistantMessage: Message = {
+      const initialAssistantMessage: AssistantMessage = {
         id: assistantMessageId,
         content: [
           {
@@ -507,7 +512,7 @@ const Home: React.FC<HomeProps> = ({
             id: assistantMessageId
           };
 
-          initialAssistantMessage.content = messageWithCorrect.content;
+          initialAssistantMessage.content = messageWithCorrect.content as any;
 
           // 更新流式消息状态
           setStreamingMessages(prev => ({
@@ -518,9 +523,9 @@ const Home: React.FC<HomeProps> = ({
         }
 
         // 更新ai会话
-        await chatSessionDB.updateMessage(targetSessionId,initialAssistantMessage.id,initialAssistantMessage);
+        await chatSessionDB.updateMessage(targetSessionId, initialAssistantMessage.id, initialAssistantMessage);
 
-        await loadSessionMessages(targetSessionId);
+        // await loadSessionMessages(targetSessionId);
       } catch (error: any) {
         console.error('AI请求失败:', error);
         message.error(`AI请求失败: ${error.message || '未知错误'}`);
@@ -558,6 +563,8 @@ const Home: React.FC<HomeProps> = ({
       console.error('Failed to send message:', error);
       message.error('发送消息失败');
       setIsLoading(false);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -573,8 +580,8 @@ const Home: React.FC<HomeProps> = ({
       // 立即清空当前消息记录
       setSessionMessages([])
       setStreamingMessages({})
-      
-      const newSession = await chatSessionDB.createDefaultSession()
+
+      const newSession = await chatSessionDB.createDefaultSession(selectedModel)
       const updatedSessions = await chatSessionDB.getAllSessions()
       setChatSessions(updatedSessions)
       navigate(`/chat/${newSession.id}`)
@@ -596,7 +603,7 @@ const Home: React.FC<HomeProps> = ({
       await chatSessionDB.updateSession(sessionId, { title: newTitle })
       const updatedSessions = await chatSessionDB.getAllSessions()
       setChatSessions(updatedSessions)
-      
+
       // 通知父组件更新标签页标题
       if (onSessionTitleUpdate) {
         onSessionTitleUpdate(sessionId)
@@ -1006,85 +1013,18 @@ const Home: React.FC<HomeProps> = ({
 
   // 渲染输入框组件
   const renderInputArea = () => (
-    <div style={{ position: 'relative' }}>
-      <div style={{
-        background: isDarkTheme ? '#121218' : '#f9fafb',
-        backdropFilter: theme.glass.backdropFilter,
-        borderRadius: '16px',
-        border: `1px solid ${isInputFocused ? theme.colors.button.primary : theme.colors.border.medium}`,
-        padding: '16px',
-        boxShadow: isInputFocused ?
-          `0 0 0 2px ${isDarkTheme ? 'rgba(99, 102, 241, 0.3)' : 'rgba(99, 102, 241, 0.2)'}` :
-          theme.shadow.card,
-        transition: 'all 0.3s ease',
-      }}>
-        <TextArea
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          onKeyPress={handleKeyPress}
-          placeholder="问点什么？可以通过@来引用工具、文件、资源..."
-          autoSize={{ minRows: 1, maxRows: 6 }}
-          onFocus={() => setIsInputFocused(true)}
-          onBlur={() => setIsInputFocused(false)}
-          style={{
-            background: 'transparent',
-            border: 'none',
-            resize: 'none',
-            color: theme.colors.text.primary,
-            padding: 0,
-            boxShadow: 'none',
-          }}
-        />
-
-        {/* 底部操作栏 */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginTop: '12px',
-          paddingTop: '12px',
-          borderTop: `1px solid ${theme.colors.border.light}`,
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Button
-              type="text"
-              size="small"
-              icon={<Paperclip size={16} style={{ color: theme.colors.text.tertiary }} />}
-              style={{
-                color: theme.colors.text.tertiary,
-              }}
-            />
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{ width: '128px' }}>
-              <ModelSelector
-                selectedModel={selectedModel}
-                onModelChange={setSelectedModel}
-                providers={providers}
-                disabled={providers.length === 0 || providers.every(p => p.models.length === 0)}
-              />
-            </div>
-            <Button
-              type="primary"
-              icon={<Send size={18} />}
-              onClick={handleSendButtonClick}
-              disabled={!inputValue.trim() || isLoading}
-              loading={isLoading}
-              style={{
-                background: theme.colors.button.primary,
-                borderColor: theme.colors.button.primary,
-                borderRadius: '8px',
-                boxShadow: '0 2px 8px rgba(99, 102, 241, 0.3)',
-                height: '40px',
-                width: '80px',
-                fontSize: '14px'
-              }}
-            />
-          </div>
-        </div>
-      </div>
-    </div>
+    <ChatInput
+      value={inputValue}
+      onChange={setInputValue}
+      onSend={handleSendButtonClick}
+      onKeyPress={handleKeyPress}
+      selectedModel={selectedModel}
+      onModelChange={handleModelChange}
+      providers={providers}
+      isLoading={isLoading}
+      isDarkTheme={isDarkTheme}
+      placeholder="问点什么？可以通过@来引用工具、文件、资源..."
+    />
   );
 
   // 如果还没有初始化完成，显示加载状态
@@ -1166,14 +1106,14 @@ const Home: React.FC<HomeProps> = ({
                     cursor: 'pointer',
                     transition: 'all 0.3s ease',
                     background: sessionId === session.id
-                      ? (isDarkTheme ? 'rgba(99, 102, 241, 0.2)' : '#e5e7eb')
-                      : theme.colors.bg.tertiary,
+                      ? (isDarkTheme ? '#1a3a52' : '#E3F2FD')
+                      : ('transparent'),
                     borderRadius: '10px',
-                    padding: '12px',
-                    boxShadow: theme.shadow.card,
+                    padding: '3px',
+                    fontSize: 12,
                     border: `1px solid ${sessionId === session.id
-                      ? (isDarkTheme ? 'rgba(99, 102, 241, 0.3)' : '#d1d5db')
-                      : theme.colors.border.light}`,
+                      ? (isDarkTheme ? 'rgba(24, 144, 255, 0.3)' : '#90CAF9')
+                      : 'transparent'}`,
                   }}
                   onClick={() => handleSessionClick(session.id)}
                   onMouseOver={(e) => {
@@ -1195,7 +1135,7 @@ const Home: React.FC<HomeProps> = ({
                         fontSize: '14px',
                         flex: 1,
                         color: sessionId === session.id
-                          ? (isDarkTheme ? '#a5b4fc' : '#1f2937')
+                          ? (isDarkTheme ? '#64b5f6' : '#1f2937')
                           : theme.colors.text.secondary,
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
@@ -1216,6 +1156,7 @@ const Home: React.FC<HomeProps> = ({
                         session={session}
                         onEdit={handleEditSession}
                         onDelete={handleDeleteSession}
+                        isDarkTheme={isDarkTheme}
                       />
                     </div>
                   </div>
@@ -1313,7 +1254,7 @@ const Home: React.FC<HomeProps> = ({
           style={{
             background: theme.colors.button.primary,
             borderColor: theme.colors.button.primary,
-            boxShadow: '0 2px 8px rgba(99, 102, 241, 0.3)',
+            boxShadow: '0 2px 8px rgba(24, 144, 255, 0.3)',
           }}
         >
           回到首页
@@ -1361,6 +1302,22 @@ const Home: React.FC<HomeProps> = ({
     );
   };
 
+  // 处理模型变更的函数
+  const handleModelChange = async (modelId: string) => {
+    setSelectedModel(modelId)
+
+    // 如果当前有会话，保存模型选择到会话中
+    if (sessionId) {
+      try {
+        await chatSessionDB.updateSessionModel(sessionId, modelId)
+        console.log(`已保存模型选择 ${modelId} 到会话 ${sessionId}`)
+      } catch (error) {
+        console.error('保存模型选择失败:', error)
+        // 即使保存失败，也不影响当前的模型选择
+      }
+    }
+  }
+
   return (
     <Layout style={{ height: '100%', background: theme.colors.bg.primary }}>
       {/* 统一的左侧会话列表 */}
@@ -1393,7 +1350,7 @@ const Home: React.FC<HomeProps> = ({
               alignItems: 'center',
               justifyContent: 'center',
               padding: '0 24px',
-              background: 'radial-gradient(circle at center, rgba(99, 102, 241, 0.08) 0%, rgba(0, 0, 0, 0) 70%)',
+              background: isDarkTheme ? '#0f0f0f' : '#E3F2FD',
             }}>
               <Title
                 level={1}

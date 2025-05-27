@@ -1,33 +1,33 @@
 import React, { useState, useEffect } from 'react'
-import { 
-  Layout, 
-  Menu, 
-  Typography, 
-  Button, 
-  Space, 
-  Card, 
-  Avatar, 
-  Badge, 
-  Divider, 
-  Row, 
-  Col, 
-  Statistic, 
-  Progress, 
-  Tag, 
-  Alert, 
-  Descriptions, 
+import {
+  Layout,
+  Menu,
+  Typography,
+  Button,
+  Space,
+  Card,
+  Avatar,
+  Badge,
+  Divider,
+  Row,
+  Col,
+  Statistic,
+  Progress,
+  Tag,
+  Alert,
+  Descriptions,
   Switch,
   Tooltip,
   Empty,
   Result,
   message
 } from 'antd'
-import { 
-  Settings as SettingsIcon, 
-  Bot, 
-  Database, 
-  Palette, 
-  Shield, 
+import {
+  Settings as SettingsIcon,
+  Bot,
+  Database,
+  Palette,
+  Shield,
   Info,
   Globe,
   Zap,
@@ -64,7 +64,7 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate }) => {
       try {
         // 首先尝试从数据库加载提供商
         let dbProviders = await providerDB.getAllProviders();
-        
+
         // 如果数据库为空，初始化默认提供商
         if (dbProviders.length === 0) {
           dbProviders = await providerDB.initializeDefaultProviders();
@@ -75,7 +75,7 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate }) => {
         setProviders([]);
       }
     };
-    
+
     loadProviders();
   }, []);
 
@@ -96,9 +96,9 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate }) => {
       label: (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span>模型管理</span>
-          <Badge 
-            count={providers.reduce((sum, p) => sum + p.models.filter(m => m.enabled).length, 0)} 
-            size="small" 
+          <Badge
+            count={providers.reduce((sum, p) => sum + p.models.filter(m => m.enabled).length, 0)}
+            size="small"
             style={{ backgroundColor: '#52c41a' }}
           />
         </div>
@@ -131,9 +131,9 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate }) => {
     try {
       // 保存到数据库
       await providerDB.saveProvider(updatedProvider);
-      
+
       // 更新状态
-      setProviders(prev => 
+      setProviders(prev =>
         prev.map(p => p.id === updatedProvider.id ? updatedProvider : p)
       );
     } catch (error) {
@@ -147,7 +147,7 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate }) => {
     try {
       // 保存到数据库
       await providerDB.saveProvider(newProvider);
-      
+
       // 更新状态
       setProviders(prev => [...prev, newProvider]);
     } catch (error) {
@@ -161,7 +161,7 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate }) => {
     try {
       // 从数据库删除
       await providerDB.deleteProvider(providerId);
-      
+
       // 更新状态
       setProviders(prev => prev.filter(p => p.id !== providerId));
     } catch (error) {
@@ -175,14 +175,14 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate }) => {
     try {
       // 更新数据库
       await providerDB.toggleModelEnabled(providerId, modelId, enabled);
-      
+
       // 更新状态
-      setProviders(prev => 
+      setProviders(prev =>
         prev.map(provider => {
           if (provider.id === providerId) {
             return {
               ...provider,
-              models: provider.models.map(model => 
+              models: provider.models.map(model =>
                 model.id === modelId ? { ...model, enabled } : model
               )
             };
@@ -195,7 +195,7 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate }) => {
       const targetModel = providers
         .find(p => p.id === providerId)?.models
         .find(m => m.id === modelId);
-      
+
       if (targetModel) {
         message.success(`模型 "${targetModel.displayName}" 已${enabled ? '启用' : '禁用'}`);
       }
@@ -209,10 +209,10 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate }) => {
   const getStatistics = () => {
     const enabledProviders = providers.filter(p => p.enabled).length
     const totalModels = providers.reduce((sum, p) => sum + p.models.length, 0)
-    const enabledModels = providers.reduce((sum, p) => 
+    const enabledModels = providers.reduce((sum, p) =>
       sum + p.models.filter(m => m.enabled).length, 0
     )
-    
+
     return {
       enabledProviders,
       totalProviders: providers.length,
@@ -223,7 +223,7 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate }) => {
 
   const renderContent = () => {
     const stats = getStatistics()
-    
+
     switch (selectedKey) {
       case 'models':
         return (
@@ -239,9 +239,9 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate }) => {
         return (
           <div style={{ padding: '24px' }}>
             <div style={{ marginBottom: '24px' }}>
-              <Title 
-                level={3} 
-                style={{ 
+              <Title
+                level={3}
+                style={{
                   color: isDarkTheme ? '#ffffff' : '#1f2937',
                   marginBottom: '8px',
                   display: 'flex',
@@ -258,10 +258,10 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate }) => {
 
             <Row gutter={[24, 24]}>
               <Col xs={24} sm={12} lg={8}>
-                <Card 
+                <Card
                   style={{
-                    background: isDarkTheme ? '#374151' : '#ffffff',
-                    borderColor: isDarkTheme ? '#4b5563' : '#e5e7eb',
+                    background: isDarkTheme ? '#2a2a2a' : '#ffffff',
+                    borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.1)' : '#e5e7eb',
                   }}
                   bodyStyle={{ padding: '20px' }}
                 >
@@ -281,10 +281,10 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate }) => {
               </Col>
 
               <Col xs={24} sm={12} lg={8}>
-                <Card 
+                <Card
                   style={{
-                    background: isDarkTheme ? '#374151' : '#ffffff',
-                    borderColor: isDarkTheme ? '#4b5563' : '#e5e7eb',
+                    background: isDarkTheme ? '#2a2a2a' : '#ffffff',
+                    borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.1)' : '#e5e7eb',
                   }}
                   bodyStyle={{ padding: '20px' }}
                 >
@@ -304,10 +304,10 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate }) => {
               </Col>
 
               <Col xs={24} sm={12} lg={8}>
-                <Card 
+                <Card
                   style={{
-                    background: isDarkTheme ? '#374151' : '#ffffff',
-                    borderColor: isDarkTheme ? '#4b5563' : '#e5e7eb',
+                    background: isDarkTheme ? '#2a2a2a' : '#ffffff',
+                    borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.1)' : '#e5e7eb',
                   }}
                   bodyStyle={{ padding: '20px' }}
                 >
@@ -327,9 +327,9 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate }) => {
               </Col>
             </Row>
 
-            <Divider style={{ 
-              borderColor: isDarkTheme ? '#4b5563' : '#e5e7eb',
-              margin: '32px 0' 
+            <Divider style={{
+              borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.1)' : '#e5e7eb',
+              margin: '32px 0'
             }} />
 
             <Alert
@@ -349,9 +349,9 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate }) => {
         return (
           <div style={{ padding: '24px' }}>
             <div style={{ marginBottom: '24px' }}>
-              <Title 
-                level={3} 
-                style={{ 
+              <Title
+                level={3}
+                style={{
                   color: isDarkTheme ? '#ffffff' : '#1f2937',
                   marginBottom: '8px',
                   display: 'flex',
@@ -368,9 +368,9 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate }) => {
 
             <Row gutter={[24, 24]}>
               <Col xs={24} lg={12}>
-                <Card 
+                <Card
                   title={
-                    <span style={{ 
+                    <span style={{
                       color: isDarkTheme ? '#ffffff' : '#1f2937',
                       display: 'flex',
                       alignItems: 'center'
@@ -380,50 +380,50 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate }) => {
                     </span>
                   }
                   style={{
-                    background: isDarkTheme ? '#374151' : '#ffffff',
-                    borderColor: isDarkTheme ? '#4b5563' : '#e5e7eb',
+                    background: isDarkTheme ? '#2a2a2a' : '#ffffff',
+                    borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.1)' : '#e5e7eb',
                   }}
                 >
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <div>
-                        <Text style={{ 
+                        <Text style={{
                           color: isDarkTheme ? '#ffffff' : '#1f2937',
                           display: 'block'
                         }}>深色模式</Text>
-                        <Text style={{ 
+                        <Text style={{
                           color: isDarkTheme ? '#9ca3af' : '#6b7280',
                           fontSize: '14px'
                         }}>使用深色主题界面</Text>
                       </div>
                       <Switch checked={isDarkTheme} />
                     </div>
-                    
-                    <Divider style={{ borderColor: isDarkTheme ? '#4b5563' : '#e5e7eb' }} />
-                    
+
+                    <Divider style={{ borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.1)' : '#e5e7eb' }} />
+
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <div>
-                        <Text style={{ 
+                        <Text style={{
                           color: isDarkTheme ? '#ffffff' : '#1f2937',
                           display: 'block'
                         }}>紧凑模式</Text>
-                        <Text style={{ 
+                        <Text style={{
                           color: isDarkTheme ? '#9ca3af' : '#6b7280',
                           fontSize: '14px'
                         }}>减少界面元素间距</Text>
                       </div>
                       <Switch />
                     </div>
-                    
-                    <Divider style={{ borderColor: isDarkTheme ? '#4b5563' : '#e5e7eb' }} />
-                    
+
+                    <Divider style={{ borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.1)' : '#e5e7eb' }} />
+
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <div>
-                        <Text style={{ 
+                        <Text style={{
                           color: isDarkTheme ? '#ffffff' : '#1f2937',
                           display: 'block'
                         }}>动画效果</Text>
-                        <Text style={{ 
+                        <Text style={{
                           color: isDarkTheme ? '#9ca3af' : '#6b7280',
                           fontSize: '14px'
                         }}>启用界面过渡动画</Text>
@@ -435,9 +435,9 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate }) => {
               </Col>
 
               <Col xs={24} lg={12}>
-                <Card 
+                <Card
                   title={
-                    <span style={{ 
+                    <span style={{
                       color: isDarkTheme ? '#ffffff' : '#1f2937',
                       display: 'flex',
                       alignItems: 'center'
@@ -447,21 +447,21 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate }) => {
                     </span>
                   }
                   style={{
-                    background: isDarkTheme ? '#374151' : '#ffffff',
-                    borderColor: isDarkTheme ? '#4b5563' : '#e5e7eb',
+                    background: isDarkTheme ? '#2a2a2a' : '#ffffff',
+                    borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.1)' : '#e5e7eb',
                   }}
                 >
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     <div>
-                      <Text style={{ 
+                      <Text style={{
                         color: isDarkTheme ? '#ffffff' : '#1f2937',
                         display: 'block',
                         marginBottom: '8px'
                       }}>界面语言</Text>
-                      <div style={{ 
-                        display: 'grid', 
-                        gridTemplateColumns: 'repeat(2, 1fr)', 
-                        gap: '8px' 
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(2, 1fr)',
+                        gap: '8px'
                       }}>
                         <Button type="primary" size="small">简体中文</Button>
                         <Button size="small" ghost>English</Button>
@@ -479,9 +479,9 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate }) => {
         return (
           <div style={{ padding: '24px' }}>
             <div style={{ marginBottom: '24px' }}>
-              <Title 
-                level={3} 
-                style={{ 
+              <Title
+                level={3}
+                style={{
                   color: isDarkTheme ? '#ffffff' : '#1f2937',
                   marginBottom: '8px',
                   display: 'flex',
@@ -498,9 +498,9 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate }) => {
 
             <Row gutter={[24, 24]}>
               <Col xs={24}>
-                <Card 
+                <Card
                   title={
-                    <span style={{ 
+                    <span style={{
                       color: isDarkTheme ? '#ffffff' : '#1f2937',
                       display: 'flex',
                       alignItems: 'center'
@@ -510,50 +510,50 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate }) => {
                     </span>
                   }
                   style={{
-                    background: isDarkTheme ? '#374151' : '#ffffff',
-                    borderColor: isDarkTheme ? '#4b5563' : '#e5e7eb',
+                    background: isDarkTheme ? '#2a2a2a' : '#ffffff',
+                    borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.1)' : '#e5e7eb',
                   }}
                 >
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <div>
-                        <Text style={{ 
+                        <Text style={{
                           color: isDarkTheme ? '#ffffff' : '#1f2937',
                           display: 'block'
                         }}>本地存储</Text>
-                        <Text style={{ 
+                        <Text style={{
                           color: isDarkTheme ? '#9ca3af' : '#6b7280',
                           fontSize: '14px'
                         }}>所有数据仅存储在本地设备</Text>
                       </div>
                       <CheckCircle style={{ color: '#10b981' }} size={20} />
                     </div>
-                    
-                    <Divider style={{ borderColor: isDarkTheme ? '#4b5563' : '#e5e7eb' }} />
-                    
+
+                    <Divider style={{ borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.1)' : '#e5e7eb' }} />
+
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <div>
-                        <Text style={{ 
+                        <Text style={{
                           color: isDarkTheme ? '#ffffff' : '#1f2937',
                           display: 'block'
                         }}>数据加密</Text>
-                        <Text style={{ 
+                        <Text style={{
                           color: isDarkTheme ? '#9ca3af' : '#6b7280',
                           fontSize: '14px'
                         }}>敏感数据使用AES加密存储</Text>
                       </div>
                       <CheckCircle style={{ color: '#10b981' }} size={20} />
                     </div>
-                    
-                    <Divider style={{ borderColor: isDarkTheme ? '#4b5563' : '#e5e7eb' }} />
-                    
+
+                    <Divider style={{ borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.1)' : '#e5e7eb' }} />
+
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <div>
-                        <Text style={{ 
+                        <Text style={{
                           color: isDarkTheme ? '#ffffff' : '#1f2937',
                           display: 'block'
                         }}>匿名使用统计</Text>
-                        <Text style={{ 
+                        <Text style={{
                           color: isDarkTheme ? '#9ca3af' : '#6b7280',
                           fontSize: '14px'
                         }}>帮助改进产品体验</Text>
@@ -583,27 +583,27 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate }) => {
       case 'about':
         return (
           <div style={{ padding: '24px' }}>
-            <div style={{ 
-              textAlign: 'center', 
-              marginBottom: '32px' 
+            <div style={{
+              textAlign: 'center',
+              marginBottom: '32px'
             }}>
-              <Avatar 
-                size={80} 
+              <Avatar
+                size={80}
                 style={{
                   background: '#3b82f6',
                   marginBottom: '16px'
                 }}
                 icon={<Bot size={40} />}
               />
-              <Title 
-                level={2} 
-                style={{ 
+              <Title
+                level={2}
+                style={{
                   color: isDarkTheme ? '#ffffff' : '#1f2937',
                   marginBottom: '8px'
                 }}
               >Koala Desktop</Title>
               <Tag color="blue" style={{ marginBottom: '16px' }}>v1.0.0</Tag>
-              <Paragraph style={{ 
+              <Paragraph style={{
                 color: isDarkTheme ? '#9ca3af' : '#6b7280',
                 maxWidth: '448px',
                 margin: '0 auto'
@@ -614,21 +614,21 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate }) => {
 
             <Row gutter={[24, 24]}>
               <Col xs={24} md={8}>
-                <Card 
+                <Card
                   style={{
-                    background: isDarkTheme ? '#374151' : '#ffffff',
-                    borderColor: isDarkTheme ? '#4b5563' : '#e5e7eb',
+                    background: isDarkTheme ? '#2a2a2a' : '#ffffff',
+                    borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.1)' : '#e5e7eb',
                     textAlign: 'center'
                   }}
                   bodyStyle={{ padding: '24px' }}
                 >
-                  <TrendingUp 
-                    style={{ 
+                  <TrendingUp
+                    style={{
                       color: '#3b82f6',
                       margin: '0 auto 12px',
                       display: 'block'
-                    }} 
-                    size={32} 
+                    }}
+                    size={32}
                   />
                   <Statistic
                     title={<span style={{ color: isDarkTheme ? '#9ca3af' : '#6b7280' }}>支持的模型</span>}
@@ -640,21 +640,21 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate }) => {
               </Col>
 
               <Col xs={24} md={8}>
-                <Card 
+                <Card
                   style={{
-                    background: isDarkTheme ? '#374151' : '#ffffff',
-                    borderColor: isDarkTheme ? '#4b5563' : '#e5e7eb',
+                    background: isDarkTheme ? '#2a2a2a' : '#ffffff',
+                    borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.1)' : '#e5e7eb',
                     textAlign: 'center'
                   }}
                   bodyStyle={{ padding: '24px' }}
                 >
-                  <Zap 
-                    style={{ 
+                  <Zap
+                    style={{
                       color: '#10b981',
                       margin: '0 auto 12px',
                       display: 'block'
-                    }} 
-                    size={32} 
+                    }}
+                    size={32}
                   />
                   <Statistic
                     title={<span style={{ color: isDarkTheme ? '#9ca3af' : '#6b7280' }}>活跃模型</span>}
@@ -666,23 +666,23 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate }) => {
               </Col>
 
               <Col xs={24} md={8}>
-                <Card 
+                <Card
                   style={{
-                    background: isDarkTheme ? '#374151' : '#ffffff',
-                    borderColor: isDarkTheme ? '#4b5563' : '#e5e7eb',
+                    background: isDarkTheme ? '#2a2a2a' : '#ffffff',
+                    borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.1)' : '#e5e7eb',
                     textAlign: 'center'
                   }}
                   bodyStyle={{ padding: '24px' }}
                 >
-                  <Heart 
-                    style={{ 
+                  <Heart
+                    style={{
                       color: '#ef4444',
                       margin: '0 auto 12px',
                       display: 'block'
-                    }} 
-                    size={32} 
+                    }}
+                    size={32}
                   />
-                  <div style={{ 
+                  <div style={{
                     color: '#ef4444',
                     fontSize: '20px',
                     fontWeight: 600,
@@ -693,42 +693,42 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate }) => {
               </Col>
             </Row>
 
-            <Divider style={{ 
-              borderColor: isDarkTheme ? '#4b5563' : '#e5e7eb',
-              margin: '32px 0' 
+            <Divider style={{
+              borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.1)' : '#e5e7eb',
+              margin: '32px 0'
             }} />
 
-            <Descriptions 
+            <Descriptions
               title={<span style={{ color: isDarkTheme ? '#ffffff' : '#1f2937' }}>技术信息</span>}
               bordered
               column={1}
               size="small"
               style={{
-                background: isDarkTheme ? '#374151' : '#ffffff',
+                background: isDarkTheme ? '#2a2a2a' : '#ffffff',
               }}
             >
-              <Descriptions.Item 
+              <Descriptions.Item
                 label={<span style={{ color: isDarkTheme ? '#9ca3af' : '#6b7280' }}>框架</span>}
                 labelStyle={{ color: isDarkTheme ? '#9ca3af' : '#6b7280' }}
                 contentStyle={{ color: isDarkTheme ? '#ffffff' : '#1f2937' }}
               >
                 Electron 28.0.0
               </Descriptions.Item>
-              <Descriptions.Item 
+              <Descriptions.Item
                 label={<span style={{ color: isDarkTheme ? '#9ca3af' : '#6b7280' }}>前端</span>}
                 labelStyle={{ color: isDarkTheme ? '#9ca3af' : '#6b7280' }}
                 contentStyle={{ color: isDarkTheme ? '#ffffff' : '#1f2937' }}
               >
                 React 18 + TypeScript
               </Descriptions.Item>
-              <Descriptions.Item 
+              <Descriptions.Item
                 label={<span style={{ color: isDarkTheme ? '#9ca3af' : '#6b7280' }}>UI库</span>}
                 labelStyle={{ color: isDarkTheme ? '#9ca3af' : '#6b7280' }}
                 contentStyle={{ color: isDarkTheme ? '#ffffff' : '#1f2937' }}
               >
                 Ant Design + CSS-in-JS
               </Descriptions.Item>
-              <Descriptions.Item 
+              <Descriptions.Item
                 label={<span style={{ color: isDarkTheme ? '#9ca3af' : '#6b7280' }}>构建工具</span>}
                 labelStyle={{ color: isDarkTheme ? '#9ca3af' : '#6b7280' }}
                 contentStyle={{ color: isDarkTheme ? '#ffffff' : '#1f2937' }}
@@ -758,50 +758,51 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate }) => {
   }
 
   return (
-    <Layout style={{ 
-      height: '100%', 
-      background: isDarkTheme ? '#0a0a0f' : '#f5f5f5',
+    <Layout style={{
+      height: '100%',
+      background: isDarkTheme ? '#0f0f0f' : '#f5f5f5',
       overflow: 'hidden'
     }}>
       <Sider
         width={260}
         style={{
-          background: isDarkTheme ? '#1a1a24' : '#ffffff',
-          borderRight: `1px solid ${isDarkTheme ? '#3a3a4a' : '#e5e7eb'}`,
+          background: isDarkTheme ? '#1a1a1a' : '#ffffff',
+          borderRight: `1px solid ${isDarkTheme ? 'rgba(255, 255, 255, 0.06)' : '#e5e7eb'}`,
         }}
       >
         <div style={{ padding: '16px' }}>
-          <div style={{ 
-            marginBottom: '24px', 
-            textAlign: 'center' 
+          <div style={{
+            marginBottom: '24px',
+            textAlign: 'center'
           }}>
-            <Avatar 
-              size={48} 
+            <Avatar
+              size={48}
               style={{
-                background: '#6366f1',
+                background: '#1890ff',
                 marginBottom: '12px'
               }}
               icon={<SettingsIcon size={24} />}
             />
-            <Title 
-              level={4} 
-              style={{ 
+            <Title
+              level={4}
+              style={{
                 color: isDarkTheme ? '#ffffff' : '#1f2937',
                 marginBottom: '4px'
               }}
             >设置中心</Title>
-            <Text style={{ 
-              color: isDarkTheme ? '#808090' : '#6b7280',
+            <Text style={{
+              color: isDarkTheme ? '#b3b3b3' : '#6b7280',
               fontSize: '14px'
             }}>个性化您的体验</Text>
           </div>
-          
+
           <Menu
             mode="inline"
             selectedKeys={[selectedKey]}
             onClick={({ key }) => setSelectedKey(key)}
             style={{
-              background: 'transparent',
+              background: 'transparent !important',
+              color: isDarkTheme ? '#000000 !important' : '#ffffff !important',
               border: 'none'
             }}
             items={menuItems}
@@ -811,7 +812,7 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate }) => {
       </Sider>
 
       <Content style={{
-        background: isDarkTheme ? '#0a0a0f' : '#f5f5f5',
+        background: isDarkTheme ? '#0f0f0f' : '#f5f5f5',
       }}>
         {renderContent()}
       </Content>

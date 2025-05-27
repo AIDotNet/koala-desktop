@@ -50,7 +50,7 @@ import {
   Filter,
   Cpu
 } from 'lucide-react'
-import { Provider, Model, ProviderManagerProps } from '@/types/model'
+import { Provider, Model, ProviderManagerProps as BaseProviderManagerProps } from '@/types/model'
 import { providerDB } from '@/utils/providerDB'
 import { getIcon, IconName } from '@/utils/iconutils'
 import { OpenAI } from '@lobehub/icons'
@@ -59,6 +59,11 @@ import ModelListItem from './ModelListItem'
 const { Title, Text } = Typography
 const { TextArea } = Input
 const { Option } = Select
+
+// 扩展 ProviderManagerProps 接口以支持主题
+interface ProviderManagerProps extends BaseProviderManagerProps {
+  isDarkTheme?: boolean
+}
 
 // 用于渲染提供商图标的函数
 const renderProviderIcon = (iconName?: string) => {
@@ -75,21 +80,137 @@ const renderProviderIcon = (iconName?: string) => {
   }
 };
 
-// 在文件顶部添加自定义动画关键帧，在scrollbarStyles之后
-const animationStyles = `
+// 自定义样式钩子
+const useProviderManagerStyles = (token: any) => {
+  return {
+    container: {
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column' as const,
+      background: token.colorBgLayout
+    },
+    sidebar: {
+      width: '280px',
+      borderRight: `1px solid ${token.colorBorder}`,
+      display: 'flex',
+      flexDirection: 'column' as const
+    },
+    sidebarHeader: {
+      padding: token.paddingLG,
+      borderBottom: `1px solid ${token.colorBorder}`,
+    },
+    sidebarContent: {
+      flex: 1,
+      overflow: 'hidden'
+    },
+    scrollContainer: {
+      height: 'calc(100vh - 120px)',
+      overflowY: 'auto' as const,
+      overflowX: 'hidden' as const,
+      padding: token.paddingSM
+    },
+    providerItem: {
+      borderRadius: token.borderRadius,
+      margin: token.marginXS,
+      padding: token.paddingSM,
+      marginBottom: token.marginSM,
+      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+      cursor: 'pointer',
+      border: 'none'
+    },
+    providerItemSelected: {
+      backgroundColor: `${token.colorPrimary}20`,
+      boxShadow: token.boxShadowSecondary
+    },
+    providerItemDefault: {
+      backgroundColor: token.colorFillQuaternary
+    },
+    contentArea: {
+      flex: 1,
+      display: 'flex',
+      flexDirection: 'column' as const,
+      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+    },
+    contentHeader: {
+      padding: token.paddingLG,
+      borderBottom: `1px solid ${token.colorBorder}`,
+    },
+    contentBody: {
+      flex: 1,
+      padding: token.paddingLG,
+      position: 'relative' as const
+    },
+    searchSection: {
+      marginBottom: token.marginLG,
+      padding: token.paddingLG,
+      borderRadius: token.borderRadiusLG,
+      border: `1px solid ${token.colorBorder}`
+    },
+    loadingOverlay: {
+      position: 'absolute' as const,
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backdropFilter: 'blur(2px)',
+      zIndex: 10,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    },
+    emptyState: {
+      display: 'flex',
+      flexDirection: 'column' as const,
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '80px 20px',
+      textAlign: 'center' as const
+    },
+    emptyIcon: {
+      width: 80,
+      height: 80,
+      borderRadius: '50%',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: token.marginLG
+    }
+  }
+}
+
+// 动画样式生成函数
+const getAnimationStyles = (token: any) => `
   @keyframes fadeIn {
-    from { opacity: 0.6; transform: translateY(5px); }
+    from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
   }
   
   @keyframes scaleIn {
-    from { transform: scale(0.95); }
-    to { transform: scale(1); }
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
   }
   
   @keyframes slideIn {
-    from { transform: translateX(-10px); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    border-radius: 3px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    border-radius: 3px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   }
 `;
 
@@ -98,10 +219,12 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
   onProviderUpdate,
   onProviderAdd,
   onProviderDelete,
-  onModelToggle
+  onModelToggle,
+  isDarkTheme = false
 }) => {
   // 获取主题token
   const { token } = theme.useToken()
+  const styles = useProviderManagerStyles(token)
   const [selectedProvider, setSelectedProvider] = useState<Provider | null>(
     providers.length > 0 ? providers.find(p => p.enabled) || providers[0] : null
   )
@@ -115,23 +238,6 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
   const [searchText, setSearchText] = useState('')
   const [filterType, setFilterType] = useState<string | null>(null)
   const [isRefreshing, setIsRefreshing] = useState(false)
-
-  // 添加自定义滚动条样式
-  const scrollbarStyles = `
-    .custom-scrollbar::-webkit-scrollbar {
-      width: 6px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-track {
-      background: #1a202c;
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-      background-color: #4a5568;
-      border-radius: 3px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-      background-color: #718096;
-    }
-  `;
 
   // 初始化加载数据
   useEffect(() => {
@@ -203,7 +309,7 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
     if (model.abilities?.functionCall) {
       abilities.push(
         <Tooltip key="function" title="支持函数调用">
-          <Zap size={12} className="text-blue-400" />
+          <Zap size={12} style={{ color: token.colorInfo }} />
         </Tooltip>
       )
     }
@@ -211,7 +317,7 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
     if (model.abilities?.vision) {
       abilities.push(
         <Tooltip key="vision" title="支持视觉识别">
-          <Eye size={12} className="text-green-400" />
+          <Eye size={12} style={{ color: token.colorSuccess }} />
         </Tooltip>
       )
     }
@@ -423,34 +529,30 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
         pricing: Object.keys(pricing).length > 0 ? pricing : undefined
       }
 
-      let updatedModels: Model[]
       if (editingModel) {
         // 更新现有模型
-        updatedModels = selectedProvider.models.map(m =>
+        const updatedModels = selectedProvider.models.map(m =>
           m.id === editingModel.id ? modelData : m
         )
-        // 更新数据库中的模型
-        await providerDB.updateModel(selectedProvider.id, modelData.id, modelData);
+        const updatedProvider = { ...selectedProvider, models: updatedModels }
+        
+        await providerDB.saveProvider(updatedProvider);
+        onProviderUpdate(updatedProvider)
+        setSelectedProvider(updatedProvider)
         message.success('模型已更新')
       } else {
         // 添加新模型
-        updatedModels = [...selectedProvider.models, modelData]
-        // 添加模型到数据库
-        await providerDB.addModel(selectedProvider.id, modelData);
-        message.success('模型已添加')
+        const updatedProvider = {
+          ...selectedProvider,
+          models: [...selectedProvider.models, modelData]
+        }
+        
+        await providerDB.saveProvider(updatedProvider);
+        onProviderUpdate(updatedProvider)
+        setSelectedProvider(updatedProvider)
+        message.success('新模型已添加')
       }
 
-      const updatedProvider = {
-        ...selectedProvider,
-        models: updatedModels
-      }
-
-      // 更新数据库中的提供商
-      await providerDB.saveProvider(updatedProvider);
-      // 更新上层组件状态
-      onProviderUpdate(updatedProvider)
-
-      setSelectedProvider(updatedProvider)
       setIsModelModalVisible(false)
       modelForm.resetFields()
     } catch (error) {
@@ -464,16 +566,10 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
     try {
       if (!selectedProvider) return
 
-      // 从数据库删除模型
-      await providerDB.deleteModel(selectedProvider.id, modelId);
-
       const updatedModels = selectedProvider.models.filter(m => m.id !== modelId)
-      const updatedProvider = {
-        ...selectedProvider,
-        models: updatedModels
-      }
-
-      // 更新上层组件状态
+      const updatedProvider = { ...selectedProvider, models: updatedModels }
+      
+      await providerDB.saveProvider(updatedProvider);
       onProviderUpdate(updatedProvider)
       setSelectedProvider(updatedProvider)
       message.success('模型已删除')
@@ -493,7 +589,7 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
     setIsLoadingModels(true);
     try {
       const apiUrl = selectedProvider.apiUrl.endsWith('/')
-        ? `${selectedProvider.apiUrl}/models`
+        ? `${selectedProvider.apiUrl}models`
         : `${selectedProvider.apiUrl}/models`;
 
       const response = await axios.get(apiUrl, {
@@ -547,42 +643,41 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
         };
       });
 
-      // 更新当前提供商的模型列表
+      // 合并现有模型和新获取的模型
       const existingModelIds = selectedProvider.models.map(m => m.id);
-      const newModels = apiModels.filter((m: Model) => !existingModelIds.includes(m.id));
-
-      if (newModels.length === 0) {
-        message.info('没有发现新的模型');
-      } else {
+      const newModels = apiModels.filter((model: Model) => !existingModelIds.includes(model.id));
+      
+      if (newModels.length > 0) {
         const updatedProvider = {
           ...selectedProvider,
           models: [...selectedProvider.models, ...newModels]
         };
-
-        // 保存到数据库
+        
         await providerDB.saveProvider(updatedProvider);
-        // 更新上层组件状态
         onProviderUpdate(updatedProvider);
         setSelectedProvider(updatedProvider);
-        message.success(`成功添加 ${newModels.length} 个模型`);
+        message.success(`成功获取 ${newModels.length} 个新模型`);
+      } else {
+        message.info('没有发现新模型');
       }
-    } catch (error: any) {
-      console.error('获取模型列表错误:', error);
-      message.error(`获取模型列表失败: ${error.response?.data?.error?.message || error.message}`);
+    } catch (error) {
+      console.error('获取模型列表失败:', error);
+      message.error('获取模型列表失败，请检查API配置');
     } finally {
       setIsLoadingModels(false);
     }
   };
 
-  // 过滤模型列表
+  // 过滤模型
   const getFilteredModels = () => {
     if (!selectedProvider) return [];
-
+    
     return selectedProvider.models.filter(model => {
-      // 按名称和ID搜索
-      const matchesSearch = searchText === '' ||
+      // 按搜索文本筛选
+      const matchesSearch = !searchText || 
         model.displayName.toLowerCase().includes(searchText.toLowerCase()) ||
-        model.id.toLowerCase().includes(searchText.toLowerCase());
+        model.id.toLowerCase().includes(searchText.toLowerCase()) ||
+        (model.description || '').toLowerCase().includes(searchText.toLowerCase());
 
       // 按类型筛选
       const matchesType = !filterType || model.type === filterType;
@@ -592,26 +687,12 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
   };
 
   return (
-    <div style={{
-      height: '100%',
-      display: 'flex',
-      flexDirection: 'column',
-      background: '#0a0a0f'
-    }}>
-      <style>{scrollbarStyles}</style>
-      <style>{animationStyles}</style>
+    <div style={styles.container}>
+      <style>{getAnimationStyles(token)}</style>
       <div style={{ flex: 1, display: 'flex' }}>
-        <div style={{
-          width: '256px',
-          borderRight: '1px solid #4b5563',
-          background: '#374151',
-          display: 'flex',
-          flexDirection: 'column'
-        }}>
-          <div style={{
-            padding: '16px',
-            borderBottom: '1px solid #4b5563'
-          }}>
+        {/* 左侧提供商列表 */}
+        <div style={styles.sidebar}>
+          <div style={styles.sidebarHeader}>
             <div style={{
               display: 'flex',
               alignItems: 'center',
@@ -620,13 +701,13 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
               <Title
                 level={5}
                 style={{
-                  color: '#ffffff',
+                  color: token.colorText,
                   marginBottom: 0,
                   display: 'flex',
                   alignItems: 'center'
                 }}
               >
-                <Globe style={{ marginRight: '8px' }} size={16} />
+                <Globe style={{ marginRight: token.marginXS }} size={16} />
                 提供商
               </Title>
               <Button
@@ -635,8 +716,7 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
                 icon={<Plus size={14} />}
                 onClick={handleAddProvider}
                 style={{
-                  background: '#3b82f6',
-                  borderColor: '#3b82f6',
+                  borderRadius: token.borderRadius
                 }}
               >
                 添加
@@ -644,46 +724,32 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
             </div>
           </div>
 
-          <div style={{ flex: 1, overflow: 'hidden' }}>
-            <div style={{
-              height: 'calc(100vh - 120px)',
-              overflowY: 'auto',
-              overflowX: "hidden",
-            }} className="custom-scrollbar">
+          <div style={styles.sidebarContent}>
+            <div style={styles.scrollContainer} className="custom-scrollbar">
               <List
                 dataSource={providers.sort((a, b) => (a.enabled === b.enabled) ? 0 : a.enabled ? -1 : 1)}
                 renderItem={(provider) => (
                   <List.Item
                     key={provider.id}
                     style={{
-                      borderRadius: '10px',
-                      margin:5,
-                      backgroundColor: selectedProvider?.id === provider.id
-                        ? 'rgba(59, 130, 246, 0.2)'
-                        : 'rgba(255, 255, 255, 0.05)',
-                      padding: '10px',
-                      marginBottom: '10px',
-                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                      cursor: 'pointer',
-                      border: 'none',
-                      boxShadow: selectedProvider?.id === provider.id
-                        ? '0 4px 6px rgba(0, 0, 0, 0.2)'
-                        : 'none',
+                      ...styles.providerItem,
+                      ...(selectedProvider?.id === provider.id 
+                        ? styles.providerItemSelected 
+                        : styles.providerItemDefault),
+                      animation: 'fadeIn 0.3s ease-out'
                     }}
                     onClick={() => handleProviderSelect(provider)}
                   >
-                    <div
-                      style={{
-                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        width: '100%'
-                      }}>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      width: '100%'
+                    }}>
                       <div style={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '12px'
+                        gap: token.marginSM
                       }}>
                         <div style={{
                           fontSize: '24px',
@@ -692,22 +758,23 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          background: selectedProvider?.id === provider.id ? 'rgba(59, 130, 246, 0.3)' : '#4b5563',
-                          borderRadius: '8px',
-                          transition: 'all 0.3s ease',
-                          boxShadow: selectedProvider?.id === provider.id ? 'inset 0 2px 4px rgba(0, 0, 0, 0.1)' : 'none'
+                          background: selectedProvider?.id === provider.id 
+                            ? `${token.colorPrimary}30` 
+                            : token.colorFillSecondary,
+                          borderRadius: token.borderRadius,
+                          transition: 'all 0.3s ease'
                         }}>
                           <ProviderIcon
                             provider={provider.id}
-                            size={38}
+                            size={20}
                             type={'color'}
                           />
                         </div>
                         <div>
                           <div style={{
-                            color: '#ffffff',
+                            color: token.colorText,
                             fontWeight: 500,
-                            fontSize: '14px',
+                            fontSize: token.fontSize,
                             display: 'flex',
                             alignItems: 'center'
                           }}>
@@ -717,26 +784,26 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
                                 width: selectedProvider?.id === provider.id ? '8px' : '6px',
                                 height: selectedProvider?.id === provider.id ? '8px' : '6px',
                                 borderRadius: '50%',
-                                background: '#10b981',
-                                marginLeft: '8px',
+                                background: token.colorSuccess,
+                                marginLeft: token.marginXS,
                                 transition: 'all 0.3s ease'
                               }}></div>
                             )}
                           </div>
                           <div style={{
-                            color: '#9ca3af',
-                            fontSize: '12px',
+                            color: token.colorTextTertiary,
+                            fontSize: token.fontSizeSM,
                             display: 'flex',
                             alignItems: 'center',
                             gap: '4px'
                           }}>
                             <span>{provider.models.length} 个模型</span>
                             {provider.models.length > 0 && (
-                              <span style={{ color: '#6b7280' }}>•</span>
+                              <span style={{ color: token.colorTextQuaternary }}>•</span>
                             )}
                             {provider.models.filter(m => m.enabled).length > 0 && (
                               <span style={{
-                                color: '#10b981',
+                                color: token.colorSuccess,
                                 transition: 'all 0.3s ease',
                                 fontWeight: selectedProvider?.id === provider.id ? 500 : 'normal'
                               }}>
@@ -753,20 +820,16 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
                         gap: '4px'
                       }}>
                         <div style={{
-                          background: provider.apiKey ? 'rgba(16, 185, 129, 0.2)' : 'rgba(107, 114, 128, 0.3)',
-                          color: provider.apiKey ? '#10b981' : '#6b7280',
-                          fontSize: '12px',
+                          background: provider.apiKey 
+                            ? `${token.colorSuccess}20` 
+                            : `${token.colorTextQuaternary}30`,
+                          color: provider.apiKey ? token.colorSuccess : token.colorTextQuaternary,
+                          fontSize: token.fontSizeSM,
                           padding: '2px 6px',
-                          borderRadius: '6px',
+                          borderRadius: token.borderRadiusSM,
                           display: 'flex',
                           alignItems: 'center',
-                          transition: 'all 0.3s ease',
-                          ...(selectedProvider?.id === provider.id && provider.apiKey && {
-                            background: 'rgba(16, 185, 129, 0.3)'
-                          }),
-                          ...(selectedProvider?.id === provider.id && !provider.apiKey && {
-                            background: 'rgba(107, 114, 128, 0.5)'
-                          })
+                          transition: 'all 0.3s ease'
                         }}>
                           {provider.apiKey ? (
                             <>
@@ -785,60 +848,44 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
         </div>
 
         {/* 右侧内容区域 */}
-        <div style={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          opacity: 1,
-          transform: 'translateY(0)'
-        }}>
+        <div style={styles.contentArea}>
           {selectedProvider ? (
             <>
-              <div
-                style={{
-                  padding: '24px',
-                  borderBottom: '1px solid #374151',
-                  background: 'linear-gradient(to right, #1f2937, rgba(31, 41, 55, 0.9))',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  animation: 'fadeIn 0.3s ease-out'
-                }}
-              >
+              <div style={{
+                ...styles.contentHeader,
+                animation: 'fadeIn 0.3s ease-out'
+              }}>
                 <div style={{
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  marginBottom: '24px'
+                  marginBottom: token.marginLG
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <div
-                      style={{
-                        width: '40px',
-                        height: '40px',
-                        background: 'rgba(59, 130, 246, 0.2)',
-                        borderRadius: '8px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        marginRight: '12px',
-                        border: '1px solid rgba(59, 130, 246, 0.3)',
-                        transition: 'all 0.3s ease',
-                        animation: 'scaleIn 0.3s ease-out'
-                      }}
-                    >
-                      <div style={{ fontSize: '20px' }}>
-                        <ProviderIcon
-                          provider={selectedProvider.id}
-                          size={24}
-                          type={'color'}
-                        />
-                      </div>
+                    <div style={{
+                      width: '40px',
+                      height: '40px',
+                      background: `${token.colorPrimary}20`,
+                      borderRadius: token.borderRadius,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginRight: token.marginSM,
+                      border: `1px solid ${token.colorPrimary}30`,
+                      transition: 'all 0.3s ease',
+                      animation: 'scaleIn 0.3s ease-out'
+                    }}>
+                      <ProviderIcon
+                        provider={selectedProvider.id}
+                        size={24}
+                        type={'color'}
+                      />
                     </div>
                     <div>
                       <Title
                         level={4}
                         style={{
-                          color: '#ffffff',
+                          color: token.colorText,
                           marginBottom: 0,
                           display: 'flex',
                           alignItems: 'center'
@@ -847,23 +894,23 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
                         {selectedProvider.displayName}
                         <Badge
                           status={selectedProvider.enabled ? "success" : "default"}
-                          style={{ marginLeft: '8px' }}
+                          style={{ marginLeft: token.marginXS }}
                         />
                       </Title>
-                      <Text style={{ color: '#9ca3af', fontSize: '14px' }}>
+                      <Text style={{ color: token.colorTextSecondary, fontSize: token.fontSize }}>
                         {selectedProvider.description || "AI模型提供商"}
                       </Text>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', gap: '8px' }}>
+                  <div style={{ display: 'flex', gap: token.marginXS }}>
                     <Button
                       icon={<Settings size={16} />}
                       onClick={() => handleEditProvider(selectedProvider)}
                       style={{
-                        background: '#374151',
-                        borderColor: '#4b5563',
-                        color: '#d1d5db',
-                        borderRadius: '8px'
+                        background: token.colorFillSecondary,
+                        borderColor: token.colorBorder,
+                        color: token.colorText,
+                        borderRadius: token.borderRadius
                       }}
                     >
                       编辑配置
@@ -872,99 +919,32 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
                       <Switch
                         checked={selectedProvider.enabled}
                         onChange={(checked) => handleProviderToggle(selectedProvider, checked)}
-                        style={{ marginLeft: '8px' }}
+                        size="default"
                       />
                     </Tooltip>
                   </div>
                 </div>
-                <div style={{
-                  marginTop: '16px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px'
-                }}>
-                  {selectedProvider.website && (
-                    <Button
-                      type="link"
-                      icon={<ExternalLink size={14} />}
-                      style={{
-                        padding: 0,
-                        height: 'auto',
-                        display: 'flex',
-                        alignItems: 'center',
-                        color: '#60a5fa'
-                      }}
-                      onClick={() => window.open(selectedProvider.website, '_blank')}
-                    >
-                      访问官方网站
-                    </Button>
-                  )}
-
-                  {selectedProvider.apiKey && selectedProvider.apiUrl && (
-                    <Button
-                      type="primary"
-                      icon={<Download size={14} />}
-                      loading={isLoadingModels}
-                      onClick={fetchModelsFromOpenAI}
-                      style={{
-                        background: '#2563eb',
-                        borderColor: '#2563eb',
-                        color: '#ffffff',
-                        borderRadius: '8px',
-                        display: 'flex',
-                        alignItems: 'center'
-                      }}
-                    >
-                      {isLoadingModels ? '加载中...' : '加载模型列表'}
-                    </Button>
-                  )}
-                </div>
               </div>
 
-              {/* 模型列表区域 */}
-              <div
-                style={{
-                  flex: 1,
-                  padding: '24px',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  animation: 'fadeIn 0.4s ease-out',
-                  position: 'relative'
-                }}
-              >
-                {/* 刷新覆盖层 */}
+              <div style={styles.contentBody} className="provider-content">
+                {/* 刷新状态覆盖层 */}
                 {isRefreshing && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      backgroundColor: 'rgba(0, 0, 0, 0.3)',
-                      backdropFilter: 'blur(2px)',
-                      zIndex: 10,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      animation: 'fadeIn 0.2s ease-out'
-                    }}
-                  >
+                  <div style={styles.loadingOverlay}>
                     <div style={{
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center'
                     }}>
                       <div style={{
-                        width: '40px',
-                        height: '40px',
+                        width: '32px',
+                        height: '32px',
                         border: '2px solid transparent',
-                        borderTop: '2px solid #3b82f6',
-                        borderBottom: '2px solid #3b82f6',
+                        borderTop: `2px solid ${token.colorPrimary}`,
                         borderRadius: '50%',
                         animation: 'spin 1s linear infinite',
-                        marginBottom: '8px'
+                        marginBottom: token.marginXS
                       }}></div>
-                      <Text style={{ color: '#ffffff' }}>更新中...</Text>
+                      <Text style={{ color: token.colorText }}>更新中...</Text>
                     </div>
                   </div>
                 )}
@@ -973,13 +953,13 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  marginBottom: '24px'
+                  marginBottom: token.marginLG
                 }}>
                   <div>
-                    <Text style={{ color: '#9ca3af' }}>
+                    <Text style={{ color: token.colorTextSecondary }}>
                       管理 {selectedProvider.displayName} 的模型配置，共 {selectedProvider.models.length} 个模型
                       {selectedProvider.models.filter(m => m.enabled).length > 0 && (
-                        <span style={{ color: '#10b981', marginLeft: '8px' }}>
+                        <span style={{ color: token.colorSuccess, marginLeft: token.marginXS }}>
                           ({selectedProvider.models.filter(m => m.enabled).length} 个活跃)
                         </span>
                       )}
@@ -990,10 +970,8 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
                     icon={<Plus size={16} />}
                     onClick={handleAddModel}
                     style={{
-                      background: '#2563eb',
-                      borderColor: '#2563eb',
-                      borderRadius: '8px',
-                      boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+                      borderRadius: token.borderRadius,
+                      boxShadow: token.boxShadowSecondary
                     }}
                   >
                     添加模型
@@ -1001,18 +979,12 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
                 </div>
 
                 {/* 搜索和筛选区域 */}
-                <div style={{
-                  marginBottom: 24,
-                  padding: '16px 20px',
-                  backgroundColor: token.colorFillAlter,
-                  borderRadius: token.borderRadiusLG,
-                  border: `1px solid ${token.colorBorder}`
-                }}>
+                <div style={styles.searchSection}>
                   <div style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 16,
-                    marginBottom: 12
+                    gap: token.marginLG,
+                    marginBottom: token.marginSM
                   }}>
                     <div style={{ position: 'relative', flex: 1 }}>
                       <Input
@@ -1044,7 +1016,7 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
                   </div>
 
                   <div style={{
-                    fontSize: 12,
+                    fontSize: token.fontSizeSM,
                     color: token.colorTextSecondary,
                     display: 'flex',
                     alignItems: 'center'
@@ -1056,20 +1028,17 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
 
                 {/* 加载状态 */}
                 {isLoadingModels && (
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      padding: '48px 0',
-                      background: 'rgba(31, 41, 55, 0.4)',
-                      borderRadius: '8px',
-                      marginBottom: '24px',
-                      border: '1px solid rgba(255, 255, 255, 0.05)',
-                      backdropFilter: 'blur(4px)',
-                      animation: 'scaleIn 0.3s ease-out'
-                    }}
-                  >
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '48px 0',
+                    background: token.colorFillQuaternary,
+                    borderRadius: token.borderRadius,
+                    marginBottom: token.marginLG,
+                    border: `1px solid ${token.colorBorder}`,
+                    animation: 'scaleIn 0.3s ease-out'
+                  }}>
                     <div style={{
                       display: 'flex',
                       flexDirection: 'column',
@@ -1079,13 +1048,13 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
                         width: '48px',
                         height: '48px',
                         border: '2px solid transparent',
-                        borderTop: '2px solid #3b82f6',
-                        borderBottom: '2px solid #3b82f6',
+                        borderTop: `2px solid ${token.colorPrimary}`,
+                        borderBottom: `2px solid ${token.colorPrimary}`,
                         borderRadius: '50%',
                         animation: 'spin 1s linear infinite',
-                        marginBottom: '16px'
+                        marginBottom: token.marginLG
                       }}></div>
-                      <Text style={{ color: '#d1d5db' }}>正在从API获取模型列表，请稍候...</Text>
+                      <Text style={{ color: token.colorText }}>正在从API获取模型列表，请稍候...</Text>
                     </div>
                   </div>
                 )}
@@ -1115,37 +1084,20 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
                     ))}
                   </div>
                 ) : (
-                  <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '80px 20px',
-                    textAlign: 'center'
-                  }}>
-                    <div style={{
-                      width: 80,
-                      height: 80,
-                      borderRadius: '50%',
-                      backgroundColor: token.colorFillQuaternary,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      marginBottom: 24,
-                      border: `1px solid ${token.colorBorderSecondary}`
-                    }}>
+                  <div style={styles.emptyState}>
+                    <div style={styles.emptyIcon}>
                       <Bot size={40} style={{ color: token.colorTextQuaternary }} />
                     </div>
                     <Title level={3} style={{ 
                       color: token.colorTextSecondary, 
-                      marginBottom: 12,
+                      marginBottom: token.marginSM,
                       fontWeight: 500
                     }}>
                       {selectedProvider.models.length > 0 ? '没有匹配的模型' : '暂无模型'}
                     </Title>
                     <Text style={{ 
                       color: token.colorTextTertiary, 
-                      marginBottom: 32, 
+                      marginBottom: token.marginXL, 
                       maxWidth: 400,
                       lineHeight: 1.6
                     }}>
@@ -1163,7 +1115,7 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
                           borderRadius: token.borderRadiusLG,
                           padding: '8px 24px',
                           height: 'auto',
-                          fontSize: 14,
+                          fontSize: token.fontSize,
                           fontWeight: 500,
                           boxShadow: token.boxShadowSecondary
                         }}
@@ -1176,14 +1128,16 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
               </div>
             </>
           ) : (
-            <div className="flex-1 flex items-center justify-center">
-              <div className="text-center">
-                <Bot size={64} className="text-gray-600 mx-auto mb-4" />
-                <Title level={3} className="!text-gray-400 !mb-2">选择一个提供商</Title>
-                <Text className="text-gray-500">
-                  从左侧列表中选择一个模型提供商来管理其配置和模型
-                </Text>
+            <div style={styles.emptyState}>
+              <div style={styles.emptyIcon}>
+                <Bot size={64} style={{ color: token.colorTextQuaternary }} />
               </div>
+              <Title level={3} style={{ color: token.colorTextSecondary, marginBottom: token.marginXS }}>
+                选择一个提供商
+              </Title>
+              <Text style={{ color: token.colorTextTertiary }}>
+                从左侧列表中选择一个模型提供商来管理其配置和模型
+              </Text>
             </div>
           )}
         </div>
@@ -1196,58 +1150,94 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
         onCancel={() => setIsProviderModalVisible(false)}
         footer={null}
         width={600}
+        styles={{
+          content: {
+            background: token.colorBgContainer,
+            borderRadius: token.borderRadiusLG
+          },
+          header: {
+            background: token.colorBgElevated,
+            borderBottom: `1px solid ${token.colorBorder}`
+          }
+        }}
       >
         <Form
           form={providerForm}
           layout="vertical"
           onFinish={handleProviderFormSubmit}
-          className="mt-4"
+          style={{ marginTop: token.marginLG }}
         >
           <Form.Item
             name="displayName"
-            label="提供商名称"
+            label={<span style={{ color: token.colorText }}>提供商名称</span>}
             rules={[{ required: true, message: '请输入提供商名称' }]}
           >
-            <Input placeholder="例如：OpenAI" />
+            <Input 
+              placeholder="例如：OpenAI" 
+              style={{ borderRadius: token.borderRadius }}
+            />
           </Form.Item>
 
           <Form.Item
             name="description"
-            label="描述"
+            label={<span style={{ color: token.colorText }}>描述</span>}
           >
             <TextArea
               placeholder="提供商描述信息"
               rows={3}
+              style={{ borderRadius: token.borderRadius }}
             />
           </Form.Item>
 
           <Form.Item
             name="apiUrl"
-            label="API URL"
+            label={<span style={{ color: token.colorText }}>API URL</span>}
             rules={[{ required: true, message: '请输入API URL' }]}
           >
-            <Input placeholder="https://api.example.com/v1" />
+            <Input 
+              placeholder="https://api.openai.com/v1" 
+              style={{ borderRadius: token.borderRadius }}
+            />
           </Form.Item>
 
           <Form.Item
             name="apiKey"
-            label="API Key"
+            label={<span style={{ color: token.colorText }}>API Key</span>}
+            rules={[{ required: true, message: '请输入API Key' }]}
           >
-            <Input.Password placeholder="输入API密钥" />
+            <Input.Password 
+              placeholder="sk-..." 
+              style={{ borderRadius: token.borderRadius }}
+            />
           </Form.Item>
 
           <Form.Item
             name="website"
-            label="官方网站"
+            label={<span style={{ color: token.colorText }}>官网</span>}
           >
-            <Input placeholder="https://example.com" />
+            <Input 
+              placeholder="https://openai.com" 
+              style={{ borderRadius: token.borderRadius }}
+            />
           </Form.Item>
 
-          <div className="flex justify-end space-x-2 mt-6">
-            <Button onClick={() => setIsProviderModalVisible(false)}>
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'flex-end', 
+            gap: token.marginXS, 
+            marginTop: token.marginLG 
+          }}>
+            <Button 
+              onClick={() => setIsProviderModalVisible(false)}
+              style={{ borderRadius: token.borderRadius }}
+            >
               取消
             </Button>
-            <Button type="primary" htmlType="submit">
+            <Button 
+              type="primary" 
+              htmlType="submit"
+              style={{ borderRadius: token.borderRadius }}
+            >
               {editingProvider ? '更新' : '添加'}
             </Button>
           </div>
@@ -1260,49 +1250,69 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
         open={isModelModalVisible}
         onCancel={() => setIsModelModalVisible(false)}
         footer={null}
-        width={700}
+        width={800}
+        styles={{
+          content: {
+            background: token.colorBgContainer,
+            borderRadius: token.borderRadiusLG
+          },
+          header: {
+            background: token.colorBgElevated,
+            borderBottom: `1px solid ${token.colorBorder}`
+          }
+        }}
       >
         <Form
           form={modelForm}
           layout="vertical"
           onFinish={handleModelFormSubmit}
-          className="mt-4"
+          style={{ marginTop: token.marginLG }}
         >
-          <div className="grid grid-cols-2 gap-4">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: token.marginLG }}>
             <Form.Item
               name="id"
-              label="模型ID"
+              label={<span style={{ color: token.colorText }}>模型ID</span>}
               rules={[{ required: true, message: '请输入模型ID' }]}
             >
-              <Input placeholder="例如：gpt-4" />
+              <Input 
+                placeholder="例如：gpt-4" 
+                style={{ borderRadius: token.borderRadius }}
+              />
             </Form.Item>
 
             <Form.Item
               name="displayName"
-              label="显示名称"
+              label={<span style={{ color: token.colorText }}>显示名称</span>}
               rules={[{ required: true, message: '请输入显示名称' }]}
             >
-              <Input placeholder="例如：GPT-4" />
+              <Input 
+                placeholder="例如：GPT-4" 
+                style={{ borderRadius: token.borderRadius }}
+              />
             </Form.Item>
           </div>
 
           <Form.Item
             name="description"
-            label="描述"
+            label={<span style={{ color: token.colorText }}>描述</span>}
           >
             <TextArea
               placeholder="模型描述信息"
               rows={2}
+              style={{ borderRadius: token.borderRadius }}
             />
           </Form.Item>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: token.marginLG }}>
             <Form.Item
               name="type"
-              label="模型类型"
+              label={<span style={{ color: token.colorText }}>模型类型</span>}
               rules={[{ required: true, message: '请选择模型类型' }]}
             >
-              <Select placeholder="选择模型类型">
+              <Select 
+                placeholder="选择模型类型"
+                style={{ borderRadius: token.borderRadius }}
+              >
                 <Option value="chat">对话模型</Option>
                 <Option value="completion">补全模型</Option>
                 <Option value="embedding">嵌入模型</Option>
@@ -1315,104 +1325,121 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
             <Form.Item
               name="enabled"
               valuePropName="checked"
+              style={{ display: 'flex', alignItems: 'center', marginTop: '30px' }}
             >
-              <Checkbox>启用模型</Checkbox>
+              <Checkbox style={{ color: token.colorText }}>启用模型</Checkbox>
             </Form.Item>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: token.marginLG }}>
             <Form.Item
               name="contextWindowTokens"
-              label="上下文窗口 (tokens)"
+              label={<span style={{ color: token.colorText }}>上下文窗口 (tokens)</span>}
               rules={[{ required: true, message: '请输入上下文窗口大小' }]}
             >
               <InputNumber
                 placeholder="4096"
                 min={1}
                 max={10000000}
-                className="w-full"
+                style={{ width: '100%', borderRadius: token.borderRadius }}
               />
             </Form.Item>
 
             <Form.Item
               name="maxOutput"
-              label="最大输出 (tokens)"
+              label={<span style={{ color: token.colorText }}>最大输出 (tokens)</span>}
               rules={[{ required: true, message: '请输入最大输出大小' }]}
             >
               <InputNumber
                 placeholder="4096"
                 min={1}
                 max={100000}
-                className="w-full"
+                style={{ width: '100%', borderRadius: token.borderRadius }}
               />
             </Form.Item>
           </div>
 
-          <div className="mb-4">
-            <Text className="text-gray-400 mb-2 block">模型能力</Text>
-            <div className="grid grid-cols-2 gap-4">
+          <div style={{ marginBottom: token.marginLG }}>
+            <Text style={{ color: token.colorTextSecondary, marginBottom: token.marginXS, display: 'block' }}>
+              模型能力
+            </Text>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: token.marginLG }}>
               <Form.Item
                 name="functionCall"
                 valuePropName="checked"
               >
-                <Checkbox>支持函数调用</Checkbox>
+                <Checkbox style={{ color: token.colorText }}>支持函数调用</Checkbox>
               </Form.Item>
 
               <Form.Item
                 name="vision"
                 valuePropName="checked"
               >
-                <Checkbox>支持视觉识别</Checkbox>
+                <Checkbox style={{ color: token.colorText }}>支持视觉识别</Checkbox>
               </Form.Item>
             </div>
           </div>
 
-          <div className="mb-4">
-            <Text className="text-gray-400 mb-2 block">定价信息 ($/1M tokens)</Text>
-            <div className="grid grid-cols-3 gap-4">
+          <div style={{ marginBottom: token.marginLG }}>
+            <Text style={{ color: token.colorTextSecondary, marginBottom: token.marginXS, display: 'block' }}>
+              定价信息 ($/1M tokens)
+            </Text>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: token.marginLG }}>
               <Form.Item
                 name="inputPrice"
-                label="输入价格"
+                label={<span style={{ color: token.colorText, fontSize: token.fontSizeSM }}>输入价格</span>}
               >
                 <InputNumber
                   placeholder="0.5"
                   min={0}
                   step={0.1}
-                  className="w-full"
+                  style={{ width: '100%', borderRadius: token.borderRadius }}
                 />
               </Form.Item>
 
               <Form.Item
                 name="outputPrice"
-                label="输出价格"
+                label={<span style={{ color: token.colorText, fontSize: token.fontSizeSM }}>输出价格</span>}
               >
                 <InputNumber
                   placeholder="1.5"
                   min={0}
                   step={0.1}
-                  className="w-full"
+                  style={{ width: '100%', borderRadius: token.borderRadius }}
                 />
               </Form.Item>
 
               <Form.Item
                 name="cachedInputPrice"
-                label="缓存输入价格"
+                label={<span style={{ color: token.colorText, fontSize: token.fontSizeSM }}>缓存输入价格</span>}
               >
                 <InputNumber
                   placeholder="0.1"
                   min={0}
                   step={0.1}
-                  className="w-full"
+                  style={{ width: '100%', borderRadius: token.borderRadius }}
                 />
               </Form.Item>
             </div>
           </div>
 
-          <div className="flex justify-end space-x-2 mt-6">
-            <Button onClick={() => setIsModelModalVisible(false)}>
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'flex-end', 
+            gap: token.marginXS, 
+            marginTop: token.marginLG 
+          }}>
+            <Button 
+              onClick={() => setIsModelModalVisible(false)}
+              style={{ borderRadius: token.borderRadius }}
+            >
               取消
             </Button>
-            <Button type="primary" htmlType="submit">
+            <Button 
+              type="primary" 
+              htmlType="submit"
+              style={{ borderRadius: token.borderRadius }}
+            >
               {editingModel ? '更新' : '添加'}
             </Button>
           </div>

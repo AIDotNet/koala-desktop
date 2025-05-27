@@ -44,7 +44,7 @@ const formatContextWindow = (tokens: number): string => {
   } else if (tokens >= 1000) {
     return `${(tokens / 1000).toFixed(0)}K`
   }
-  return tokens.toString()
+  return tokens?.toString()
 }
 
 // 获取模型类型标签颜色
@@ -71,6 +71,70 @@ const getTypeDisplayName = (type: string): string => {
   }
 }
 
+// 自定义样式钩子
+const useModelItemStyles = (token: any, enabled: boolean) => {
+  return {
+    card: {
+      marginBottom: token.marginXS,
+      border: `1px solid ${token.colorBorder}`,
+      borderRadius: token.borderRadius,
+      transition: 'all 0.2s ease',
+      opacity: enabled ? 1 : 0.7,
+      boxShadow: token.boxShadowTertiary,
+      background: token.colorBgContainer
+    },
+    iconContainer: {
+      width: '32px',
+      height: '32px',
+      borderRadius: token.borderRadiusSM,
+      background: enabled ? `${token.colorPrimary}15` : token.colorFillQuaternary,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: token.marginSM,
+      transition: 'all 0.3s ease'
+    },
+    modelInfo: {
+      flex: 1,
+      minWidth: 0
+    },
+    modelName: {
+      color: token.colorText,
+      fontWeight: 500,
+      fontSize: token.fontSize,
+      marginBottom: '2px',
+      display: 'flex',
+      alignItems: 'center',
+      gap: token.marginXS
+    },
+    modelMeta: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: token.marginXS,
+      flexWrap: 'wrap' as const,
+      marginBottom: '4px'
+    },
+    contextInfo: {
+      color: token.colorTextTertiary,
+      fontSize: token.fontSizeSM,
+      display: 'flex',
+      alignItems: 'center',
+      gap: '4px'
+    },
+    abilities: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '4px',
+      marginTop: '4px'
+    },
+    controls: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: token.marginXS
+    }
+  }
+}
+
 const ModelListItem: React.FC<ModelListItemProps> = ({
   model,
   index,
@@ -83,6 +147,7 @@ const ModelListItem: React.FC<ModelListItemProps> = ({
 }) => {
   // 获取主题token
   const { token } = theme.useToken()
+  const styles = useModelItemStyles(token, model.enabled)
   
   // 添加CSS动画样式
   React.useEffect(() => {
@@ -98,6 +163,7 @@ const ModelListItem: React.FC<ModelListItemProps> = ({
       document.head.removeChild(style)
     }
   }, [])
+
   // 处理模型状态切换
   const handleToggle = async (checked: boolean) => {
     try {
@@ -177,156 +243,114 @@ const ModelListItem: React.FC<ModelListItemProps> = ({
     }
   ]
 
+  // 渲染模型能力图标
+  const renderAbilities = () => {
+    const abilities = [];
+
+    if (model.abilities?.functionCall) {
+      abilities.push(
+        <Tooltip key="function" title="支持函数调用">
+          <Zap size={12} style={{ color: token.colorInfo }} />
+        </Tooltip>
+      )
+    }
+
+    if (model.abilities?.vision) {
+      abilities.push(
+        <Tooltip key="vision" title="支持视觉识别">
+          <Eye size={12} style={{ color: token.colorSuccess }} />
+        </Tooltip>
+      )
+    }
+
+    return abilities
+  }
+
   return (
     <Card
       size="small"
       style={{
-        marginBottom: 8,
-        border: `1px solid ${token.colorBorder}`,
-        borderRadius: token.borderRadius,
-        transition: 'all 0.2s ease',
+        ...styles.card,
         animation: `fadeIn 0.3s ease-out forwards`,
         animationDelay: `${index * 0.03}s`,
-        opacity: 0,
-        boxShadow: token.boxShadowTertiary
+        opacity: 0
       }}
-      bodyStyle={{ padding: '16px' }}
+      bodyStyle={{ padding: token.paddingLG }}
       hoverable
     >
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         {/* 左侧：图标和信息 */}
         <div style={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: 0 }}>
-          <div
-            style={{
-              width: 40,
-              height: 40,
-              borderRadius: token.borderRadiusLG,
-              backgroundColor: token.colorFillQuaternary,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginRight: 16,
-              flexShrink: 0,
-              border: `1px solid ${token.colorBorderSecondary}`
-            }}
-          >
+          <div style={styles.iconContainer}>
             <ProviderIcon
               provider={model.provider}
-              size={24}
-              type="color"
+              size={18}
+              type={'color'}
             />
           </div>
           
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', marginBottom: 6 }}>
-              <Text
-                strong
-                style={{
-                  fontSize: 15,
-                  marginRight: 12,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  maxWidth: 250,
-                  color: token.colorText
-                }}
-                title={model.displayName}
-              >
+          <div style={styles.modelInfo}>
+            <div style={styles.modelName}>
+              <span style={{ 
+                overflow: 'hidden', 
+                textOverflow: 'ellipsis', 
+                whiteSpace: 'nowrap',
+                maxWidth: '200px'
+              }}>
                 {model.displayName}
-              </Text>
-              
-              {/* 能力图标 */}
-              <Space size={6}>
-                {model.abilities?.vision && (
-                  <Tooltip title="支持视觉识别">
-                    <div style={{
-                      padding: '2px 6px',
-                      backgroundColor: token.colorPrimaryBg,
-                      borderRadius: token.borderRadiusSM,
-                      display: 'flex',
-                      alignItems: 'center'
-                    }}>
-                      <Eye size={12} style={{ color: token.colorPrimary }} />
-                    </div>
-                  </Tooltip>
-                )}
-                {model.abilities?.functionCall && (
-                  <Tooltip title="支持函数调用">
-                    <div style={{
-                      padding: '2px 6px',
-                      backgroundColor: token.colorWarningBg,
-                      borderRadius: token.borderRadiusSM,
-                      display: 'flex',
-                      alignItems: 'center'
-                    }}>
-                      <Zap size={12} style={{ color: token.colorWarning }} />
-                    </div>
-                  </Tooltip>
-                )}
-              </Space>
-            </div>
-            
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <Text
-                type="secondary"
-                style={{
-                  fontSize: 12,
-                  fontFamily: 'Monaco, Consolas, monospace',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  maxWidth: 180,
-                  backgroundColor: token.colorFillTertiary,
-                  padding: '2px 6px',
-                  borderRadius: token.borderRadiusSM
-                }}
-                title={model.id}
-              >
-                {model.id}
-              </Text>
-              
-              <Tag
-                color={getTypeTagColor(model.type)}
+              </span>
+              <Tag 
+                color={getTypeTagColor(model.type)} 
+                size="small"
                 style={{ 
-                  fontSize: 11, 
-                  padding: '2px 8px', 
-                  margin: 0,
-                  borderRadius: token.borderRadiusLG,
-                  fontWeight: 500
+                  fontSize: token.fontSizeSM,
+                  lineHeight: '16px',
+                  margin: 0
                 }}
               >
                 {getTypeDisplayName(model.type)}
               </Tag>
             </div>
+            
+            <div style={styles.modelMeta}>
+              <Text style={{ 
+                color: token.colorTextQuaternary, 
+                fontSize: token.fontSizeSM 
+              }}>
+                ID: {model.id}
+              </Text>
+            </div>
+            
+            <div style={styles.contextInfo}>
+              <span>上下文: {formatContextWindow(model.contextWindowTokens)}</span>
+              <span style={{ color: token.colorTextQuaternary }}>•</span>
+              <span>输出: {formatContextWindow(model.maxOutput)}</span>
+              {model.pricing && (
+                <>
+                  <span style={{ color: token.colorTextQuaternary }}>•</span>
+                  <span style={{ color: token.colorWarning }}>
+                    ${model.pricing.input || 0}/${model.pricing.output || 0}
+                  </span>
+                </>
+              )}
+            </div>
+            
+            {(model.abilities?.functionCall || model.abilities?.vision) && (
+              <div style={styles.abilities}>
+                {renderAbilities()}
+              </div>
+            )}
           </div>
         </div>
 
-        {/* 右侧：操作区域 */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexShrink: 0 }}>
-          {/* 上下文窗口大小 */}
-          <Tooltip title={`上下文窗口: ${model.contextWindowTokens.toLocaleString()} tokens`}>
-            <div style={{
-              padding: '4px 8px',
-              backgroundColor: token.colorFillSecondary,
-              borderRadius: token.borderRadius,
-              fontSize: 12,
-              fontWeight: 500,
-              color: token.colorTextSecondary,
-              minWidth: 'fit-content'
-            }}>
-              {formatContextWindow(model.contextWindowTokens)}
-            </div>
-          </Tooltip>
-
-          {/* 启用状态开关 */}
+        {/* 右侧：控制按钮 */}
+        <div style={styles.controls}>
           <Switch
-            size="small"
             checked={model.enabled}
             onChange={handleToggle}
-            style={{ flexShrink: 0 }}
+            size="small"
           />
-
-          {/* 更多操作菜单 */}
+          
           <Dropdown
             menu={{ items: menuItems }}
             trigger={['click']}
@@ -334,15 +358,12 @@ const ModelListItem: React.FC<ModelListItemProps> = ({
           >
             <Button
               type="text"
-              size="small"
               icon={<MoreHorizontal size={16} />}
+              size="small"
               style={{
                 color: token.colorTextTertiary,
                 border: 'none',
-                padding: '6px',
-                height: 'auto',
-                flexShrink: 0,
-                borderRadius: token.borderRadius
+                background: 'transparent'
               }}
             />
           </Dropdown>

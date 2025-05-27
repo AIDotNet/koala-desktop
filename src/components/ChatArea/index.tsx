@@ -1,7 +1,6 @@
 import React, {  useRef, useEffect } from 'react'
 import { message as antdMessage } from 'antd'
 import { Message } from '@/types/chat'
-import WelcomeScreen from '../WelcomeScreen'
 import ChatMessage from '../ChatMessage'
 import './index.css'
 

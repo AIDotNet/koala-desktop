@@ -5,7 +5,7 @@ export const darkTheme: ThemeConfig = {
   algorithm: theme.darkAlgorithm,
   token: {
     // 主色调
-    colorPrimary: '#6366f1',
+    colorPrimary: '#1890ff',
     colorSuccess: '#10b981',
     colorWarning: '#f59e0b',
     colorError: '#ef4444',
@@ -68,9 +68,9 @@ export const darkTheme: ThemeConfig = {
     },
     Menu: {
       itemBg: 'transparent',
-      itemSelectedBg: '#6366f1',
+      itemSelectedBg: '#1890ff',
       itemHoverBg: '#2d2d44',
-      itemActiveBg: '#6366f1',
+      itemActiveBg: '#1890ff',
       itemColor: '#e0e0e8',
       itemSelectedColor: '#ffffff',
       itemHoverColor: '#ffffff',
@@ -79,8 +79,8 @@ export const darkTheme: ThemeConfig = {
     },
     Button: {
       primaryColor: '#ffffff',
-      colorPrimaryHover: '#8b5cf6',
-      colorPrimaryActive: '#5b21b6',
+      colorPrimaryHover: '#40a9ff',
+      colorPrimaryActive: '#096dd9',
       defaultBg: '#2a2a3a',
       defaultBorderColor: '#3a3a4a',
       defaultColor: '#e0e0e8',
@@ -120,15 +120,15 @@ export const darkTheme: ThemeConfig = {
     Tabs: {
       cardBg: '#1e1e2e',
       itemColor: '#b0b0c0',
-      itemSelectedColor: '#6366f1',
+      itemSelectedColor: '#1890ff',
       itemHoverColor: '#ffffff',
-      inkBarColor: '#6366f1',
+      inkBarColor: '#1890ff',
       cardHeight: 40,
     },
     Select: {
       colorBgContainer: '#2a2a3a',
       colorBgElevated: '#1e1e2e',
-      optionSelectedBg: '#6366f1',
+      optionSelectedBg: '#1890ff',
       optionActiveBg: '#2d2d44',
     },
     Tooltip: {
@@ -138,7 +138,7 @@ export const darkTheme: ThemeConfig = {
     Notification: {
       colorBgElevated: '#1e1e2e',
       colorText: '#ffffff',
-      colorIcon: '#6366f1',
+      colorIcon: '#1890ff',
     },
     Message: {
       contentBg: '#1e1e2e',
@@ -152,7 +152,7 @@ export const lightTheme: ThemeConfig = {
   algorithm: theme.defaultAlgorithm,
   token: {
     // 主色调
-    colorPrimary: '#6366f1',
+    colorPrimary: '#1890ff',
     colorSuccess: '#10b981',
     colorWarning: '#f59e0b',
     colorError: '#ef4444',
@@ -215,9 +215,9 @@ export const lightTheme: ThemeConfig = {
     },
     Menu: {
       itemBg: 'transparent',
-      itemSelectedBg: '#6366f1',
+      itemSelectedBg: '#1890ff',
       itemHoverBg: '#f3f4f6',
-      itemActiveBg: '#6366f1',
+      itemActiveBg: '#1890ff',
       itemColor: '#6b7280',
       itemSelectedColor: '#ffffff',
       itemHoverColor: '#1f2937',
@@ -226,8 +226,8 @@ export const lightTheme: ThemeConfig = {
     },
     Button: {
       primaryColor: '#ffffff',
-      colorPrimaryHover: '#8b5cf6',
-      colorPrimaryActive: '#5b21b6',
+      colorPrimaryHover: '#40a9ff',
+      colorPrimaryActive: '#096dd9',
       defaultBg: '#ffffff',
       defaultBorderColor: '#d1d5db',
       defaultColor: '#6b7280',
@@ -267,15 +267,15 @@ export const lightTheme: ThemeConfig = {
     Tabs: {
       cardBg: '#ffffff',
       itemColor: '#6b7280',
-      itemSelectedColor: '#6366f1',
+      itemSelectedColor: '#1890ff',
       itemHoverColor: '#1f2937',
-      inkBarColor: '#6366f1',
+      inkBarColor: '#1890ff',
       cardHeight: 40,
     },
     Select: {
       colorBgContainer: '#ffffff',
       colorBgElevated: '#ffffff',
-      optionSelectedBg: '#6366f1',
+      optionSelectedBg: '#1890ff',
       optionActiveBg: '#f3f4f6',
     },
     Tooltip: {
@@ -285,7 +285,7 @@ export const lightTheme: ThemeConfig = {
     Notification: {
       colorBgElevated: '#ffffff',
       colorText: '#1f2937',
-      colorIcon: '#6366f1',
+      colorIcon: '#1890ff',
     },
     Message: {
       contentBg: '#ffffff',
@@ -298,7 +298,7 @@ export const lightTheme: ThemeConfig = {
 export const colors = {
   dark: {
     // 主要色调
-    primary: '#6366f1',
+    primary: '#1890ff',
     success: '#10b981',
     warning: '#f59e0b',
     error: '#ef4444',
@@ -329,7 +329,7 @@ export const colors = {
   },
   light: {
     // 主要色调
-    primary: '#6366f1',
+    primary: '#1890ff',
     success: '#10b981',
     warning: '#f59e0b',
     error: '#ef4444',

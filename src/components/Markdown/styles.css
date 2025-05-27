@@ -11,12 +11,12 @@
 
 .markdown-renderer.light {
   background: transparent;
-  color: #1f2937;
+  color: #3b3b3b;
 }
 
 .markdown-renderer.dark {
   background: transparent;
-  color: white;
+  color: #ffffff;
 }
 
 /* 工具栏 */
@@ -62,18 +62,18 @@
   margin: 24px 0 16px 0;
   font-weight: 600;
   line-height: 1.2;
-  color: #6366f1;
+  color: #1890ff;
 }
 
 .markdown-h1 {
   font-size: 2.5em;
-  border-bottom: 2px solid rgba(99, 102, 241, 0.3);
+  border-bottom: 2px solid rgba(24, 144, 255, 0.3);
   padding-bottom: 8px;
 }
 
 .markdown-h2 {
   font-size: 2em;
-  border-bottom: 1px solid rgba(99, 102, 241, 0.2);
+  border-bottom: 1px solid rgba(24, 144, 255, 0.2);
   padding-bottom: 6px;
 }
 
@@ -101,28 +101,27 @@
 
 /* 链接样式 */
 .markdown-link {
-  color: #6366f1;
+  color: #1890ff;
   text-decoration: none;
   border-bottom: 1px solid transparent;
 }
 
 .markdown-link:hover {
-  border-bottom-color: #6366f1;
-  color: #8b5cf6;
+  border-bottom-color: #1890ff;
+  color: #40a9ff;
 }
 
 /* 引用块样式 */
 .markdown-blockquote {
-  margin: 24px 0;
-  padding: 16px 24px;
-  border-left: 4px solid #6366f1;
-  background: rgba(99, 102, 241, 0.1);
+  margin: 16px 0;
+  padding: 16px 20px;
+  border-left: 4px solid #1890ff;
+  background: rgba(24, 144, 255, 0.1);
   border-radius: 0 8px 8px 0;
-  font-style: italic;
 }
 
-.markdown-renderer.dark .markdown-blockquote {
-  background: rgba(99, 102, 241, 0.15);
+.markdown-blockquote:hover {
+  background: rgba(24, 144, 255, 0.15);
 }
 
 /* 列表样式 */
@@ -152,29 +151,31 @@
 
 /* 表格样式 */
 .table-container {
-  margin: 24px 0;
+  margin: 20px 0;
   overflow-x: auto;
   border-radius: 8px;
-  border: 1px solid rgba(107, 114, 128, 0.3);
+  border: 1px solid rgba(24, 144, 255, 0.2);
 }
 
 .markdown-table {
   width: 100%;
   border-collapse: collapse;
-  background: transparent;
+  background: rgba(24, 144, 255, 0.05);
 }
 
-.markdown-th,
+.markdown-th {
+  background: rgba(24, 144, 255, 0.1);
+  color: #1890ff;
+  font-weight: 600;
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 2px solid rgba(24, 144, 255, 0.3);
+}
+
 .markdown-td {
   padding: 12px 16px;
   text-align: left;
   border-bottom: 1px solid rgba(107, 114, 128, 0.3);
-}
-
-.markdown-th {
-  background: rgba(99, 102, 241, 0.1);
-  font-weight: 600;
-  color: #6366f1;
 }
 
 .markdown-tr:hover {
@@ -213,30 +214,26 @@
 
 /* 代码块容器 */
 .code-block-container {
-  margin: 24px 0;
-  border-radius: 8px;
+  margin: 20px 0;
+  border-radius: 12px;
   overflow: hidden;
-  border: 1px solid rgba(107, 114, 128, 0.3);
-  background: rgba(55, 65, 81, 0.05);
-}
-
-.markdown-renderer.dark .code-block-container {
-  background: rgba(17, 24, 39, 0.8);
-  border-color: rgba(75, 85, 99, 0.3);
+  background: rgba(24, 144, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #1890ff;
 }
 
 .code-block-header {
+  background: rgba(24, 144, 255, 0.05);
+  padding: 12px 16px;
+  border: 1px solid rgba(24, 144, 255, 0.2);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 12px;
-  background: rgba(17, 24, 39, 0.1);
-  border-bottom: 1px solid rgba(107, 114, 128, 0.2);
 }
 
-.markdown-renderer.dark .code-block-header {
-  background: rgba(17, 24, 39, 0.5);
-  border-bottom-color: rgba(75, 85, 99, 0.3);
+.code-block-header:hover {
+  background: rgba(24, 144, 255, 0.1);
+  border-color: rgba(24, 144, 255, 0.3);
 }
 
 .language-label {
@@ -248,22 +245,19 @@
 }
 
 .copy-button {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  border: none;
-  border-radius: 4px;
-  background: #6366f1;
+  background: #1890ff;
   color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
   cursor: pointer;
   font-size: 12px;
-  font-weight: 500;
-  position: relative;
+  transition: all 0.2s ease;
 }
 
 .copy-button:hover {
-  background: #4f46e5;
+  background: rgba(24, 144, 255, 0.8);
+  transform: translateY(-1px);
 }
 
 .copy-button.copied {
@@ -354,14 +348,14 @@
 
 /* 可拖拽模式 */
 .markdown-draggable {
-  border: 2px dashed rgba(99, 102, 241, 0.3);
+  border: 2px dashed rgba(24, 144, 255, 0.3);
   border-radius: 12px;
   min-width: 300px;
   min-height: 200px;
 }
 
 .markdown-draggable:hover {
-  border-color: rgba(99, 102, 241, 0.6);
+  border-color: rgba(24, 144, 255, 0.6);
 }
 
 .markdown-draggable .markdown-renderer {
@@ -415,13 +409,13 @@
 
 .markdown-content::-webkit-scrollbar-thumb,
 .table-container::-webkit-scrollbar-thumb {
-  background: rgba(99, 102, 241, 0.5);
+  background: rgba(24, 144, 255, 0.5);
   border-radius: 3px;
 }
 
 .markdown-content::-webkit-scrollbar-thumb:hover,
 .table-container::-webkit-scrollbar-thumb:hover {
-  background: rgba(99, 102, 241, 0.7);
+  background: rgba(24, 144, 255, 0.7);
 }
 
 /* 数学公式样式优化 */
@@ -593,7 +587,7 @@
 
 /* 让Think Block在聊天消息中的样式更合适 */
 .assistant-message-bubble .think-block {
-  margin: 16px 0;
+  margin: 8px 0;
   border-radius: 6px;
 }
 
@@ -609,4 +603,14 @@
 .assistant-message-bubble .think-content-inner {
   padding-top: 12px;
   font-size: 13px;
+}
+
+/* 行内代码样式 */
+.markdown-code {
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Fira Code', 'Monaco', 'Consolas', monospace;
+  font-size: 0.9em;
+  color: #1890ff;
+  font-weight: 500;
 } 

@@ -1,56 +1,219 @@
 /* SessionMenu 组件样式 */
-.session-menu-dropdown .ant-dropdown-menu {
-  background-color: #374151 !important;
-  border: 1px solid #4B5563 !important;
+
+/* 深色主题下拉菜单样式 */
+.session-menu-dropdown.dark-theme .ant-dropdown-menu {
+  background-color: #2a2a3a !important;
+  border: 1px solid #3a3a4a !important;
   border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
 }
 
-.session-menu-dropdown .ant-dropdown-menu-item {
-  color: #D1D5DB !important;
+.session-menu-dropdown.dark-theme .ant-dropdown-menu-item {
+  color: #e0e0e8 !important;
+  transition: all 0.2s ease !important;
 }
 
-.session-menu-dropdown .ant-dropdown-menu-item:hover {
-  background-color: #4B5563 !important;
+.session-menu-dropdown.dark-theme .ant-dropdown-menu-item:hover {
+  background-color: #2d2d44 !important;
+  color: #ffffff !important;
 }
 
-/* 模态框深色主题样式 */
-.ant-modal .ant-modal-content {
-  background-color: #1F2937 !important;
-  border: 1px solid #374151 !important;
+/* 亮色主题下拉菜单样式 */
+.session-menu-dropdown.light-theme .ant-dropdown-menu {
+  background-color: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
 }
 
-.ant-modal .ant-modal-header {
-  background-color: #1F2937 !important;
-  border-bottom: 1px solid #374151 !important;
+.session-menu-dropdown.light-theme .ant-dropdown-menu-item {
+  color: #6b7280 !important;
+  transition: all 0.2s ease !important;
 }
 
-.ant-modal .ant-modal-title {
-  color: #F9FAFB !important;
+.session-menu-dropdown.light-theme .ant-dropdown-menu-item:hover {
+  background-color: #f3f4f6 !important;
+  color: #1f2937 !important;
 }
 
-.ant-modal .ant-modal-footer {
-  background-color: #1F2937 !important;
-  border-top: 1px solid #374151 !important;
+/* 菜单触发器悬停效果 - 修复背景透明问题 */
+.session-menu-trigger:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  transform: scale(1.05);
 }
 
-.ant-modal .ant-btn-default {
-  background-color: #374151 !important;
-  border-color: #4B5563 !important;
-  color: #D1D5DB !important;
+/* 深色主题下的菜单触发器悬停效果 */
+.dark-theme .session-menu-trigger:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
 }
 
-.ant-modal .ant-btn-default:hover {
-  background-color: #4B5563 !important;
-  border-color: #6B7280 !important;
-  color: #F9FAFB !important;
+/* 亮色主题下的菜单触发器悬停效果 */
+.light-theme .session-menu-trigger:hover {
+  background-color: rgba(0, 0, 0, 0.05) !important;
 }
 
-.ant-modal .ant-btn-primary {
-  background-color: #3B82F6 !important;
-  border-color: #3B82F6 !important;
+/* 深色主题模态框样式 - 使用具体颜色值 */
+.session-edit-modal.dark-theme .ant-modal-content {
+  background-color: #1e1e2e !important;
+  border: 1px solid #3a3a4a !important;
+  border-radius: 12px !important;
 }
 
-.ant-modal .ant-btn-primary:hover {
-  background-color: #2563EB !important;
-  border-color: #2563EB !important;
+.session-edit-modal.dark-theme .ant-modal-header {
+  background-color: #1e1e2e !important;
+  border-bottom: 1px solid #3a3a4a !important;
+}
+
+.session-edit-modal.dark-theme .ant-modal-title {
+  color: #ffffff !important;
+  font-weight: 600;
+}
+
+.session-edit-modal.dark-theme .ant-modal-body {
+  background-color: #1e1e2e !important;
+}
+
+.session-edit-modal.dark-theme .ant-modal-footer {
+  background-color: #1e1e2e !important;
+  border-top: 1px solid #3a3a4a !important;
+}
+
+.session-edit-modal.dark-theme .ant-btn-default {
+  background-color: #2a2a3a !important;
+  border-color: #3a3a4a !important;
+  color: #e0e0e8 !important;
+  transition: all 0.2s ease !important;
+}
+
+.session-edit-modal.dark-theme .ant-btn-default:hover {
+  background-color: #2d2d44 !important;
+  border-color: #4a4a5a !important;
+  color: #ffffff !important;
+  transform: translateY(-1px);
+}
+
+.session-edit-modal.dark-theme .ant-btn-primary {
+  background-color: #1890ff !important;
+  border-color: #1890ff !important;
+  transition: all 0.2s ease !important;
+}
+
+.session-edit-modal.dark-theme .ant-btn-primary:hover {
+  background-color: #40a9ff !important;
+  border-color: #40a9ff !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(24, 144, 255, 0.3);
+}
+
+/* 深色主题输入框样式 */
+.session-edit-modal.dark-theme .ant-input {
+  background-color: #2a2a3a !important;
+  border-color: #3a3a4a !important;
+  color: #ffffff !important;
+}
+
+.session-edit-modal.dark-theme .ant-input:focus {
+  border-color: #1890ff !important;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2) !important;
+}
+
+/* 亮色主题模态框样式 */
+.session-edit-modal.light-theme .ant-modal-content {
+  background-color: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1) !important;
+}
+
+.session-edit-modal.light-theme .ant-modal-header {
+  background-color: #ffffff !important;
+  border-bottom: 1px solid #e5e7eb !important;
+}
+
+.session-edit-modal.light-theme .ant-modal-title {
+  color: #1f2937 !important;
+  font-weight: 600;
+}
+
+.session-edit-modal.light-theme .ant-modal-body {
+  background-color: #ffffff !important;
+}
+
+.session-edit-modal.light-theme .ant-modal-footer {
+  background-color: #ffffff !important;
+  border-top: 1px solid #e5e7eb !important;
+}
+
+.session-edit-modal.light-theme .ant-btn-default {
+  background-color: #ffffff !important;
+  border-color: #d1d5db !important;
+  color: #6b7280 !important;
+  transition: all 0.2s ease !important;
+}
+
+.session-edit-modal.light-theme .ant-btn-default:hover {
+  background-color: #f9fafb !important;
+  border-color: #9ca3af !important;
+  color: #1f2937 !important;
+  transform: translateY(-1px);
+}
+
+.session-edit-modal.light-theme .ant-btn-primary {
+  background-color: #1890ff !important;
+  border-color: #1890ff !important;
+  transition: all 0.2s ease !important;
+}
+
+.session-edit-modal.light-theme .ant-btn-primary:hover {
+  background-color: #40a9ff !important;
+  border-color: #40a9ff !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(24, 144, 255, 0.2);
+}
+
+/* 亮色主题输入框样式 */
+.session-edit-modal.light-theme .ant-input {
+  background-color: #ffffff !important;
+  border-color: #d1d5db !important;
+  color: #1f2937 !important;
+}
+
+.session-edit-modal.light-theme .ant-input:focus {
+  border-color: #1890ff !important;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2) !important;
+}
+
+/* 确认删除模态框样式 */
+.session-confirm-modal .ant-modal-content {
+  border-radius: 12px !important;
+}
+
+.session-confirm-modal .ant-btn-dangerous {
+  transition: all 0.2s ease !important;
+}
+
+.session-confirm-modal .ant-btn-dangerous:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+}
+
+/* 通用输入框样式增强 */
+.session-edit-modal .ant-input {
+  border-radius: 8px !important;
+  transition: all 0.2s ease !important;
+}
+
+.session-edit-modal .ant-input:focus {
+  transform: translateY(-1px);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .session-edit-modal {
+    margin: 0 16px !important;
+  }
+  
+  .session-edit-modal .ant-modal-content {
+    margin: 0 !important;
+  }
 } 
