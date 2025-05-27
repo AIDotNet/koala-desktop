@@ -5,7 +5,7 @@
   max-width: 100%;
   overflow: hidden;
   border-radius: 12px;
-  padding: 16px;
+  padding: 8px;
   position: relative;
 }
 
@@ -446,13 +446,9 @@
   margin: 20px 0;
   border-radius: 8px;
   overflow: hidden;
-  border: 1px solid rgba(99, 102, 241, 0.2);
-  background: rgba(99, 102, 241, 0.05);
 }
 
 .think-block.dark {
-  background: rgba(99, 102, 241, 0.08);
-  border-color: rgba(99, 102, 241, 0.25);
 }
 
 .think-toggle-button {
@@ -522,7 +518,6 @@
 
 .think-content-inner {
   padding-top: 16px;
-  border-top: 1px solid rgba(99, 102, 241, 0.15);
   font-size: 14px;
   line-height: 1.6;
 }

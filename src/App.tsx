@@ -11,6 +11,7 @@ import { Monitor, Smartphone, Tablet, Zap } from 'lucide-react'
 import logoVite from './assets/logo-vite.svg'
 import logoElectron from './assets/logo-electron.svg'
 import { darkTheme, lightTheme, getThemeColors } from '@/theme'
+import { chatSessionDB } from '@/utils/indexedDB'
 
 function App() {
   const [isDarkTheme, setIsDarkTheme] = useState(false)
@@ -133,6 +134,25 @@ function App() {
     setCurrentUrl(randomTab.url)
   }
 
+  // 更新聊天标签页标题的函数
+  const updateChatTabTitle = async (sessionId: string) => {
+    try {
+      const session = await chatSessionDB.getSession(sessionId)
+      if (session) {
+        setTabs(prevTabs => 
+          prevTabs.map(tab => {
+            if (tab.url === `/chat/${sessionId}`) {
+              return { ...tab, title: session.title }
+            }
+            return tab
+          })
+        )
+      }
+    } catch (error) {
+      console.error('更新标签页标题失败:', error)
+    }
+  }
+
   // 添加设置标签页的函数
   const addSettingsTab = () => {
     // 检查是否已经存在设置标签页
@@ -177,18 +197,43 @@ function App() {
         
         if (!existingTab) {
           // 创建新的聊天标签页
-          const chatTab: Tab = {
-            id: Date.now().toString(),
-            title: `聊天 ${sessionIdFromUrl.slice(0, 8)}...`,
-            url: url,
-            isActive: true,
-            canClose: true
+          const createChatTab = async () => {
+            try {
+              // 通过 chatSessionDB 获取会话信息
+              const session = await chatSessionDB.getSession(sessionIdFromUrl)
+              const sessionTitle = session?.title || `聊天 ${sessionIdFromUrl.slice(0, 8)}...`
+              
+              const chatTab: Tab = {
+                id: Date.now().toString(),
+                title: sessionTitle,
+                url: url,
+                isActive: true,
+                canClose: true
+              }
+              
+              setTabs(prevTabs => [
+                ...prevTabs.map(tab => ({ ...tab, isActive: false })),
+                chatTab
+              ])
+            } catch (error) {
+              console.error('获取会话标题失败:', error)
+              // 如果获取失败，使用默认标题
+              const chatTab: Tab = {
+                id: Date.now().toString(),
+                title: `聊天 ${sessionIdFromUrl.slice(0, 8)}...`,
+                url: url,
+                isActive: true,
+                canClose: true
+              }
+              
+              setTabs(prevTabs => [
+                ...prevTabs.map(tab => ({ ...tab, isActive: false })),
+                chatTab
+              ])
+            }
           }
           
-          setTabs(prevTabs => [
-            ...prevTabs.map(tab => ({ ...tab, isActive: false })),
-            chatTab
-          ])
+          createChatTab()
         } else {
           // 激活现有标签页
           setTabs(prevTabs => 
@@ -214,6 +259,7 @@ function App() {
             addSettingsTab={addSettingsTab}
             sessionId={sessionId}
             onNavigate={handleNavigate}
+            onSessionTitleUpdate={updateChatTabTitle}
           />
         )
     }

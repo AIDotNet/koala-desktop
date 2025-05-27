@@ -8,6 +8,7 @@ import remarkMath from 'remark-math'
 import remarkBreaks from 'remark-breaks'
 import rehypeKatex from 'rehype-katex'
 import rehypeRaw from 'rehype-raw'
+import { Button } from 'antd'
 
 interface ThinkBlockProps {
   content: string
@@ -37,8 +38,7 @@ const ThinkBlock: React.FC<ThinkBlockProps> = ({ content, isDarkTheme = false })
 
   return (
     <div className={`think-block ${isDarkTheme ? 'dark' : 'light'}`}>
-      <button
-        className="think-toggle-button"
+      <Button
         onClick={toggleExpanded}
         aria-expanded={isExpanded}
       >
@@ -47,12 +47,16 @@ const ThinkBlock: React.FC<ThinkBlockProps> = ({ content, isDarkTheme = false })
         <span className="think-chevron">
           {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
         </span>
-      </button>
+      </Button>
       
       <div 
         className={`think-content ${isExpanded ? 'expanded' : 'collapsed'}`}
         style={{
-          maxHeight: isExpanded ? `${contentHeight + 32}px` : '0px'
+          maxHeight: isExpanded ? `${contentHeight + 32}px` : '0px',
+          background: isDarkTheme ? '#121218' : '#f9fafb',
+          borderRadius: '8px',
+          padding: isExpanded ? '8px' : '0px',
+          margin: isExpanded ? '8px 0' : '0px',
         }}
       >
         <div ref={contentRef} className="think-content-inner">

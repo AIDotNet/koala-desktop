@@ -54,10 +54,6 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     antdMessage.success('已复制到剪贴板')
   }
 
-  if (messages.length === 0) {
-    return <WelcomeScreen isDarkTheme={isDarkTheme} onNewChat={onNewChat} />
-  }
-
   return (
     <div className="chat-area">
       <div className="chat-content">

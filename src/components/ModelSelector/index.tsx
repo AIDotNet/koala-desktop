@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Select } from 'antd'
-import { ChevronDown, Zap, Eye, Search } from 'lucide-react'
+import { ChevronDown, Zap, Eye } from 'lucide-react'
 import { Model, Provider, ModelSelectorProps } from '@/types/model'
 import { getIcon, IconName } from '@/utils/iconutils'
 import './ModelSelector.css'

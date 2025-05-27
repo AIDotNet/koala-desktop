@@ -36,25 +36,27 @@ interface HomeProps {
   sessionId?: string
   onNavigate?: (url: string) => void
   initialQuery?: string // 新增：用于非Router上下文的初始查询参数
+  onSessionTitleUpdate?: (sessionId: string) => void // 新增：会话标题更新回调
 }
 
-const Home: React.FC<HomeProps> = ({ 
-  isDarkTheme, 
-  addSettingsTab, 
-  sessionId: propSessionId, 
+const Home: React.FC<HomeProps> = ({
+  isDarkTheme,
+  addSettingsTab,
+  sessionId: propSessionId,
   onNavigate,
-  initialQuery
+  initialQuery,
+  onSessionTitleUpdate
 }) => {
   // 优先使用props传入的sessionId，如果没有则使用useParams
   let sessionId: string | undefined
-  let navigate: any = (path: string, options?: any) => {}
+  let navigate: any = (path: string, options?: any) => { }
   let location: any = { search: '', pathname: '' }
 
   try {
     const params = useParams()
     const routerNavigate = useNavigate()
     const routerLocation = useLocation()
-    
+
     sessionId = propSessionId || params.sessionId
     navigate = onNavigate || routerNavigate
     location = routerLocation
@@ -124,14 +126,30 @@ const Home: React.FC<HomeProps> = ({
   // 判断是否在欢迎页面模式
   const isWelcomeMode = !sessionId
 
+  // 监听 sessionId 变化，确保切换会话时清空消息记录
+  useEffect(() => {
+    if (!sessionId) {
+      // 如果没有 sessionId（回到首页），立即清空消息记录
+      setSessionMessages([])
+      setStreamingMessages({})
+    }
+  }, [sessionId])
+
   // 新增：加载会话消息的方法，使用useCallback包装
   const loadSessionMessages = useCallback(async (sid: string) => {
     try {
+      // 先清空当前消息记录和流式消息
+      setSessionMessages([])
+      setStreamingMessages({})
+      
       const messages = await chatSessionDB.getMessagesForSession(sid)
       setSessionMessages(messages)
     } catch (error) {
       console.error('Failed to load session messages:', error)
       message.error('加载会话消息失败')
+      // 出错时也要清空消息记录
+      setSessionMessages([])
+      setStreamingMessages({})
     }
   }, []);
 
@@ -245,11 +263,18 @@ const Home: React.FC<HomeProps> = ({
       const sessionExists = chatSessions.some(session => session.id === sessionId)
       if (!sessionExists) {
         console.log('会话不存在，回到首页')
+        // 清空消息记录
+        setSessionMessages([])
+        setStreamingMessages({})
         navigate('/')
       } else {
         // 会话存在，加载该会话的消息
         loadSessionMessages(sessionId)
       }
+    } else if (isInitialized && !sessionId) {
+      // 如果没有会话ID（在首页），清空消息记录
+      setSessionMessages([])
+      setStreamingMessages({})
     }
   }, [isInitialized, sessionId, chatSessions, navigate, loadSessionMessages])
 
@@ -261,21 +286,22 @@ const Home: React.FC<HomeProps> = ({
       // 使用之前安全获取的location对象
       const params = new URLSearchParams(location.search);
       const initialMessage = params.get('q') || params.get('query') || initialQuery;
-      
+
       if (initialMessage && initialMessage.trim() !== '') {
+        debugger;
         if (!sessionId) {
           // 如果没有活跃会话，创建一个新会话
           try {
             const newSession = await chatSessionDB.createDefaultSession();
             const newSessionId = newSession.id;
-            
+
             // 更新会话列表
             const updatedSessions = await chatSessionDB.getAllSessions();
             setChatSessions(updatedSessions);
-            
+
             // 导航到新会话并带上初始消息
             navigate(`/chat/${newSessionId}`);
-            
+
             // 保存初始消息以供会话加载后发送
             localStorage.setItem('initialMessage', initialMessage);
           } catch (error) {
@@ -287,14 +313,14 @@ const Home: React.FC<HomeProps> = ({
           setInputValue(initialMessage);
           handleSendMessage(initialMessage);
         }
-        
+
         // 清除URL中的查询参数，仅在Router上下文中执行
         if (typeof navigate === 'function' && location.pathname) {
           navigate(location.pathname, { replace: true });
         }
       }
     };
-    
+
     checkInitialMessageInURL();
   }, [location, sessionId, initialQuery, navigate]);
 
@@ -316,6 +342,8 @@ const Home: React.FC<HomeProps> = ({
       message.error('请先在设置中启用至少一个模型');
       return;
     }
+
+    debugger;
 
     let targetSessionId = sessionId;
 
@@ -381,26 +409,13 @@ const Home: React.FC<HomeProps> = ({
     };
 
     try {
+      sessionMessages.push(userMessage);
       // 添加用户消息到数据库
       await chatSessionDB.addMessage(targetSessionId, userMessage);
 
-      // 更新会话标题（如果是第一条消息）
-      const session = await chatSessionDB.getSession(targetSessionId);
-      // 获取会话的消息数量来判断是否是第一条消息
-      const messages = await chatSessionDB.getMessagesForSession(targetSessionId);
-      if (session && messages.length === 1) {
-        const newTitle = text.slice(0, 20) + (text.length > 20 ? '...' : '');
-        await chatSessionDB.updateSession(targetSessionId, { title: newTitle });
-      }
-
-      // 重新加载会话数据
-      const updatedSessions = await chatSessionDB.getAllSessions();
-      setChatSessions(updatedSessions);
-      
-      // 重新加载消息数据
-      if (targetSessionId === sessionId) {
-        await loadSessionMessages(targetSessionId);
-      }
+      // // 重新加载会话数据
+      // const updatedSessions = await chatSessionDB.getAllSessions();
+      // setChatSessions(updatedSessions);
 
       setInputValue('');
       setIsLoading(true);
@@ -408,15 +423,15 @@ const Home: React.FC<HomeProps> = ({
       // 获取选中的模型和提供商
       const allModels = providers.flatMap(p => p.models);
       const selectedModelData = allModels.find(m => m.id === selectedModel);
-      
+
       if (!selectedModelData) {
         message.error('未找到所选模型');
         setIsLoading(false);
         return;
       }
-      
+
       const selectedProvider = providers.find(p => p.id === selectedModelData.provider);
-      
+
       if (!selectedProvider) {
         message.error('未找到所选模型的提供商');
         setIsLoading(false);
@@ -425,7 +440,7 @@ const Home: React.FC<HomeProps> = ({
 
       // 准备助手消息的ID
       const assistantMessageId = uuidv4();
-      
+
       // 创建一个初始的助手消息对象，确保正确设置 conversationId
       const initialAssistantMessage: Message = {
         id: assistantMessageId,
@@ -459,18 +474,9 @@ const Home: React.FC<HomeProps> = ({
         conversationId: targetSessionId,  // 确保设置正确的会话ID
         is_variant: 0
       };
-      console.log('initialAssistantMessage', initialAssistantMessage)
-      // 添加初始助手消息到数据库
-      await chatSessionDB.addMessage(targetSessionId, initialAssistantMessage);
-      
-      // 重新加载消息数据
-      if (targetSessionId === sessionId) {
-        await loadSessionMessages(targetSessionId);
-      }
-      
       // 创建消息历史
-      const messageHistory = [...messages, userMessage,initialAssistantMessage];
-      
+      const messageHistory = [...sessionMessages, userMessage];
+
       // 使用 async iterator 处理流式消息
       try {
         // 获取流式消息生成器
@@ -483,78 +489,60 @@ const Home: React.FC<HomeProps> = ({
             maxTokens: selectedModelData.maxOutput
           }
         );
-        
+
+        sessionMessages.push(initialAssistantMessage);
+        // 添加初始助手消息到数据库
+        await chatSessionDB.addMessage(targetSessionId, initialAssistantMessage);
+
+        setStreamingMessages({
+          [assistantMessageId]: initialAssistantMessage
+        });
+
         // 使用 for await...of 迭代流式消息
         for await (const streamMessage of messageStream) {
           // 确保流式消息中的 conversationId 与目标会话ID一致
-          const messageWithCorrectId = {
+          const messageWithCorrect = {
             ...streamMessage,
             conversationId: targetSessionId,
             id: assistantMessageId
           };
-          
+
+          initialAssistantMessage.content = messageWithCorrect.content;
+
           // 更新流式消息状态
           setStreamingMessages(prev => ({
             ...prev,
-            [assistantMessageId]: messageWithCorrectId
+            [assistantMessageId]: initialAssistantMessage
           }));
-          
-          // 如果消息状态为已发送或错误，则保存到数据库
-          if (streamMessage.status === 'sent' || streamMessage.status === 'error') {
-            try {
-              // 更新助手消息，确保包含正确的会话ID
-              await chatSessionDB.updateMessage(targetSessionId, assistantMessageId, messageWithCorrectId);
-              
-              // 更新会话数据
-              const updatedSessions = await chatSessionDB.getAllSessions();
-              setChatSessions(updatedSessions);
-              
-              // 设置延迟清除流式消息
-              setTimeout(() => {
-                setStreamingMessages(prev => {
-                  const newState = { ...prev };
-                  delete newState[assistantMessageId];
-                  return newState;
-                });
-                
-                setIsLoading(false);
-              }, 500);
-            } catch (error) {
-              console.error('保存最终消息失败:', error);
-              message.error('保存消息失败');
-              setIsLoading(false);
-            }
-          }
+
         }
+
+        // 更新ai会话
+        await chatSessionDB.updateMessage(targetSessionId,initialAssistantMessage.id,initialAssistantMessage);
+
+        await loadSessionMessages(targetSessionId);
       } catch (error: any) {
         console.error('AI请求失败:', error);
         message.error(`AI请求失败: ${error.message || '未知错误'}`);
-        
-        // 创建错误消息，确保包含正确的会话ID
-        const errorMessage: Message = {
-          ...initialAssistantMessage,
-          content: [
-            {
-              type: 'error',
-              content: `请求失败: ${error.message || '未知错误'}`,
-              status: 'error',
-              timestamp: Date.now()
-            }
-          ],
-          status: 'error',
-          error: error.message || '未知错误',
-          conversationId: targetSessionId // 确保错误消息也有正确的会话ID
-        };
-        
+
+        initialAssistantMessage.content = [
+          {
+            type: 'error',
+            content: `请求失败: ${error.message || '未知错误'}`,
+            status: 'error',
+            timestamp: Date.now()
+          }
+        ]
+
         // 更新流式消息状态
         setStreamingMessages(prev => ({
           ...prev,
-          [assistantMessageId]: errorMessage
+          [assistantMessageId]: initialAssistantMessage
         }));
-        
+
         // 更新数据库
-        await chatSessionDB.updateMessage(targetSessionId, assistantMessageId, errorMessage);
-        
+        await chatSessionDB.updateMessage(targetSessionId, assistantMessageId, initialAssistantMessage);
+
         // 延迟清除流式消息
         setTimeout(() => {
           setStreamingMessages(prev => {
@@ -563,7 +551,7 @@ const Home: React.FC<HomeProps> = ({
             return newState;
           });
         }, 500);
-        
+
         setIsLoading(false);
       }
     } catch (error) {
@@ -582,6 +570,10 @@ const Home: React.FC<HomeProps> = ({
 
   const handleNewChat = async () => {
     try {
+      // 立即清空当前消息记录
+      setSessionMessages([])
+      setStreamingMessages({})
+      
       const newSession = await chatSessionDB.createDefaultSession()
       const updatedSessions = await chatSessionDB.getAllSessions()
       setChatSessions(updatedSessions)
@@ -593,6 +585,9 @@ const Home: React.FC<HomeProps> = ({
   }
 
   const handleSessionClick = (sessionId: string) => {
+    // 立即清空当前消息记录，避免显示上一个会话的消息
+    setSessionMessages([])
+    setStreamingMessages({})
     navigate(`/chat/${sessionId}`)
   }
 
@@ -601,6 +596,11 @@ const Home: React.FC<HomeProps> = ({
       await chatSessionDB.updateSession(sessionId, { title: newTitle })
       const updatedSessions = await chatSessionDB.getAllSessions()
       setChatSessions(updatedSessions)
+      
+      // 通知父组件更新标签页标题
+      if (onSessionTitleUpdate) {
+        onSessionTitleUpdate(sessionId)
+      }
     } catch (error) {
       console.error('Failed to edit session:', error)
       throw error
@@ -609,8 +609,10 @@ const Home: React.FC<HomeProps> = ({
 
   const handleDeleteSession = async (sessionIdToDelete: string) => {
     try {
-      // 如果删除的是当前会话，先导航到首页
+      // 如果删除的是当前会话，先清空消息记录并导航到首页
       if (sessionIdToDelete === sessionId) {
+        setSessionMessages([])
+        setStreamingMessages({})
         navigate('/')
       }
 
@@ -674,7 +676,7 @@ const Home: React.FC<HomeProps> = ({
     try {
       if (!sessionId) return;
       await chatSessionDB.deleteMessage(sessionId, messageId);
-      
+
       // 重新加载消息
       await loadSessionMessages(sessionId);
       message.success('消息已删除');
@@ -683,21 +685,21 @@ const Home: React.FC<HomeProps> = ({
       message.error('删除消息失败');
     }
   };
-  
+
   // 添加编辑消息的处理函数
   const handleEditMessage = async (messageId: string, newContent: string) => {
     try {
       if (!sessionId) return;
-      
+
       // 找到需要编辑的消息
       const messageToEdit = sessionMessages.find(msg => msg.id === messageId);
       if (!messageToEdit) {
         message.error('消息不存在');
         return;
       }
-      
+
       let updatedMessage;
-      
+
       if (messageToEdit.role === 'user') {
         // 更新用户消息内容
         updatedMessage = {
@@ -730,7 +732,7 @@ const Home: React.FC<HomeProps> = ({
               timestamp: now
             });
           }
-          
+
           updatedMessage = {
             ...messageToEdit,
             content: updatedContent
@@ -743,10 +745,10 @@ const Home: React.FC<HomeProps> = ({
           };
         }
       }
-      
+
       // 保存更新后的消息
       await chatSessionDB.updateMessage(sessionId, messageId, updatedMessage as Message);
-      
+
       // 重新加载消息
       await loadSessionMessages(sessionId);
       message.success('消息已更新');
@@ -760,30 +762,30 @@ const Home: React.FC<HomeProps> = ({
   const handleRegenerateMessage = async (messageId: string) => {
     try {
       if (!sessionId) return;
-      
+
       // 查找点击的消息
       const clickedMessage = sessionMessages.find(msg => msg.id === messageId);
       if (!clickedMessage) {
         message.error('无法找到对应的消息');
         return;
       }
-      
+
       // 如果点击的是AI消息，找到对应的用户消息并直接重新生成回复
       if (clickedMessage.role === 'assistant') {
         // 查找这条AI消息之前的用户消息
         const userMessages = sessionMessages.filter(msg => msg.role === 'user');
         const assistantMessages = sessionMessages.filter(msg => msg.role === 'assistant');
-        
+
         // 找出这条AI消息的索引
         const assistantIndex = assistantMessages.findIndex(msg => msg.id === messageId);
         if (assistantIndex < 0 || assistantIndex >= userMessages.length) {
           message.error('无法找到对应的用户消息');
           return;
         }
-        
+
         // 获取对应的用户消息
         const userMessage = userMessages[assistantIndex];
-        
+
         let userContent = '';
         // 处理不同类型的用户消息内容
         if (typeof userMessage.content === 'string') {
@@ -795,190 +797,187 @@ const Home: React.FC<HomeProps> = ({
             userContent = userMessageContent.text;
           }
         }
-        
+
         if (!userContent) {
           message.error('用户消息内容为空');
           return;
         }
-        
+
         // 删除当前AI消息以及之后的所有消息
         const messagesToDelete = sessionMessages.filter(msg => msg.timestamp >= clickedMessage.timestamp);
-        
+
         // 先删除消息
         for (const msgToDelete of messagesToDelete) {
           await chatSessionDB.deleteMessage(sessionId, msgToDelete.id);
         }
-        
+
         // 重新加载消息列表，此时应该只有用户消息，没有对应的AI消息
         await loadSessionMessages(sessionId);
-        
+
         // 检查是否有可用的模型
         if (!selectedModel || providers.length === 0 || providers.every(p => p.models.length === 0)) {
           message.error('请先在设置中启用至少一个模型');
           return;
         }
-        
+
         // 获取选中的模型和提供商
         const allModels = providers.flatMap(p => p.models);
         const selectedModelData = allModels.find(m => m.id === selectedModel);
-        
+
         if (!selectedModelData) {
           message.error('未找到所选模型');
           return;
         }
-        
+
         const selectedProvider = providers.find(p => p.id === selectedModelData.provider);
-        
+
         if (!selectedProvider) {
           message.error('未找到所选模型的提供商');
           return;
         }
-        
+
         setIsLoading(true);
-        
-        // 准备助手消息的ID
-        const assistantMessageId = uuidv4();
-        
-        // 创建一个初始的助手消息对象
-        const initialAssistantMessage: Message = {
-          id: assistantMessageId,
-          content: [
-            {
-              type: 'content',
-              content: '',
-              status: 'loading',
-              timestamp: Date.now()
-            }
-          ],
-          role: 'assistant',
-          timestamp: Date.now(),
-          avatar: '',
-          name: 'AI助手',
-          model_name: selectedModelData.displayName,
-          model_id: selectedModelData.id,
-          model_provider: selectedProvider.id,
-          status: 'pending',
-          error: '',
-          usage: {
-            tokens_per_second: 0,
-            total_tokens: 0,
-            generation_time: 0,
-            first_token_time: 0,
-            reasoning_start_time: 0,
-            reasoning_end_time: 0,
-            input_tokens: 0,
-            output_tokens: 0
-          },
-          conversationId: sessionId,
-          is_variant: 0
-        };
-        
-        // 添加初始助手消息到数据库
-        await chatSessionDB.addMessage(sessionId, initialAssistantMessage);
-        
-        // 重新加载消息数据
-        await loadSessionMessages(sessionId);
-        
-        // 获取当前所有消息作为历史记录
-        const messages = await chatSessionDB.getMessagesForSession(sessionId);
-        
-        // 使用 async iterator 处理流式消息
-        try {
-          // 获取流式消息生成器
-          const messageStream = aiMessageService.streamMessageAsync(
-            messages,
-            selectedModelData,
-            selectedProvider,
-            {
-              temperature: 0.7,
-              maxTokens: selectedModelData.maxOutput
-            }
-          );
-          
-          // 使用 for await...of 迭代流式消息
-          for await (const streamMessage of messageStream) {
-            // 确保流式消息中的 conversationId 与目标会话ID一致
-            const messageWithCorrectId = {
-              ...streamMessage,
-              conversationId: sessionId,
-              id: assistantMessageId
-            };
-            
-            // 更新流式消息状态
-            setStreamingMessages(prev => ({
-              ...prev,
-              [assistantMessageId]: messageWithCorrectId
-            }));
-            
-            // 如果消息状态为已发送或错误，则保存到数据库
-            if (streamMessage.status === 'sent' || streamMessage.status === 'error') {
-              try {
-                // 更新助手消息
-                await chatSessionDB.updateMessage(sessionId, assistantMessageId, messageWithCorrectId);
-                
-                // 设置延迟清除流式消息
-                setTimeout(() => {
-                  setStreamingMessages(prev => {
-                    const newState = { ...prev };
-                    delete newState[assistantMessageId];
-                    return newState;
-                  });
-                  
-                  setIsLoading(false);
-                }, 500);
-              } catch (error) {
-                console.error('保存最终消息失败:', error);
-                message.error('保存消息失败');
-                setIsLoading(false);
-              }
-            }
-          }
-        } catch (error: any) {
-          console.error('AI请求失败:', error);
-          message.error(`AI请求失败: ${error.message || '未知错误'}`);
-          
-          // 创建错误消息
-          const errorMessage: Message = {
-            ...initialAssistantMessage,
+
+        // 等待100ms,提供一个function 
+        const wait = async () => {
+
+          // 准备助手消息的ID
+          const assistantMessageId = uuidv4();
+
+          // 创建一个初始的助手消息对象
+          const initialAssistantMessage: Message = {
+            id: assistantMessageId,
             content: [
               {
-                type: 'error',
-                content: `请求失败: ${error.message || '未知错误'}`,
-                status: 'error',
+                type: 'content',
+                content: '',
+                status: 'loading',
                 timestamp: Date.now()
               }
             ],
-            status: 'error',
-            error: error.message || '未知错误'
+            role: 'assistant',
+            timestamp: Date.now(),
+            avatar: '',
+            name: 'AI助手',
+            model_name: selectedModelData.displayName,
+            model_id: selectedModelData.id,
+            model_provider: selectedProvider.id,
+            status: 'pending',
+            error: '',
+            usage: {
+              tokens_per_second: 0,
+              total_tokens: 0,
+              generation_time: 0,
+              first_token_time: 0,
+              reasoning_start_time: 0,
+              reasoning_end_time: 0,
+              input_tokens: 0,
+              output_tokens: 0
+            },
+            conversationId: sessionId,
+            is_variant: 0
           };
-          
-          // 更新流式消息状态
-          setStreamingMessages(prev => ({
-            ...prev,
-            [assistantMessageId]: errorMessage
-          }));
-          
-          // 更新数据库
-          await chatSessionDB.updateMessage(sessionId, assistantMessageId, errorMessage);
-          
-          // 延迟清除流式消息
-          setTimeout(() => {
-            setStreamingMessages(prev => {
-              const newState = { ...prev };
-              delete newState[assistantMessageId];
-              return newState;
-            });
-          }, 500);
-          
-          setIsLoading(false);
+
+          // 获取当前所有消息作为历史记录
+          const messages = await chatSessionDB.getMessagesForSession(sessionId);
+
+          setSessionMessages(messages);
+
+          // 使用 async iterator 处理流式消息
+          try {
+            // 获取流式消息生成器
+            const messageStream = aiMessageService.streamMessageAsync(
+              messages,
+              selectedModelData,
+              selectedProvider,
+              {
+                temperature: 0.7,
+                maxTokens: selectedModelData.maxOutput
+              }
+            );
+
+            // 添加初始助手消息到数据库
+            await chatSessionDB.addMessage(sessionId, initialAssistantMessage);
+
+            // 重新加载消息数据
+            await loadSessionMessages(sessionId);
+
+            // 使用 for await...of 迭代流式消息
+            for await (const streamMessage of messageStream) {
+              // 确保流式消息中的 conversationId 与目标会话ID一致
+              const messageWithCorrect = {
+                ...streamMessage,
+                conversationId: sessionId,
+                id: assistantMessageId
+              };
+
+              initialAssistantMessage.content = messageWithCorrect.content;
+
+              // 更新流式消息状态
+              setStreamingMessages(prev => ({
+                ...prev,
+                [assistantMessageId]: initialAssistantMessage
+              }));
+
+            }
+
+            // 更新initialAssistantMessage
+            await chatSessionDB.updateMessage(sessionId, assistantMessageId, initialAssistantMessage);
+
+            // 重新加载消息
+            await loadSessionMessages(sessionId);
+
+
+          } catch (error: any) {
+            console.error('AI请求失败:', error);
+            message.error(`AI请求失败: ${error.message || '未知错误'}`);
+
+            // 创建错误消息
+            const errorMessage: Message = {
+              ...initialAssistantMessage,
+              content: [
+                {
+                  type: 'error',
+                  content: `请求失败: ${error.message || '未知错误'}`,
+                  status: 'error',
+                  timestamp: Date.now()
+                }
+              ],
+              status: 'error',
+              error: error.message || '未知错误'
+            };
+
+            // 更新流式消息状态
+            setStreamingMessages(prev => ({
+              ...prev,
+              [assistantMessageId]: errorMessage
+            }));
+
+            // 更新数据库
+            await chatSessionDB.updateMessage(sessionId, assistantMessageId, errorMessage);
+
+            // 延迟清除流式消息
+            setTimeout(() => {
+              setStreamingMessages(prev => {
+                const newState = { ...prev };
+                delete newState[assistantMessageId];
+                return newState;
+              });
+            }, 500);
+
+            setIsLoading(false);
+          }
+
+          return new Promise(resolve => setTimeout(resolve, 100));
         }
-        
-        message.success('正在生成回复');
-      } 
-      // 如果点击的是用户消息，直接使用该消息的内容
+
+        await wait();
+
+        setIsLoading(false);
+      }
       else if (clickedMessage.role === 'user') {
         let userContent = '';
-        
+
         // 处理不同类型的用户消息内容
         if (typeof clickedMessage.content === 'string') {
           userContent = clickedMessage.content;
@@ -989,12 +988,12 @@ const Home: React.FC<HomeProps> = ({
             userContent = userMessageContent.text;
           }
         }
-        
+
         if (!userContent) {
           message.error('用户消息内容为空');
           return;
         }
-        
+
         // 用户消息仍然使用handleSendMessage方法
         handleSendMessage(userContent);
       }
@@ -1102,7 +1101,7 @@ const Home: React.FC<HomeProps> = ({
       </div>
     )
   }
-  
+
   // 侧边栏样式
   const siderStyle = {
     overflow: 'hidden' as const,
@@ -1111,7 +1110,7 @@ const Home: React.FC<HomeProps> = ({
     background: theme.colors.bg.secondary,
     borderRight: `1px solid ${theme.colors.border.light}`,
   };
-  
+
   // 渲染侧边栏内容
   const renderSiderContent = () => (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -1206,7 +1205,7 @@ const Home: React.FC<HomeProps> = ({
                       {session.title}
                     </Text>
 
-                    <div 
+                    <div
                       className="session-menu-container"
                       onClick={(e) => e.stopPropagation()}
                       style={{
@@ -1261,7 +1260,7 @@ const Home: React.FC<HomeProps> = ({
       </div>
     </div>
   );
-  
+
   // 渲染顶部工具栏
   const renderHeader = () => (
     <div style={{
@@ -1274,7 +1273,7 @@ const Home: React.FC<HomeProps> = ({
       backdropFilter: 'blur(10px)',
       height: 50,
       maxHeight: 50,
-      minHeight:50
+      minHeight: 50
     }}>
       <Space>
         <Tooltip title={collapsed ? "展开菜单" : "收起菜单"}>
@@ -1327,7 +1326,7 @@ const Home: React.FC<HomeProps> = ({
   const getChatAreaContent = () => {
     // 创建会话消息的副本
     const allMessages = [...sessionMessages];
-    
+
     // 合并流式消息，优先使用流式消息（它们是最新的）
     Object.values(streamingMessages).forEach(streamMessage => {
       const existingIndex = allMessages.findIndex(m => m.id === streamMessage.id);
@@ -1339,15 +1338,15 @@ const Home: React.FC<HomeProps> = ({
         allMessages.push(streamMessage);
       }
     });
-    
+
     // 确保消息按时间戳排序
     allMessages.sort((a, b) => a.timestamp - b.timestamp);
-    
+
     const handleMessageSend = (content: string) => {
       setInputValue(content);
       handleSendMessage(content);
     };
-    
+
     return (
       <ChatArea
         isDarkTheme={isDarkTheme}
@@ -1384,7 +1383,7 @@ const Home: React.FC<HomeProps> = ({
         }}>
           {/* 统一的顶部工具栏 */}
           {renderHeader()}
-          
+
           {/* 欢迎页面内容 */}
           {isWelcomeMode ? (
             <div style={{

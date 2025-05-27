@@ -1,6 +1,5 @@
 import { Provider, Model } from '@/types/model'
 import { iconMap, IconName } from './iconutils'
-import modelData from '@/components/ModelSelector/model.json'
 
 // 数据修正映射 - 修正 model.json 中的错误数据
 const dataCorrections: Record<string, { owned_by?: string; type?: string }> = {
@@ -376,7 +375,7 @@ function generateModelDescription(modelId: string, provider: string): string {
 // 处理模型数据，按提供商分组
 export function processModelData(): Provider[] {
   // 首先修正数据
-  const correctedModelData = correctModelData(modelData)
+  const correctedModelData = correctModelData([])
   
   // 按 owned_by 分组模型
   const modelsByProvider: Record<string, any[]> = {}
