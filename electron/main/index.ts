@@ -1,8 +1,9 @@
-import { app, BrowserWindow, shell, ipcMain } from 'electron'
+import { app, BrowserWindow, shell, ipcMain, dialog } from 'electron'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import os from 'node:os'
+import fs from 'node:fs/promises'
 import { update } from './update'
 
 const require = createRequire(import.meta.url)
@@ -186,4 +187,71 @@ ipcMain.handle('open-settings-window', () => {
   })
 
   return settingsWindow.id
+})
+
+// 添加文件选择的IPC处理器
+ipcMain.handle('select-files', async (_, options = {}) => {
+  try {
+    const defaultOptions = {
+      title: '选择代码文件',
+      properties: ['openFile', 'multiSelections'] as const,
+      filters: [
+        {
+          name: '代码文件',
+          extensions: [
+            'js', 'jsx', 'ts', 'tsx', 'vue', 'py', 'java', 'cpp', 'c', 'h', 'hpp',
+            'cs', 'php', 'rb', 'go', 'rs', 'swift', 'kt', 'scala', 'sh', 'bash',
+            'ps1', 'bat', 'cmd', 'sql', 'html', 'htm', 'css', 'scss', 'sass',
+            'less', 'xml', 'json', 'yaml', 'yml', 'toml', 'ini', 'cfg', 'conf',
+            'md', 'txt', 'log', 'dockerfile', 'makefile', 'cmake', 'gradle',
+            'pom', 'mod', 'sum', 'workspace', 'classpath', 'project', 'settings'
+          ]
+        },
+        {
+          name: '所有文件',
+          extensions: ['*']
+        }
+      ]
+    }
+
+    const mergedOptions = {
+      ...defaultOptions,
+      ...options,
+      filters: options.filters || defaultOptions.filters,
+      properties: options.properties || defaultOptions.properties
+    }
+
+    const result = await dialog.showOpenDialog(win!, mergedOptions)
+    return result
+  } catch (error) {
+    console.error('文件选择失败:', error)
+    return { canceled: true, filePaths: [] }
+  }
+})
+
+// 添加文件读取的IPC处理器
+ipcMain.handle('read-file', async (_, filePath: string) => {
+  try {
+    // 验证文件路径安全性
+    if (!filePath || typeof filePath !== 'string') {
+      return { success: false, error: '无效的文件路径' }
+    }
+
+    // 检查文件是否存在
+    try {
+      await fs.access(filePath)
+    } catch {
+      return { success: false, error: '文件不存在或无法访问' }
+    }
+
+    // 读取文件内容
+    const content = await fs.readFile(filePath, 'utf-8')
+    return { success: true, content }
+  } catch (error) {
+    console.error('文件读取失败:', error)
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : '未知错误' 
+    }
+  }
 })

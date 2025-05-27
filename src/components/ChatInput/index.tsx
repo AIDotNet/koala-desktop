@@ -1,6 +1,6 @@
-import React, { useState } from 'react'
-import { Button, Input } from 'antd'
-import { Send, Paperclip } from 'lucide-react'
+import React, { useState, useRef } from 'react'
+import { Button, Input, message } from 'antd'
+import { Send, Paperclip, X } from 'lucide-react'
 import ModelSelector from '@/components/ModelSelector'
 import { Provider } from '@/types/model'
 
@@ -18,6 +18,8 @@ interface ChatInputProps {
   isDarkTheme?: boolean
   placeholder?: string
   disabled?: boolean
+  onFileUpload?: (files: { name: string; path: string; size: number }[]) => void
+  onSendWithFiles?: (message: string, files: { name: string; path: string; size: number }[]) => void
 }
 
 const ChatInput: React.FC<ChatInputProps> = ({
@@ -31,9 +33,12 @@ const ChatInput: React.FC<ChatInputProps> = ({
   isLoading = false,
   isDarkTheme = false,
   placeholder,
-  disabled = false
+  disabled = false,
+  onFileUpload,
+  onSendWithFiles
 }) => {
   const [isInputFocused, setIsInputFocused] = useState(false)
+  const [uploadedFiles, setUploadedFiles] = useState<{ name: string; path: string; size: number }[]>([])
 
   // 主题配置
   const theme = {
@@ -70,6 +75,106 @@ const ChatInput: React.FC<ChatInputProps> = ({
 
   const defaultPlaceholder = placeholder || '问点什么？可以通过@来引用工具、文件、资源...'
 
+  // 处理文件选择 - 使用 Electron API
+  const handleFileSelect = async () => {
+    if (disabled) return
+
+    try {
+      // 检查是否在 Electron 环境中
+      if (!window.electronAPI || !window.electronAPI.selectFiles) {
+        message.warning('文件选择功能仅在桌面应用中可用')
+        return
+      }
+
+      const result = await window.electronAPI.selectFiles({
+        title: '选择代码文件',
+        properties: ['openFile', 'multiSelections'],
+        filters: [
+          {
+            name: '代码文件',
+            extensions: [
+              'js', 'jsx', 'ts', 'tsx', 'vue', 'py', 'java', 'cpp', 'c', 'h', 'hpp',
+              'cs', 'php', 'rb', 'go', 'rs', 'swift', 'kt', 'scala', 'sh', 'bash',
+              'ps1', 'bat', 'cmd', 'sql', 'html', 'htm', 'css', 'scss', 'sass',
+              'less', 'xml', 'json', 'yaml', 'yml', 'toml', 'ini', 'cfg', 'conf',
+              'md', 'txt', 'log', 'dockerfile', 'makefile', 'cmake', 'gradle'
+            ]
+          },
+          {
+            name: '所有文件',
+            extensions: ['*']
+          }
+        ]
+      })
+
+      if (result.canceled || result.filePaths.length === 0) {
+        return
+      }
+
+      // 处理选中的文件
+      const newFiles: { name: string; path: string; size: number }[] = []
+      
+      for (const filePath of result.filePaths) {
+        try {
+          // 获取文件信息
+          const fileName = filePath.split(/[/\\]/).pop() || filePath
+          
+          // 这里我们暂时设置一个默认大小，实际大小可以通过文件系统 API 获取
+          // 或者在主进程中一并返回文件信息
+          const fileInfo = {
+            name: fileName,
+            path: filePath,
+            size: 0 // 暂时设为0，后续可以优化
+          }
+          
+          newFiles.push(fileInfo)
+        } catch (error) {
+          console.error(`处理文件 ${filePath} 失败:`, error)
+        }
+      }
+
+      if (newFiles.length > 0) {
+        const allFiles = [...uploadedFiles, ...newFiles]
+        setUploadedFiles(allFiles)
+        onFileUpload?.(allFiles)
+        message.success(`成功添加 ${newFiles.length} 个代码文件`)
+      }
+    } catch (error) {
+      console.error('文件选择失败:', error)
+      message.error('文件选择失败')
+    }
+  }
+
+  // 移除文件
+  const removeFile = (index: number) => {
+    const newFiles = uploadedFiles.filter((_, i) => i !== index)
+    setUploadedFiles(newFiles)
+    onFileUpload?.(newFiles)
+  }
+
+  // 获取文件大小显示
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '未知大小'
+    const k = 1024
+    const sizes = ['B', 'KB', 'MB', 'GB']
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+  }
+
+  // 处理键盘事件
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      if (onSendWithFiles && value.trim()) {
+        onSendWithFiles(value, uploadedFiles)
+      } else if (onKeyPress) {
+        onKeyPress(e)
+      }
+    } else if (onKeyPress) {
+      onKeyPress(e)
+    }
+  }
+
   return (
     <div style={{ position: 'relative' }}>
       <div style={{
@@ -84,10 +189,64 @@ const ChatInput: React.FC<ChatInputProps> = ({
         transition: 'all 0.3s ease',
         opacity: disabled ? 0.6 : 1,
       }}>
+        {/* 已上传文件列表 */}
+        {uploadedFiles.length > 0 && (
+          <div style={{
+            marginBottom: '12px',
+            padding: '8px',
+            background: isDarkTheme ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)',
+            borderRadius: '8px',
+            border: `1px solid ${theme.colors.border.light}`,
+          }}>
+            <div style={{
+              fontSize: '12px',
+              color: theme.colors.text.tertiary,
+              marginBottom: '6px'
+            }}>
+              已添加的代码文件 ({uploadedFiles.length})
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+              {uploadedFiles.map((file, index) => (
+                <div
+                  key={index}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    padding: '4px 8px',
+                    background: isDarkTheme ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+                    borderRadius: '4px',
+                    fontSize: '12px',
+                    color: theme.colors.text.secondary,
+                  }}
+                >
+                  <span>{file.name}</span>
+                  <span style={{ color: theme.colors.text.tertiary }}>
+                    ({formatFileSize(file.size)})
+                  </span>
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={<X size={12} />}
+                    onClick={() => removeFile(index)}
+                    style={{
+                      padding: '0',
+                      width: '16px',
+                      height: '16px',
+                      minWidth: '16px',
+                      color: theme.colors.text.tertiary,
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <TextArea
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          onKeyPress={onKeyPress}
+          onKeyPress={handleKeyPress}
           placeholder={defaultPlaceholder}
           autoSize={{ minRows: 1, maxRows: 6 }}
           onFocus={() => setIsInputFocused(true)}
@@ -103,7 +262,6 @@ const ChatInput: React.FC<ChatInputProps> = ({
           }}
         />
 
-        {/* 底部操作栏 */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
@@ -118,6 +276,8 @@ const ChatInput: React.FC<ChatInputProps> = ({
               size="small"
               icon={<Paperclip size={16} style={{ color: theme.colors.text.tertiary }} />}
               disabled={disabled}
+              onClick={handleFileSelect}
+              title="上传代码文件"
               style={{
                 color: theme.colors.text.tertiary,
               }}
@@ -136,7 +296,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
             <Button
               type="primary"
               icon={<Send size={18} />}
-              onClick={onSend}
+              onClick={() => onSendWithFiles?.(value, uploadedFiles)}
               disabled={disabled || !value.trim() || isLoading}
               loading={isLoading}
               style={{

@@ -94,7 +94,6 @@ body:not(.dark) .message-time {
 }
 
 .user-avatar.dark {
-  background-color: #4b5563;
 }
 
 .user-avatar.light {

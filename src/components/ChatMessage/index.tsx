@@ -11,6 +11,7 @@ interface ChatMessageProps {
   onDeleteMessage: (messageId: string) => void
   onEditMessage: (messageId: string, newContent: string) => void
   onRegenerateMessage?: (messageId: string) => void
+  isLoading?: boolean
 }
 
 const ChatMessage: React.FC<ChatMessageProps> = ({
@@ -19,7 +20,8 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   onCopy,
   onDeleteMessage,
   onEditMessage,
-  onRegenerateMessage
+  onRegenerateMessage,
+  isLoading
 }) => {
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null)
   const [editingContent, setEditingContent] = useState('')
@@ -69,6 +71,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
       <AssistantMessage
         message={message as AssistantMessageType}
         isDarkTheme={isDarkTheme}
+        isLoading={isLoading}
         isEditing={isEditing}
         editingContent={editingContent}
         onCopy={onCopy}

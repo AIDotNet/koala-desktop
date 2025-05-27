@@ -147,8 +147,8 @@ const ModelListItem: React.FC<ModelListItemProps> = ({
 }) => {
   // 获取主题token
   const { token } = theme.useToken()
-  const styles = useModelItemStyles(token, model.enabled)
-  
+  const styles = useModelItemStyles(token, model.enabled || false)
+
   // 添加CSS动画样式
   React.useEffect(() => {
     const style = document.createElement('style')
@@ -168,9 +168,9 @@ const ModelListItem: React.FC<ModelListItemProps> = ({
   const handleToggle = async (checked: boolean) => {
     try {
       setIsRefreshing(true)
-      
+
       onToggle(model.provider, model.id, checked)
-      
+
       message.loading({
         content: '正在更新模型状态...',
         duration: 0.5,
@@ -288,21 +288,20 @@ const ModelListItem: React.FC<ModelListItemProps> = ({
               type={'color'}
             />
           </div>
-          
+
           <div style={styles.modelInfo}>
             <div style={styles.modelName}>
-              <span style={{ 
-                overflow: 'hidden', 
-                textOverflow: 'ellipsis', 
+              <span style={{
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
                 maxWidth: '200px'
               }}>
                 {model.displayName}
               </span>
-              <Tag 
-                color={getTypeTagColor(model.type)} 
-                size="small"
-                style={{ 
+              <Tag
+                color={getTypeTagColor(model.type)}
+                style={{
                   fontSize: token.fontSizeSM,
                   lineHeight: '16px',
                   margin: 0
@@ -311,20 +310,20 @@ const ModelListItem: React.FC<ModelListItemProps> = ({
                 {getTypeDisplayName(model.type)}
               </Tag>
             </div>
-            
+
             <div style={styles.modelMeta}>
-              <Text style={{ 
-                color: token.colorTextQuaternary, 
-                fontSize: token.fontSizeSM 
+              <Text style={{
+                color: token.colorTextQuaternary,
+                fontSize: token.fontSizeSM
               }}>
                 ID: {model.id}
               </Text>
             </div>
-            
+
             <div style={styles.contextInfo}>
-              <span>上下文: {formatContextWindow(model.contextWindowTokens)}</span>
+              <span>上下文: {formatContextWindow(model.contextWindowTokens || 0)}</span>
               <span style={{ color: token.colorTextQuaternary }}>•</span>
-              <span>输出: {formatContextWindow(model.maxOutput)}</span>
+              <span>输出: {formatContextWindow(model.maxOutput || 0)}</span>
               {model.pricing && (
                 <>
                   <span style={{ color: token.colorTextQuaternary }}>•</span>
@@ -334,7 +333,7 @@ const ModelListItem: React.FC<ModelListItemProps> = ({
                 </>
               )}
             </div>
-            
+
             {(model.abilities?.functionCall || model.abilities?.vision) && (
               <div style={styles.abilities}>
                 {renderAbilities()}
@@ -350,7 +349,7 @@ const ModelListItem: React.FC<ModelListItemProps> = ({
             onChange={handleToggle}
             size="small"
           />
-          
+
           <Dropdown
             menu={{ items: menuItems }}
             trigger={['click']}

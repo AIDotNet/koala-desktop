@@ -1,6 +1,7 @@
 import React from 'react'
 import { Avatar, Typography, Button, Popconfirm, Input } from 'antd'
 import { Bot, Copy, ThumbsUp, ThumbsDown, RotateCcw, Trash2, Edit } from 'lucide-react'
+import { ModelIcon, ProviderIcon } from '@lobehub/icons'
 import { AssistantMessage as AssistantMessageType } from '@/types/chat'
 import '../styles.css'
 import MarkdownRenderer from '@/components/Markdown'
@@ -12,6 +13,7 @@ const { TextArea } = Input
 interface AssistantMessageProps {
     message: AssistantMessageType
     isDarkTheme: boolean
+    isLoading: boolean
     isEditing: boolean
     editingContent: string
     onCopy: (content: string) => void
@@ -26,6 +28,7 @@ interface AssistantMessageProps {
 const AssistantMessage: React.FC<AssistantMessageProps> = ({
     message,
     isDarkTheme,
+    isLoading,
     isEditing,
     editingContent,
     onCopy,
@@ -48,15 +51,27 @@ const AssistantMessage: React.FC<AssistantMessageProps> = ({
         content = assistantContent
     }
 
+    // 根据模型提供商渲染图标
+    const renderModelIcon = () => {
+        // 如果有模型提供商信息，使用 ProviderIcon
+        if (message.model_provider) {
+            return (
+                <ModelIcon
+                    model={message.model_id}
+                    key={message.model_provider}
+                    size={32}
+                />
+            )
+        }
+        // 回退到默认的 Bot 图标
+        return <Bot size={32} />
+    }
+
     // 如果当前消息正在编辑中
     if (isEditing) {
         return (
             <div className="message-container assistant-message-container">
-                <Avatar
-                    icon={<Bot size={16} />}
-                    className={`assistant-avatar ${isDarkTheme ? 'dark' : 'light'}`}
-                />
-
+                {renderModelIcon()}
                 <div className="message-content" style={{ width: 'auto' }}>
                     <div className="edit-message-area">
                         <TextArea
@@ -103,16 +118,13 @@ const AssistantMessage: React.FC<AssistantMessageProps> = ({
     }
     return (
         <div className="message-container assistant-message-container">
-            <Avatar
-                icon={<Bot size={16} />}
-                className={`assistant-avatar ${isDarkTheme ? 'dark' : 'light'}`}
-            />
-
+            {renderModelIcon()}
             <div className="message-content">
                 <div className="message-bubble assistant-message-bubble">
                     <MarkdownRenderer
                         content={content}
                         isDarkTheme={isDarkTheme}
+                        isLoading={isLoading}
                         enableCopy={true}
                         enableZoom={false}
                         enableDrag={false}

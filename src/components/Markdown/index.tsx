@@ -26,6 +26,7 @@ export interface MarkdownRendererProps {
   reasoning_content?: string
   reasoning_expanded?: boolean
   style?: React.CSSProperties
+  isLoading?: boolean
 }
 
 // Mermaid 图表组件
@@ -230,13 +231,20 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
   enableZoom = false,
   enableDrag = false,
   enableFullscreen = false,
+  isLoading,
   className = '',
   style = {},
 }) => {
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [position, setPosition] = useState({ x: 0, y: 0 })
   const [size, setSize] = useState({ width: '100%', height: 'auto' })
-  const [isExpanded, setIsExpanded] = useState(true)
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  useEffect(()=>{
+    if(isLoading && isExpanded === false){
+      setIsExpanded(true);
+    }
+  },[isLoading])
 
   // 解析 think 内容
   const { cleanContent, thinkBlocks } = parseThinkContent(content)

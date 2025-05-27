@@ -243,8 +243,8 @@ function App() {
     switch (currentUrl) {
       case '/settings':
         return <Settings isDarkTheme={isDarkTheme} onNavigate={handleNavigate} />
-      case '/providers':
-        return <ProviderDemo />
+      // case '/providers':
+      //   return <ProviderManager />
       default:
         // 处理聊天路由 /chat/:sessionId 和主页
         return (
@@ -279,6 +279,7 @@ function App() {
           onTabClick={handleTabClick}
           onTabClose={handleTabClose}
           onNewTab={handleNewTab}
+          onSettingsClick={addSettingsTab}
         />
         
         {/* 主内容区域 - 直接渲染组件 */}

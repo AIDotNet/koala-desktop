@@ -1,9 +1,11 @@
 import React, { useState } from 'react'
 import { Select } from 'antd'
-import { ChevronDown, Zap, Eye, Cpu, Sparkles } from 'lucide-react'
+import { ChevronDown, Zap, Eye, Cpu, Sparkles, Brain } from 'lucide-react'
 import { Model, Provider, ModelSelectorProps } from '@/types/model'
 import { getIcon, IconName } from '@/utils/iconutils'
 import './ModelSelector.css'
+import { IconProvider, Tooltip } from '@lobehub/ui'
+import { ProviderIcon } from '@lobehub/icons'
 
 const { Option } = Select
 
@@ -20,7 +22,7 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
   const getEnabledModels = (): Model[] => {
     return providers
       .filter(provider => provider.enabled) // 只获取启用的渠道
-      .flatMap(provider => 
+      .flatMap(provider =>
         provider.models.filter(model => model.enabled) // 只获取启用的模型
       )
   }
@@ -28,12 +30,12 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
   // 根据服务商分组模型（只包含启用的渠道和模型）
   const getGroupedModels = () => {
     const groups: { [key: string]: { models: Model[], provider: Provider } } = {}
-    
+
     providers
       .filter(provider => provider.enabled) // 只处理启用的渠道
       .forEach(provider => {
         const enabledModels = provider.models.filter(model => model.enabled) // 只获取启用的模型
-        
+
         if (enabledModels.length > 0) {
           groups[provider.displayName] = {
             models: enabledModels,
@@ -41,7 +43,7 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
           }
         }
       })
-    
+
     return groups
   }
 
@@ -51,14 +53,14 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
   // 渲染提供商图标
   const renderProviderIcon = (provider: Provider) => {
     if (!provider.icon) return null
-    
+
     const IconComponent = getIcon(provider.icon as IconName)
     if (!IconComponent) return null
-    
+
     return (
-      <IconComponent 
-        size={18} 
-        style={{ 
+      <IconComponent
+        size={18}
+        style={{
           marginRight: '10px',
           flexShrink: 0,
           color: 'inherit',
@@ -68,81 +70,72 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
     )
   }
 
+  // 渲染模型图标
+  const renderModelIcon = (model: Model) => {
+    return <ProviderIcon
+      provider={model.provider}
+      size={20}
+      type={'color'}
+    />
+  }
+
   // 渲染模型能力图标
   const renderAbilities = (model: Model) => {
     const abilities = []
-    
+
     if (model.abilities?.functionCall) {
       abilities.push(
-        <span 
-          key="function" 
-          title="支持函数调用" 
-          className="ability-icon"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            marginRight: '6px'
-          }}
-        >
-          <Zap size={14} style={{ color: '#3b82f6' }} />
-        </span>
+        <Tooltip title={'支持函数调用'}>
+          <span
+            key="function"
+            className="ability-icon"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              marginRight: '4px'
+            }}
+          >
+            <Zap size={14} style={{ color: '#3b82f6' }} />
+          </span>
+        </Tooltip>
       )
     }
-    
+
     if (model.abilities?.vision) {
-      abilities.push(
-        <span 
-          key="vision" 
-          title="支持视觉识别" 
+      abilities.push(<Tooltip title='支持视觉识别'>
+        <span
+          key="vision"
           className="ability-icon"
           style={{
             display: 'inline-flex',
             alignItems: 'center',
-            marginRight: '6px'
+            marginRight: '4px'
           }}
         >
           <Eye size={14} style={{ color: '#10b981' }} />
         </span>
+      </Tooltip>
       )
     }
 
-    // 添加更多能力图标
-    if (model.contextWindowTokens >= 100000) {
-      abilities.push(
-        <span 
-          key="longContext" 
-          title="超长上下文" 
+
+    if (model.abilities?.reasoning) {
+      abilities.push(<Tooltip title='支持推理'>
+        <span
+          key="reasoning"
           className="ability-icon"
           style={{
             display: 'inline-flex',
             alignItems: 'center',
-            marginRight: '6px'
+            marginRight: '4px'
           }}
         >
-          <Cpu size={14} style={{ color: '#f59e0b' }} />
+          <Brain size={14} style={{ color: '#10b981' }} />
         </span>
+      </Tooltip>
       )
     }
 
-    if (model.displayName.toLowerCase().includes('gpt-4') || 
-        model.displayName.toLowerCase().includes('claude-3') ||
-        model.displayName.toLowerCase().includes('gemini')) {
-      abilities.push(
-        <span 
-          key="premium" 
-          title="高级模型" 
-          className="ability-icon"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            marginRight: '6px'
-          }}
-        >
-          <Sparkles size={14} style={{ color: '#8b5cf6' }} />
-        </span>
-      )
-    }
-    
     return abilities
   }
 
@@ -185,12 +178,12 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
   const filterOption = (input: string, option: any) => {
     const model = enabledModels.find(m => m.id === option.value)
     if (!model) return false
-    
+
     const searchLower = input.toLowerCase()
     return model.displayName.toLowerCase().includes(searchLower) ||
-           model.id.toLowerCase().includes(searchLower) ||
-           (model.description || '').toLowerCase().includes(searchLower) ||
-           model.provider.toLowerCase().includes(searchLower)
+      model.id.toLowerCase().includes(searchLower) ||
+      (model.description || '').toLowerCase().includes(searchLower) ||
+      model.provider.toLowerCase().includes(searchLower)
   }
 
   // 自定义下拉框无结果内容
@@ -218,24 +211,28 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
         showSearch={true}
         filterOption={filterOption}
         virtual={true}
-        listHeight={400}
+        listHeight={520}
         notFoundContent={renderNoResults()}
         dropdownMatchSelectWidth={false}
         getPopupContainer={(trigger) => trigger.parentNode}
       >
         {Object.entries(groupedModels).map(([providerName, { models, provider }]) => (
-          <Select.OptGroup 
-            key={providerName} 
+          <Select.OptGroup
+            key={providerName}
             label={
-              <div style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
                 padding: '4px 0',
                 justifyContent: 'space-between'
               }}>
                 <div style={{ display: 'flex', alignItems: 'center' }}>
                   {renderProviderIcon(provider)}
-                  <span style={{ fontWeight: 600, fontSize: '14px' }}>{providerName}</span>
+                  <span
+                    style={{
+                      fontWeight: 600,
+                      fontSize: '14px'
+                    }}>{providerName}</span>
                 </div>
                 <span className="model-count">
                   {models.length}
@@ -244,105 +241,105 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
             }
           >
             {models.map(model => (
-              <Option 
-                key={model.id} 
+              <Option
+                key={model.id}
                 value={model.id}
                 label={model.displayName}
               >
-                <div style={{ padding: '16px' }}>
-                  {/* 模型标题行 */}
-                  <div style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'space-between', 
-                    marginBottom: '12px' 
+                <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: '6px'
                   }}>
-                    <div style={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      gap: '10px',
-                      flex: 1
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      flex: 1,
+                      minWidth: 0
                     }}>
-                      <span style={{ 
-                        fontWeight: 600, 
-                        fontSize: '15px', 
-                        color: 'rgba(255, 255, 255, 0.95)',
-                        lineHeight: 1.2
+                      {renderModelIcon(model)}
+                      <span style={{
+                        fontWeight: 600,
+                        fontSize: '14px',
+                        lineHeight: 1.2,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
                       }}>{model.displayName}</span>
-                      
+
                       {/* 模型类型标签 */}
                       {getModelTypeLabel(model) && (
                         <span style={{
                           background: getModelTypeColor(model),
                           color: 'white',
-                          fontSize: '10px',
+                          fontSize: '9px',
                           padding: '2px 6px',
                           borderRadius: '8px',
-                          fontWeight: 600,
+                          fontWeight: 700,
                           textTransform: 'uppercase',
-                          letterSpacing: '0.5px'
+                          letterSpacing: '0.5px',
+                          flexShrink: 0
                         }}>
                           {getModelTypeLabel(model)}
                         </span>
                       )}
                     </div>
-                    
+
                     <span className="context-window-badge">
                       {formatContextWindow(model.contextWindowTokens)}
                     </span>
                   </div>
 
-                  {/* 能力图标行 */}
+                  {/* 第二行：能力图标 */}
                   {renderAbilities(model).length > 0 && (
-                    <div style={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      gap: '8px',
-                      marginBottom: '10px'
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      marginBottom: '6px'
                     }}>
                       <span style={{
-                        fontSize: '12px',
-                        color: 'rgba(255, 255, 255, 0.6)',
-                        marginRight: '4px'
+                        fontSize: '11px',
+                        marginRight: '2px',
+                        fontWeight: 500
                       }}>
                         能力:
                       </span>
                       {renderAbilities(model)}
                     </div>
                   )}
-                  
-                  {/* 模型描述 */}
-                  <div style={{ 
-                    fontSize: '13px', 
-                    color: 'rgba(255, 255, 255, 0.7)', 
-                    marginBottom: '8px',
-                    display: '-webkit-box',
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: 'vertical',
+
+                  {/* 第三行：模型描述（单行，省略号） */}
+                  <div style={{
+                    fontSize: '12px',
                     overflow: 'hidden',
-                    lineHeight: 1.4
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    lineHeight: 1.4,
+                    flex: 1
                   }}>
                     {model.description || '暂无描述'}
                   </div>
-                  
-                  {/* 价格信息 */}
+
+                  {/* 第四行：价格信息（紧凑显示） */}
                   {model.pricing && (
-                    <div style={{ 
-                      fontSize: '12px', 
-                      color: 'rgba(255, 255, 255, 0.5)', 
-                      marginTop: '8px',
-                      padding: '6px 10px',
-                      background: 'rgba(255, 255, 255, 0.05)',
-                      borderRadius: '8px',
-                      border: '1px solid rgba(255, 255, 255, 0.1)'
+                    <div style={{
+                      fontSize: '11px',
+                      marginTop: '4px',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center'
                     }}>
-                      <span style={{ marginRight: '12px' }}>
-                        输入: <strong style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+                      <span>
+                        输入: <strong style={{}}>
                           ${model.pricing.input}/1M
                         </strong>
                       </span>
                       <span>
-                        输出: <strong style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+                        输出: <strong style={{}}>
                           ${model.pricing.output}/1M
                         </strong>
                       </span>

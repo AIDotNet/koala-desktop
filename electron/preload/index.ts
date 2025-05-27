@@ -30,6 +30,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   closeWindow: () => ipcRenderer.invoke('window-close'),
   isMaximized: () => ipcRenderer.invoke('window-is-maximized'),
   openSettingsWindow: () => ipcRenderer.invoke('open-settings-window'),
+  selectFiles: (options?: {
+    title?: string
+    filters?: Array<{ name: string; extensions: string[] }>
+    properties?: Array<'openFile' | 'multiSelections'>
+  }) => ipcRenderer.invoke('select-files', options),
+  readFile: (filePath: string) => ipcRenderer.invoke('read-file', filePath),
 })
 
 // --------- Preload scripts loading ---------

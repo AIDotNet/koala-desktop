@@ -62,6 +62,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
             message={msg}
             isDarkTheme={isDarkTheme}
             onCopy={handleCopy}
+            isLoading={isLoading}
             onDeleteMessage={onDeleteMessage || (() => {})}
             onEditMessage={onEditMessage || (() => {})}
             onRegenerateMessage={onRegenerateMessage}

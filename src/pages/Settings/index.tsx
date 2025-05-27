@@ -40,9 +40,6 @@ import {
 import ProviderManager from '@/components/ProviderManager'
 import { Provider, Model } from '@/types/model'
 import { providerDB } from '@/utils/providerDB'
-import { getIcon } from '@/utils/iconutils'
-import { OpenAI } from '@lobehub/icons'
-import { createStyles } from '@/theme'
 
 const { Sider, Content } = Layout
 const { Title, Text, Paragraph } = Typography
@@ -55,8 +52,6 @@ interface SettingsProps {
 const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate }) => {
   const [selectedKey, setSelectedKey] = useState<string>('models')
   const [providers, setProviders] = useState<Provider[]>([])
-
-  const styles = createStyles(isDarkTheme);
 
   // 从IndexedDB加载提供商数据
   useEffect(() => {

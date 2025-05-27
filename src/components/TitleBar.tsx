@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react'
-import { Minus, Square, X, Maximize2 } from 'lucide-react'
-import { Button, theme, Layout } from 'antd'
+import { Minus, Square, X, Maximize2, Settings } from 'lucide-react'
+import { Button, theme, Layout, message } from 'antd'
 import ThemeToggle from './ThemeToggle'
 import TabBar, { Tab } from './TabBar'
 import { getThemeColors } from '@/theme'
 import './TitleBar.css'
+import { Tooltip } from '@lobehub/ui'
 
 interface TitleBarProps {
   onThemeChange?: (isDark: boolean) => void
@@ -12,6 +13,7 @@ interface TitleBarProps {
   onTabClick?: (tabId: string) => void
   onTabClose?: (tabId: string) => void
   onNewTab?: () => void
+  onSettingsClick?: () => void
 }
 
 const TitleBar: React.FC<TitleBarProps> = ({
@@ -19,7 +21,8 @@ const TitleBar: React.FC<TitleBarProps> = ({
   tabs = [],
   onTabClick = () => { },
   onTabClose = () => { },
-  onNewTab = () => { }
+  onNewTab = () => { },
+  onSettingsClick = () => { }
 }) => {
   const [isMaximized, setIsMaximized] = useState(false)
   const [isDarkTheme, setIsDarkTheme] = useState(false)
@@ -43,6 +46,10 @@ const TitleBar: React.FC<TitleBarProps> = ({
     if (window.electronAPI) {
       window.electronAPI.minimizeWindow()
     }
+  }
+
+  const handleSettings = async () => {
+    onSettingsClick()
   }
 
   const handleMaximize = () => {
@@ -88,6 +95,18 @@ const TitleBar: React.FC<TitleBarProps> = ({
 
       {/* 右侧：窗口控制按钮 */}
       <div className="titlebar-right">
+        <div className="titlebar-toggle-container">
+          <Tooltip title={'打开系统设置'}>
+            <Button
+              type="text"
+              icon={<Settings 
+              size={15}
+              />}
+              onClick={handleSettings}
+              className="theme-toggle-btn"
+            />
+          </Tooltip>
+        </div>
         {/* 主题切换按钮 */}
         {onThemeChange && (
           <div className="titlebar-toggle-container">
@@ -101,13 +120,13 @@ const TitleBar: React.FC<TitleBarProps> = ({
           className="window-button"
           title="最小化"
           icon={
-            <Minus 
-              size={16} 
+            <Minus
+              size={16}
               style={{ color: themeColors.text.tertiary }}
             />
           }
         />
-        
+
         <Button
           type="text"
           onClick={handleMaximize}
@@ -116,34 +135,34 @@ const TitleBar: React.FC<TitleBarProps> = ({
           icon={
             isMaximized ? (
               <div className="restore-icon">
-                <Square 
-                  size={12} 
+                <Square
+                  size={12}
                   className="restore-icon-front"
                   style={{ color: themeColors.text.tertiary }}
                 />
-                <Square 
-                  size={12} 
+                <Square
+                  size={12}
                   className="restore-icon-back"
                   style={{ color: themeColors.text.tertiary }}
                 />
               </div>
             ) : (
-              <Maximize2 
-                size={14} 
+              <Maximize2
+                size={14}
                 style={{ color: themeColors.text.tertiary }}
               />
             )
           }
         />
-        
+
         <Button
           type="text"
           onClick={handleClose}
           className="window-button close-button"
           title="关闭"
           icon={
-            <X 
-              size={16} 
+            <X
+              size={16}
               style={{ color: themeColors.text.tertiary }}
             />
           }

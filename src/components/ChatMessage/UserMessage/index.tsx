@@ -147,7 +147,8 @@ const UserMessage: React.FC<UserMessageProps> = ({
       </div>
 
       <Avatar
-        icon={<User size={16} />}
+        src='favicon.ico'
+        size={34}
         className={`user-avatar ${isDarkTheme ? 'dark' : 'light'}`}
       />
     </div>
