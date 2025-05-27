@@ -49,10 +49,10 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   ]
 
   // 处理文件上传
-  const handleFileUpload = async (files: File[]) => {
+  const handleFileUpload = async (files: { name: string; path: string; size: number }[]) => {
     try {
       // 只记录文件，不将内容插入到输入框中
-      console.log('已上传文件:', files.map(f => ({ name: f.name, size: f.size })))
+      console.log('已上传文件:', files.map(f => ({ name: f.name, path: f.path, size: f.size })))
       // 这里可以根据需要保存文件信息到状态或其他地方
       // 文件内容将在发送消息时读取和处理
     } catch (error) {
@@ -61,19 +61,25 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
     }
   }
 
-  // 读取文件内容
-  const readFileContent = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        const content = e.target?.result as string
-        resolve(content)
+  // 读取文件内容 - 使用 Electron API
+  const readFileContent = async (file: { name: string; path: string; size: number }): Promise<string> => {
+    try {
+      // 检查是否在 Electron 环境中
+      if (!window.electronAPI || !window.electronAPI.readFile) {
+        throw new Error('文件读取功能仅在桌面应用中可用')
       }
-      reader.onerror = () => {
-        reject(new Error('文件读取失败'))
+
+      const result = await window.electronAPI.readFile(file.path)
+      
+      if (!result.success) {
+        throw new Error(result.error || '文件读取失败')
       }
-      reader.readAsText(file, 'UTF-8')
-    })
+
+      return result.content || ''
+    } catch (error) {
+      console.error(`读取文件 ${file.name} 失败:`, error)
+      throw error
+    }
   }
 
   // 根据文件扩展名获取语言标识
@@ -131,7 +137,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   }
 
   // 处理带文件的消息发送
-  const handleSendWithFiles = async (messageText: string, files: File[]) => {
+  const handleSendWithFiles = async (messageText: string, files: { name: string; path: string; size: number }[]) => {
     if (!messageText.trim() && files.length === 0) return
 
     let finalMessage = messageText.trim()
