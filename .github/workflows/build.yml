@@ -20,28 +20,47 @@ jobs:
 
     strategy:
       matrix:
-        os: [macos-latest, ubuntu-latest, windows-latest]
+        include:
+          - os: macos-latest
+            platform: mac
+            build_script: build:mac
+          - os: ubuntu-latest
+            platform: linux
+            build_script: build:linux
+          - os: windows-latest
+            platform: win
+            build_script: build:win
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 18
+          cache: 'npm'
+
+      # Linux 特定依赖
+      - name: Install Linux Dependencies
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libnss3-dev libatk-bridge2.0-dev libdrm2 libxcomposite1 libxdamage1 libxrandr2 libgbm1 libxss1 libasound2-dev
 
       - name: Install Dependencies
-        run: npm install
+        run: npm ci
 
       - name: Build Release Files
-        run: npm run build
+        run: npm run ${{ matrix.build_script }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # 设置 Electron 镜像以避免网络问题
+          ELECTRON_MIRROR: https://npmmirror.com/mirrors/electron/
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: release_on_${{ matrix. os }}
+          name: release_on_${{ matrix.platform }}
           path: release/
           retention-days: 5

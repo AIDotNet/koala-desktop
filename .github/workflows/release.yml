@@ -77,12 +77,13 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
         include:
           - os: ubuntu-latest
             platform: linux
+            build_script: build:linux
           - os: windows-latest
             platform: windows
+            build_script: build:win
 
     steps:
       - name: Checkout Code
@@ -109,13 +110,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libnss3-dev libatk-bridge2.0-dev libdrm2 libxcomposite1 libxdamage1 libxrandr2 libgbm1 libxss1 libasound2-dev
 
-      # # macOS 特定设置
-      # - name: Setup macOS Signing
-      #   if: matrix.platform == 'macos'
-      #   run: |
-      #     # 这里可以添加 macOS 代码签名配置
-      #     echo "macOS signing setup (if needed)"
-
       # Windows 特定设置
       - name: Setup Windows Signing
         if: matrix.platform == 'windows'
@@ -123,10 +117,25 @@ jobs:
           # 这里可以添加 Windows 代码签名配置
           echo "Windows signing setup (if needed)"
 
-      - name: Build Application
-        run: npm run build
+      # 清理可能的文件锁定问题
+      - name: Clean Build Directory
+        run: |
+          if [ -d "release" ]; then
+            rm -rf release
+          fi
+        shell: bash
+
+      - name: Build Application (with retry)
+        uses: nick-fields/retry@v2
+        with:
+          timeout_minutes: 30
+          max_attempts: 3
+          retry_wait_seconds: 30
+          command: npm run ${{ matrix.build_script }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # 设置 Electron 镜像以避免网络问题
+          ELECTRON_MIRROR: https://npmmirror.com/mirrors/electron/
           # 如果需要代码签名，在这里添加相关环境变量
           # CSC_LINK: ${{ secrets.CSC_LINK }}
           # CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
@@ -183,7 +192,6 @@ jobs:
           ### 📦 下载
           请根据您的操作系统选择对应的安装包：
           - **Windows**: `Koala Desktop_${{ needs.prepare.outputs.version }}.exe`
-          # - **macOS**: `Koala Desktop_${{ needs.prepare.outputs.version }}.dmg`
           - **Linux**: `Koala Desktop_${{ needs.prepare.outputs.version }}.AppImage`
           
           ### 🔧 系统要求
