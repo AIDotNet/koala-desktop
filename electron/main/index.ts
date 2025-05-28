@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import os from 'node:os'
 import fs from 'node:fs/promises'
+import fsSync from 'node:fs'
 import { update } from './update'
 
 const require = createRequire(import.meta.url)
@@ -47,6 +48,28 @@ app.commandLine.appendSwitch('--disable-background-timer-throttling')
 app.commandLine.appendSwitch('--disable-renderer-backgrounding')
 app.commandLine.appendSwitch('--disable-backgrounding-occluded-windows')
 app.commandLine.appendSwitch('--disable-ipc-flooding-protection')
+
+// ICU 数据文件配置 - 修复 ICU 错误
+if (!VITE_DEV_SERVER_URL) {
+  // 生产环境下设置 ICU 数据文件路径
+  const icuDataPath = path.join(process.resourcesPath, '..', 'icudtl.dat')
+  const localesPath = path.join(process.resourcesPath, '..', 'locales')
+  
+  // 设置 ICU 数据文件路径
+  app.commandLine.appendSwitch('--icu-data-file', icuDataPath)
+  app.commandLine.appendSwitch('--locales-dir', localesPath)
+  
+  // 确保 ICU 数据文件存在
+  try {
+    if (fsSync.existsSync(icuDataPath)) {
+      console.log('ICU data file found at:', icuDataPath)
+    } else {
+      console.warn('ICU data file not found at:', icuDataPath)
+    }
+  } catch (error) {
+    console.error('Error checking ICU data file:', error)
+  }
+}
 
 let win: BrowserWindow | null = null
 const preload = path.join(__dirname, '../preload/index.mjs')
