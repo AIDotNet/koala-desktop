@@ -85,6 +85,9 @@ jobs:
           - os: windows-latest
             platform: windows
             build_script: build:win
+          - os: macos-latest
+            platform: macos
+            build_script: build:mac
 
     steps:
       - name: Checkout Code
@@ -119,6 +122,17 @@ jobs:
           # 这里可以添加 Windows 代码签名配置
           echo "Windows signing setup (if needed)"
 
+      # macOS 特定设置
+      - name: Setup macOS Signing
+        if: matrix.platform == 'macos'
+        run: |
+          # 这里可以添加 macOS 代码签名配置
+          echo "macOS signing setup (if needed)"
+          # 如果需要代码签名，可以在这里配置 Keychain
+          # security create-keychain -p "" build.keychain
+          # security import ${{ secrets.MAC_CERTS }} -k build.keychain -P ${{ secrets.MAC_CERTS_PASSWORD }} -T /usr/bin/codesign
+          # security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
+
       # 清理可能的文件锁定问题
       - name: Clean Build Directory
         run: |
@@ -139,8 +153,12 @@ jobs:
           # 设置 Electron 镜像以避免网络问题
           ELECTRON_MIRROR: https://npmmirror.com/mirrors/electron/
           # 如果需要代码签名，在这里添加相关环境变量
+          # macOS 代码签名环境变量
           # CSC_LINK: ${{ secrets.CSC_LINK }}
           # CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          # APPLE_ID: ${{ secrets.APPLE_ID }}
+          # APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+          # APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
@@ -194,11 +212,13 @@ jobs:
           ### 📦 下载
           请根据您的操作系统选择对应的安装包：
           - **Windows**: `Koala Desktop_${{ needs.prepare.outputs.version }}.exe`
+          - **macOS**: `Koala Desktop_${{ needs.prepare.outputs.version }}.dmg`
           - **Linux**: `Koala Desktop_${{ needs.prepare.outputs.version }}.AppImage`
           
           ### 🔧 系统要求
-          - Windows 10 或更高版本
-          - Ubuntu 18.04 或其他现代 Linux 发行版
+          - **Windows**: Windows 10 或更高版本
+          - **macOS**: macOS 10.15 (Catalina) 或更高版本
+          - **Linux**: Ubuntu 18.04 或其他现代 Linux 发行版
           
           ---
           
@@ -237,6 +257,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 📦 构建产物" >> $GITHUB_STEP_SUMMARY
           echo "- Windows 安装包" >> $GITHUB_STEP_SUMMARY
+          echo "- macOS 安装包 (DMG)" >> $GITHUB_STEP_SUMMARY
           echo "- Linux AppImage" >> $GITHUB_STEP_SUMMARY
 
       # 可以在这里添加通知逻辑，比如发送到 Slack、Discord 等
