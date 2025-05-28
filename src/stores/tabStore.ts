@@ -1,4 +1,4 @@
-import create from 'zustand'
+import { create } from 'zustand'
 import { devtools, persist } from 'zustand/middleware'
 import { Tab } from '@/components/TabBar'
 
@@ -50,7 +50,7 @@ const initialState: TabState = {
 }
 
 // 创建标签页状态管理
-export const useTabStore = create<TabState & TabActions>(
+export const useTabStore = create<TabState & TabActions>()(
   devtools(
     persist(
       (set, get) => ({

@@ -1,4 +1,4 @@
-import create from 'zustand'
+import { create } from 'zustand'
 import { devtools, persist } from 'zustand/middleware'
 import { Provider, Model } from '@/types/model'
 import { providerDB } from '@/utils/providerDB'
@@ -61,7 +61,7 @@ const initialState: ModelState = {
 }
 
 // 创建模型状态管理
-export const useModelStore = create<ModelState & ModelActions>(
+export const useModelStore = create<ModelState & ModelActions>()(
   devtools(
     persist(
       (set, get) => ({
