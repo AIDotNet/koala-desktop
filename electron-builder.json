@@ -4,12 +4,16 @@
   "productName": "Koala Desktop",
   "asar": true,
   "directories": {
-    "output": "release/${version}"
+    "output": "release/${version}",
+    "buildResources": "build"
   },
   "files": [
     "dist-electron",
     "dist"
   ],
+  "extraMetadata": {
+    "main": "dist-electron/main/index.js"
+  },
   "mac": {
     "artifactName": "${productName}_${version}.${ext}",
     "target": [
@@ -27,7 +31,8 @@
         ]
       }
     ],
-    "artifactName": "${productName}_${version}.${ext}"
+    "artifactName": "${productName}_${version}.${ext}",
+    "requestedExecutionLevel": "asInvoker"
   },
   "linux": {
     "target": [
@@ -47,7 +52,8 @@
     "allowToChangeInstallationDirectory": true,
     "deleteAppDataOnUninstall": false,
     "createDesktopShortcut": true,
-    "createStartMenuShortcut": true
+    "createStartMenuShortcut": true,
+    "allowElevation": false
   },
   "publish": {
     "provider": "github",

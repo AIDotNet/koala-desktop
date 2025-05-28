@@ -1,0 +1,47 @@
+directories:
+  output: temp-build
+  buildResources: build
+$schema: https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json
+appId: com.aidotnet.koala-desktop
+productName: Koala Desktop
+asar: true
+files:
+  - filter:
+      - dist-electron
+      - dist
+extraMetadata:
+  main: dist-electron/main/index.js
+mac:
+  artifactName: ${productName}_${version}.${ext}
+  target:
+    - dmg
+    - zip
+  category: public.app-category.productivity
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  artifactName: ${productName}_${version}.${ext}
+  requestedExecutionLevel: asInvoker
+linux:
+  target:
+    - target: AppImage
+      arch:
+        - x64
+  artifactName: ${productName}_${version}.${ext}
+  category: Office
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  deleteAppDataOnUninstall: false
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  allowElevation: false
+publish:
+  provider: github
+  owner: AIDotNet
+  repo: koala-desktop
+  releaseType: release
+electronVersion: 36.3.1
