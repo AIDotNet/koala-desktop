@@ -69,7 +69,7 @@ export const useTabStore = create<TabState & TabActions>(
           }
           
           // 将所有现有标签页设为非活跃
-          const updatedTabs = tabs.map(tab => ({ ...tab, isActive: false }))
+          const updatedTabs = tabs.map((tab: Tab) => ({ ...tab, isActive: false }))
           
           // 添加新标签页并设为活跃
           newTab.isActive = true
@@ -85,7 +85,7 @@ export const useTabStore = create<TabState & TabActions>(
         
         removeTab: (tabId: string) => {
           const { tabs, activeTabId } = get()
-          const filteredTabs = tabs.filter(tab => tab.id !== tabId)
+          const filteredTabs = tabs.filter((tab: Tab) => tab.id !== tabId)
           
           let newActiveTabId = activeTabId
           
@@ -108,7 +108,7 @@ export const useTabStore = create<TabState & TabActions>(
         
         setActiveTab: (tabId: string) => {
           const { tabs } = get()
-          const updatedTabs = tabs.map(tab => ({
+          const updatedTabs = tabs.map((tab: Tab) => ({
             ...tab,
             isActive: tab.id === tabId,
           }))
@@ -121,7 +121,7 @@ export const useTabStore = create<TabState & TabActions>(
         
         updateTab: (tabId: string, updates: Partial<Tab>) => {
           const { tabs } = get()
-          const updatedTabs = tabs.map(tab =>
+          const updatedTabs = tabs.map((tab: Tab) =>
             tab.id === tabId ? { ...tab, ...updates } : tab
           )
           
@@ -131,7 +131,7 @@ export const useTabStore = create<TabState & TabActions>(
         // 批量操作
         removeTabs: (tabIds: string[]) => {
           const { tabs, activeTabId } = get()
-          const filteredTabs = tabs.filter(tab => !tabIds.includes(tab.id))
+          const filteredTabs = tabs.filter((tab: Tab) => !tabIds.includes(tab.id))
           
           let newActiveTabId = activeTabId
           
@@ -158,8 +158,8 @@ export const useTabStore = create<TabState & TabActions>(
             : urlPattern
           
           const tabsToRemove = tabs
-            .filter(tab => tab.url && pattern.test(tab.url))
-            .map(tab => tab.id)
+            .filter((tab: Tab) => tab.url && pattern.test(tab.url))
+            .map((tab: Tab) => tab.id)
           
           if (tabsToRemove.length > 0) {
             const { removeTabs } = get()
@@ -178,7 +178,7 @@ export const useTabStore = create<TabState & TabActions>(
           const { tabs, updateTab } = get()
           
           // 查找与该会话相关的标签页
-          const sessionTab = tabs.find(tab => 
+          const sessionTab = tabs.find((tab: Tab) => 
             tab.url && tab.url.includes(`/chat/${sessionId}`)
           )
           
@@ -190,17 +190,17 @@ export const useTabStore = create<TabState & TabActions>(
         // 查询操作
         getTab: (tabId: string) => {
           const { tabs } = get()
-          return tabs.find(tab => tab.id === tabId)
+          return tabs.find((tab: Tab) => tab.id === tabId)
         },
         
         getTabByUrl: (url: string) => {
           const { tabs } = get()
-          return tabs.find(tab => tab.url === url)
+          return tabs.find((tab: Tab) => tab.url === url)
         },
         
         getActiveTab: () => {
           const { tabs, activeTabId } = get()
-          return tabs.find(tab => tab.id === activeTabId)
+          return tabs.find((tab: Tab) => tab.id === activeTabId)
         },
         
         // 导航操作

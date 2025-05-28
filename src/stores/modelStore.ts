@@ -82,12 +82,12 @@ export const useModelStore = create<ModelState & ModelActions>(
 
             // 只保留启用的提供商，并且只保留启用的模型
             const enabledProviders = dbProviders
-              .filter(provider => provider.enabled)
-              .map(provider => ({
+              .filter((provider: Provider) => provider.enabled)
+              .map((provider: Provider) => ({
                 ...provider,
-                models: provider.models.filter(model => model.enabled)
+                models: provider.models.filter((model: Model) => model.enabled)
               }))
-              .filter(provider => provider.models.length > 0) // 只保留有启用模型的提供商
+              .filter((provider: Provider) => provider.models.length > 0) // 只保留有启用模型的提供商
 
             set({ 
               providers: enabledProviders, 
@@ -96,9 +96,9 @@ export const useModelStore = create<ModelState & ModelActions>(
 
             // 如果当前没有选中模型，或者选中的模型不在启用列表中，自动选择第一个可用模型
             const { selectedModel } = get()
-            const allEnabledModels = enabledProviders.flatMap(p => p.models)
+            const allEnabledModels = enabledProviders.flatMap((p: Provider) => p.models)
             
-            if (!selectedModel || !allEnabledModels.find(m => m.id === selectedModel)) {
+            if (!selectedModel || !allEnabledModels.find((m: Model) => m.id === selectedModel)) {
               if (allEnabledModels.length > 0) {
                 set({ selectedModel: allEnabledModels[0].id })
               }
@@ -165,8 +165,8 @@ export const useModelStore = create<ModelState & ModelActions>(
         
         getSelectedModelData: () => {
           const { providers, selectedModel } = get()
-          const allModels = providers.flatMap(p => p.models)
-          return allModels.find(m => m.id === selectedModel) || null
+          const allModels = providers.flatMap((p: Provider) => p.models)
+          return allModels.find((m: Model) => m.id === selectedModel) || null
         },
         
         getSelectedProvider: () => {
@@ -174,31 +174,31 @@ export const useModelStore = create<ModelState & ModelActions>(
           const selectedModelData = getSelectedModelData()
           if (!selectedModelData) return null
           
-          return providers.find(p => p.id === selectedModelData.provider) || null
+          return providers.find((p: Provider) => p.id === selectedModelData.provider) || null
         },
         
         // 获取可用模型
         getEnabledModels: () => {
           const { providers } = get()
           return providers
-            .filter(provider => provider.enabled)
-            .flatMap(provider => 
-              provider.models.filter(model => model.enabled)
+            .filter((provider: Provider) => provider.enabled)
+            .flatMap((provider: Provider) => 
+              provider.models.filter((model: Model) => model.enabled)
             )
         },
         
         getEnabledProviders: () => {
           const { providers } = get()
           return providers
-            .filter(provider => provider.enabled)
-            .filter(provider => provider.models.some(model => model.enabled))
+            .filter((provider: Provider) => provider.enabled)
+            .filter((provider: Provider) => provider.models.some((model: Model) => model.enabled))
         },
         
         // 模型验证
         isModelAvailable: (modelId: string) => {
           const { getEnabledModels } = get()
           const enabledModels = getEnabledModels()
-          return enabledModels.some(model => model.id === modelId)
+          return enabledModels.some((model: Model) => model.id === modelId)
         },
         
         // 会话模型同步

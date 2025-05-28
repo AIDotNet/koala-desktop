@@ -77,32 +77,35 @@ class DataManager {
         this.config = this.getDefaultConfig()
         await this.saveConfig()
       }
-      return this.config
+      // 此时 this.config 已经确保不为 null
+      return this.config!
     } catch (error) {
       console.error('初始化配置失败:', error)
       this.config = this.getDefaultConfig()
-      return this.config
+      // 此时 this.config 已经确保不为 null
+      return this.config!
     }
   }
 
   // 获取配置
   getConfig(): AppConfig {
-    return this.config || this.getDefaultConfig()
+    return this.config ?? this.getDefaultConfig()
   }
 
   // 更新配置
   async updateConfig(updates: Partial<AppConfig>): Promise<void> {
-    if (!this.config) {
-      this.config = await this.initConfig()
-    }
-    this.config = { ...this.config!, ...updates }
+    // 确保配置已初始化
+    const currentConfig = this.config ?? await this.initConfig()
+    this.config = { ...currentConfig, ...updates }
     await this.saveConfig()
   }
 
   // 保存配置
   private async saveConfig(): Promise<void> {
     try {
-      localStorage.setItem(this.configKey, JSON.stringify(this.config))
+      if (this.config) {
+        localStorage.setItem(this.configKey, JSON.stringify(this.config))
+      }
     } catch (error) {
       console.error('保存配置失败:', error)
     }
