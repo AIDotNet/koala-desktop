@@ -1,4 +1,4 @@
-/* 模型选择器样式优化 - 与整体设计保持一致 */
+/* 模型选择器样式优化 - 性能优先版本 */
 
 /* 模型选择器容器 */
 .model-selector {
@@ -6,26 +6,25 @@
   width: 100%;
 }
 
-/* 选择器输入框样式 */
+/* 选择器输入框样式 - 移除复杂动画 */
 .model-selector .ant-select-selector {
   border-radius: 12px !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
   background: rgba(255, 255, 255, 0.05) !important;
   backdrop-filter: blur(10px) !important;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  transition: border-color 0.2s ease !important; /* 简化过渡效果 */
   min-height: 34px !important;
 }
 
 .model-selector .ant-select-selector:hover {
   border-color: rgba(24, 144, 255, 0.4) !important;
   background: rgba(255, 255, 255, 0.08) !important;
-  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.1) !important;
 }
 
 .model-selector .ant-select-focused .ant-select-selector {
   border-color: rgba(24, 144, 255, 0.6) !important;
   background: rgba(255, 255, 255, 0.1) !important;
-  box-shadow: 0 0 0 3px rgba(24, 144, 255, 0.15) !important;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.15) !important;
 }
 
 /* 选择器文本样式 */
@@ -40,10 +39,10 @@
   font-size: 14px !important;
 }
 
-/* 下拉箭头 */
+/* 下拉箭头 - 简化动画 */
 .model-selector .ant-select-arrow {
   color: rgba(255, 255, 255, 0.6) !important;
-  transition: all 0.3s ease !important;
+  transition: transform 0.2s ease !important;
 }
 
 .model-selector .ant-select-open .ant-select-arrow {
@@ -51,7 +50,7 @@
   color: rgba(24, 144, 255, 0.8) !important;
 }
 
-/* 下拉框容器 - 移除动画 */
+/* 下拉框容器 - 性能优化 */
 .model-selector-dropdown {
   border-radius: 16px !important;
   padding: 8px !important;
@@ -59,12 +58,14 @@
   backdrop-filter: blur(20px) !important;
   box-shadow: 
     0 20px 40px rgba(0, 0, 0, 0.3),
-    0 8px 16px rgba(0, 0, 0, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+    0 8px 16px rgba(0, 0, 0, 0.2) !important;
   overflow: hidden !important;
   max-height: 600px !important;
   min-width: 520px !important;
   max-width: 640px !important;
+  /* 性能优化：启用硬件加速 */
+  will-change: transform !important;
+  transform: translateZ(0) !important;
 }
 
 /* 下拉框内容区域 */
@@ -77,11 +78,11 @@
   background-color: #2e2c2c;
 }
 
-body:not(.dark){
-  background-color: #adadad;
+body:not(.dark) .ant-select-dropdown{
+  background-color: #f5f5f5;
 }
 
-/* 分组标签样式 - 优化视觉层次 */
+/* 分组标签样式 - 减少复杂效果 */
 .model-selector-dropdown .ant-select-item-group {
   padding: 0 !important;
   margin-bottom: 8px !important;
@@ -107,22 +108,22 @@ body:not(.dark){
   top: 0 !important;
   z-index: 10 !important;
   backdrop-filter: blur(10px) !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+  /* 性能优化：减少阴影复杂度 */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
 }
 
 /* 提供商数量标签 */
 .model-count {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  background: #10b981 !important;
   color: white !important;
   font-size: 11px !important;
   padding: 3px 8px !important;
   border-radius: 12px !important;
   margin-left: 12px !important;
   font-weight: 600 !important;
-  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3) !important;
 }
 
-/* 模型选项样式 - 固定高度，移除动画 */
+/* 模型选项样式 - 性能优化 */
 .model-selector-dropdown .ant-select-item-option {
   padding: 4px !important;
   margin: 5px !important;
@@ -132,30 +133,26 @@ body:not(.dark){
   max-height: 90px !important;
   overflow: hidden !important;
   position: relative !important;
+  /* 性能优化：移除复杂过渡 */
+  transition: background-color 0.15s ease !important;
 }
 
-/* 悬停效果 - 移除动画 */
+/* 悬停效果 - 简化 */
 .model-selector-dropdown .ant-select-item-option:hover {
   background: rgba(24, 144, 255, 0.08) !important;
-  box-shadow: 0 2px 8px rgba(0, 42, 231, 0.15) !important;
 }
 
-/* 选中状态 */
+/* 选中状态 - 简化 */
 .model-selector-dropdown .ant-select-item-option-selected {
-  background: linear-gradient(135deg, 
-    rgba(24, 144, 255, 0.15) 0%, 
-    rgba(24, 144, 255, 0.08) 100%) !important;
+  background: rgba(24, 144, 255, 0.15) !important;
   border-color: rgba(24, 144, 255, 0.5) !important;
-  box-shadow: 
-    0 0 0 2px rgba(24, 144, 255, 0.5),
-    0 4px 12px rgba(0, 132, 255, 0.1) !important;
 }
 
 .model-selector-dropdown .ant-select-item-option-selected:hover {
   border-color: rgba(24, 144, 255, 0.6) !important;
 }
 
-/* 模型内容区域样式优化 - 固定布局 */
+/* 模型内容区域样式优化 */
 .model-selector-dropdown .ant-select-item-option-content {
   color: rgba(255, 255, 255, 0.9) !important;
   padding: 12px !important;
@@ -179,7 +176,7 @@ body:not(.dark){
 
 /* 上下文窗口标签 */
 .context-window-badge {
-  background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%) !important;
+  background: #1890ff !important;
   color: white !important;
   font-size: 10px !important;
   padding: 2px 6px !important;
@@ -187,11 +184,10 @@ body:not(.dark){
   font-weight: 600 !important;
   min-width: 20px !important;
   text-align: center !important;
-  box-shadow: 0 2px 6px rgba(24, 144, 255, 0.3) !important;
   letter-spacing: 0.5px !important;
 }
 
-/* 能力图标样式 */
+/* 能力图标样式 - 简化 */
 .ability-icon {
   display: inline-flex !important;
   align-items: center !important;
@@ -199,6 +195,7 @@ body:not(.dark){
   cursor: help !important;
   padding: 2px !important;
   border-radius: 4px !important;
+  transition: background-color 0.15s ease !important;
 }
 
 .ability-icon:hover {
@@ -219,7 +216,6 @@ body:not(.dark){
   font-size: 48px !important;
   margin-bottom: 16px !important;
   opacity: 0.6 !important;
-  filter: grayscale(0.3) !important;
 }
 
 .no-results-text {
@@ -235,7 +231,7 @@ body:not(.dark){
   line-height: 1.5 !important;
 }
 
-/* 滚动条样式 */
+/* 滚动条样式 - 简化 */
 .model-selector-dropdown .ant-select-dropdown-menu {
   max-height: 520px !important;
   overflow-y: auto !important;
@@ -248,13 +244,16 @@ body:not(.dark){
 .model-selector-dropdown .ant-select-dropdown-menu::-webkit-scrollbar-track {
   border-radius: 4px !important;
   margin: 8px 0 !important;
+  background: rgba(255, 255, 255, 0.05) !important;
 }
 
 .model-selector-dropdown .ant-select-dropdown-menu::-webkit-scrollbar-thumb {
   border-radius: 4px !important;
+  background: rgba(255, 255, 255, 0.2) !important;
 }
 
 .model-selector-dropdown .ant-select-dropdown-menu::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3) !important;
 }
 
 /* 禁用状态 */
@@ -269,7 +268,7 @@ body:not(.dark){
   color: rgba(255, 255, 255, 0.3) !important;
 }
 
-/* 响应式设计 */
+/* 响应式设计 - 性能优化 */
 @media (max-width: 768px) {
   .model-selector-dropdown {
     min-width: 360px !important;
@@ -336,9 +335,7 @@ body:not(.dark) .model-selector .ant-select-selection-placeholder {
 }
 
 body:not(.dark) .model-selector-dropdown {
-  background: linear-gradient(135deg, 
-    rgba(255, 255, 255, 0.95) 0%, 
-    rgba(248, 250, 252, 0.95) 100%) !important;
+  background: rgba(255, 255, 255, 0.95) !important;
   border-color: rgba(0, 0, 0, 0.1) !important;
   box-shadow: 
     0 20px 40px rgba(0, 0, 0, 0.1),
@@ -346,9 +343,7 @@ body:not(.dark) .model-selector-dropdown {
 }
 
 body:not(.dark) .model-selector-dropdown .ant-select-item-group-label {
-  background: linear-gradient(135deg, 
-    rgba(0, 0, 0, 0.04) 0%, 
-    rgba(0, 0, 0, 0.02) 100%) !important;
+  background: rgba(0, 0, 0, 0.04) !important;
   color: rgba(0, 0, 0, 0.85) !important;
   border-color: rgba(0, 0, 0, 0.08) !important;
 }

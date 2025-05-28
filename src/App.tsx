@@ -4,6 +4,9 @@ import TitleBar from '@/components/TitleBar'
 import { Tab } from '@/components/TabBar'
 import Home from '@/pages/Home/index'
 import Settings from '@/pages/Settings'
+import About from '@/pages/About'
+import LoginPage from '@/pages/Login'
+import LoginCallback from '@/pages/LoginCallback'
 import { darkTheme, lightTheme, getThemeColors } from '@/theme'
 import { chatSessionDB } from '@/utils/indexedDB'
 
@@ -24,6 +27,58 @@ function App() {
       document.body.classList.add('dark')
     } else {
       document.body.classList.remove('dark')
+    }
+  }, [])
+
+  // 监听来自登录页面的消息
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return
+      
+      if (event.data.type === 'LOGIN_SUCCESS' && event.data.token) {
+        // 转发登录成功消息给整个应用
+        // window.postMessage({
+        //   type: 'LOGIN_SUCCESS',
+        //   token: event.data.token
+        // }, window.location.origin)
+      }
+      
+      if (event.data.type === 'CLOSE_LOGIN_TAB') {
+        // 关闭登录相关的标签页
+        setTabs(prevTabs => {
+          const filteredTabs = prevTabs.filter(tab => 
+            tab.url !== '/login' && tab.url !== '/login-callback'
+          )
+          
+          // 如果当前活动标签页被关闭，激活第一个可用标签页
+          const currentActiveTab = prevTabs.find(tab => tab.isActive)
+          if (currentActiveTab && (currentActiveTab.url === '/login' || currentActiveTab.url === '/login-callback')) {
+            if (filteredTabs.length > 0) {
+              filteredTabs[0].isActive = true
+              setCurrentUrl(filteredTabs[0].url || '/')
+            } else {
+              // 如果没有其他标签页，创建默认标签页
+              const defaultTab: Tab = {
+                id: Date.now().toString(),
+                title: '对话',
+                url: '/',
+                isActive: true,
+                canClose: false
+              }
+              setCurrentUrl('/')
+              return [defaultTab]
+            }
+          }
+          
+          return filteredTabs
+        })
+      }
+    }
+
+    window.addEventListener('message', handleMessage)
+
+    return () => {
+      window.removeEventListener('message', handleMessage)
     }
   }, [])
   
@@ -175,6 +230,34 @@ function App() {
     setCurrentUrl('/settings')
   }
 
+  // 添加登录标签页的函数
+  const addLoginTab = () => {
+    // 检查是否已经存在登录标签页
+    const existingLoginTab = tabs.find(tab => tab.url === '/login')
+    
+    if (existingLoginTab) {
+      // 如果已存在，直接激活该标签页
+      handleTabClick(existingLoginTab.id)
+      return
+    }
+    
+    // 创建新的登录标签页
+    const loginTab: Tab = {
+      id: Date.now().toString(),
+      title: '登录 - TokenAI',
+      url: '/login',
+      isActive: true,
+      canClose: true
+    }
+    
+    // 添加新标签页并设为活动状态
+    setTabs(prevTabs => [
+      ...prevTabs.map(tab => ({ ...tab, isActive: false })),
+      loginTab
+    ])
+    setCurrentUrl('/login')
+  }
+
   // 渲染当前页面内容
   const renderCurrentPage = () => {
     // 从当前URL中提取sessionId
@@ -243,8 +326,12 @@ function App() {
     switch (currentUrl) {
       case '/settings':
         return <Settings isDarkTheme={isDarkTheme} onNavigate={handleNavigate} />
-      // case '/providers':
-      //   return <ProviderManager />
+      case '/about':
+        return <About />
+      case '/login':
+        return <LoginPage isDarkTheme={isDarkTheme} />
+      case '/login-callback':
+        return <LoginCallback isDarkTheme={isDarkTheme} />
       default:
         // 处理聊天路由 /chat/:sessionId 和主页
         return (
@@ -280,6 +367,7 @@ function App() {
           onTabClose={handleTabClose}
           onNewTab={handleNewTab}
           onSettingsClick={addSettingsTab}
+          onAddLoginTab={addLoginTab}
         />
         
         {/* 主内容区域 - 直接渲染组件 */}

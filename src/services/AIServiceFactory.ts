@@ -52,7 +52,8 @@ export class AIServiceFactory implements IAIServiceFactory {
         service = new DeepSeekService(options.apiKey, options.baseUrl);
         break;
       default:
-        throw new Error(`不支持的AI服务类型: ${type}`);
+        service = new OpenAIService(options.apiKey, options.baseUrl);
+        break;
     }
     
     // 设置其他选项

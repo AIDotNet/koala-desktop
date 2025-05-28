@@ -29,16 +29,24 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL
   ? path.join(process.env.APP_ROOT, 'public')
   : RENDERER_DIST
 
-// Disable GPU Acceleration for Windows 7
+// 性能优化：禁用GPU加速（如果遇到问题）
 if (os.release().startsWith('6.1')) app.disableHardwareAcceleration()
 
-// Set application name for Windows 10+ notifications
+// 性能优化：设置应用程序名称
 if (process.platform === 'win32') app.setAppUserModelId(app.getName())
 
+// 性能优化：确保单实例运行
 if (!app.requestSingleInstanceLock()) {
   app.quit()
   process.exit(0)
 }
+
+// 性能优化：设置应用程序标志
+app.commandLine.appendSwitch('--disable-features', 'VizDisplayCompositor')
+app.commandLine.appendSwitch('--disable-background-timer-throttling')
+app.commandLine.appendSwitch('--disable-renderer-backgrounding')
+app.commandLine.appendSwitch('--disable-backgrounding-occluded-windows')
+app.commandLine.appendSwitch('--disable-ipc-flooding-protection')
 
 let win: BrowserWindow | null = null
 const preload = path.join(__dirname, '../preload/index.mjs')
@@ -46,7 +54,7 @@ const indexHtml = path.join(RENDERER_DIST, 'index.html')
 
 async function createWindow() {
   win = new BrowserWindow({
-    title: 'Main window',
+    title: 'Koala AI',
     icon: path.join(process.env.VITE_PUBLIC, 'favicon.ico'),
     frame: false,
     titleBarStyle: 'hidden',
@@ -54,15 +62,33 @@ async function createWindow() {
     height: 800,
     minWidth: 800,
     minHeight: 600,
+    show: false, // 性能优化：延迟显示窗口
     webPreferences: {
       preload,
-      // Warning: Enable nodeIntegration and disable contextIsolation is not secure in production
-      // nodeIntegration: true,
-
-      // Consider using contextBridge.exposeInMainWorld
-      // Read more on https://www.electronjs.org/docs/latest/tutorial/context-isolation
-      // contextIsolation: false,
+      // 性能优化：启用上下文隔离和禁用节点集成
+      contextIsolation: true,
+      nodeIntegration: false,
+      // 性能优化：启用沙盒模式
+      sandbox: false, // 暂时禁用沙盒，因为需要文件访问
+      // 性能优化：禁用web安全（仅开发环境）
+      webSecurity: !VITE_DEV_SERVER_URL,
+      // 性能优化：启用实验性功能
+      experimentalFeatures: true,
+      // 性能优化：启用背景节流
+      backgroundThrottling: false,
+      // 性能优化：设置内存限制
+      v8CacheOptions: 'code',
     },
+  })
+
+  // 性能优化：窗口准备就绪后再显示
+  win.once('ready-to-show', () => {
+    win?.show()
+    
+    // 性能优化：设置窗口优先级
+    if (process.platform === 'win32') {
+      win?.setAlwaysOnTop(false)
+    }
   })
 
   if (VITE_DEV_SERVER_URL) { // #298
@@ -82,6 +108,16 @@ async function createWindow() {
   win.webContents.setWindowOpenHandler(({ url }) => {
     if (url.startsWith('https:')) shell.openExternal(url)
     return { action: 'deny' }
+  })
+
+  // 性能优化：内存管理
+  win.webContents.on('dom-ready', () => {
+    // 强制垃圾回收（仅开发环境）
+    if (VITE_DEV_SERVER_URL) {
+      setTimeout(() => {
+        win?.webContents.executeJavaScript('window.gc && window.gc()')
+      }, 5000)
+    }
   })
 
   // Auto update

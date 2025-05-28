@@ -3,6 +3,7 @@ import { Minus, Square, X, Maximize2, Settings } from 'lucide-react'
 import { Button, theme, Layout, message } from 'antd'
 import ThemeToggle from './ThemeToggle'
 import TabBar, { Tab } from './TabBar'
+import UserAvatar from './UserAvatar'
 import { getThemeColors } from '@/theme'
 import './TitleBar.css'
 import { Tooltip } from '@lobehub/ui'
@@ -14,6 +15,7 @@ interface TitleBarProps {
   onTabClose?: (tabId: string) => void
   onNewTab?: () => void
   onSettingsClick?: () => void
+  onAddLoginTab?: () => void
 }
 
 const TitleBar: React.FC<TitleBarProps> = ({
@@ -22,7 +24,8 @@ const TitleBar: React.FC<TitleBarProps> = ({
   onTabClick = () => { },
   onTabClose = () => { },
   onNewTab = () => { },
-  onSettingsClick = () => { }
+  onSettingsClick = () => { },
+  onAddLoginTab = () => { }
 }) => {
   const [isMaximized, setIsMaximized] = useState(false)
   const [isDarkTheme, setIsDarkTheme] = useState(false)
@@ -95,6 +98,11 @@ const TitleBar: React.FC<TitleBarProps> = ({
 
       {/* 右侧：窗口控制按钮 */}
       <div className="titlebar-right">
+        {/* 用户头像按钮 */}
+        <div className="titlebar-toggle-container">
+          <UserAvatar isDarkTheme={isDarkTheme} onAddLoginTab={onAddLoginTab} />
+        </div>
+
         <div className="titlebar-toggle-container">
           <Tooltip title={'打开系统设置'}>
             <Button

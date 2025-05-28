@@ -2,8 +2,6 @@ import React from 'react'
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import Home from '../pages/Home/index'
 import Settings from '../pages/Settings'
-import ZustandTestPage from '../pages/Home/ZustandTestPage'
-import SessionManagerExample from '../pages/Home/SessionManagerExample'
 
 interface RouteWrapperProps {
   children: React.ReactElement
@@ -41,14 +39,6 @@ export const createAppRouter = (isDarkTheme: boolean, onThemeChange: (isDark: bo
           <Settings isDarkTheme={isDarkTheme} />
         </RouteWrapper>
       )
-    },
-    {
-      path: '/zustand-test',
-      element: <ZustandTestPage />
-    },
-    {
-      path: '/session-example',
-      element: <SessionManagerExample />
     },
     {
       path: '/home',

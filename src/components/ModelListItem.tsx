@@ -75,13 +75,14 @@ const getTypeDisplayName = (type: string): string => {
 const useModelItemStyles = (token: any, enabled: boolean) => {
   return {
     card: {
-      marginBottom: token.marginXS,
       border: `1px solid ${token.colorBorder}`,
       borderRadius: token.borderRadius,
-      transition: 'all 0.2s ease',
       opacity: enabled ? 1 : 0.7,
       boxShadow: token.boxShadowTertiary,
-      background: token.colorBgContainer
+      background: token.colorBgContainer,
+      height: '80px', // 确保高度与虚拟列表中设置的itemHeight匹配
+      overflow: 'hidden',
+      marginBottom: 0
     },
     iconContainer: {
       width: '32px',
@@ -148,21 +149,6 @@ const ModelListItem: React.FC<ModelListItemProps> = ({
   // 获取主题token
   const { token } = theme.useToken()
   const styles = useModelItemStyles(token, model.enabled || false)
-
-  // 添加CSS动画样式
-  React.useEffect(() => {
-    const style = document.createElement('style')
-    style.textContent = `
-      @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
-    `
-    document.head.appendChild(style)
-    return () => {
-      document.head.removeChild(style)
-    }
-  }, [])
 
   // 处理模型状态切换
   const handleToggle = async (checked: boolean) => {
@@ -271,16 +257,13 @@ const ModelListItem: React.FC<ModelListItemProps> = ({
       size="small"
       style={{
         ...styles.card,
-        animation: `fadeIn 0.3s ease-out forwards`,
-        animationDelay: `${index * 0.03}s`,
-        opacity: 0
       }}
-      bodyStyle={{ padding: token.paddingLG }}
+      bodyStyle={{ padding: token.paddingSM }}
       hoverable
     >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '100%' }}>
         {/* 左侧：图标和信息 */}
-        <div style={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: 0, height: '100%' }}>
           <div style={styles.iconContainer}>
             <ProviderIcon
               provider={model.provider}
@@ -289,7 +272,7 @@ const ModelListItem: React.FC<ModelListItemProps> = ({
             />
           </div>
 
-          <div style={styles.modelInfo}>
+          <div style={{ ...styles.modelInfo, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
             <div style={styles.modelName}>
               <span style={{
                 overflow: 'hidden',
@@ -311,34 +294,31 @@ const ModelListItem: React.FC<ModelListItemProps> = ({
               </Tag>
             </div>
 
-            <div style={styles.modelMeta}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <Text style={{
                 color: token.colorTextQuaternary,
-                fontSize: token.fontSizeSM
+                fontSize: token.fontSizeSM,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap'
               }}>
-                ID: {model.id}
+                {model.id}
               </Text>
-            </div>
-
-            <div style={styles.contextInfo}>
-              <span>上下文: {formatContextWindow(model.contextWindowTokens || 0)}</span>
+              
               <span style={{ color: token.colorTextQuaternary }}>•</span>
-              <span>输出: {formatContextWindow(model.maxOutput || 0)}</span>
-              {model.pricing && (
-                <>
-                  <span style={{ color: token.colorTextQuaternary }}>•</span>
-                  <span style={{ color: token.colorWarning }}>
-                    ${model.pricing.input || 0}/${model.pricing.output || 0}
-                  </span>
-                </>
-              )}
-            </div>
-
-            {(model.abilities?.functionCall || model.abilities?.vision) && (
-              <div style={styles.abilities}>
-                {renderAbilities()}
+              
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                fontSize: token.fontSizeSM,
+                color: token.colorTextTertiary
+              }}>
+                <span>上下文: {formatContextWindow(model.contextWindowTokens || 0)}</span>
+                {model.abilities?.functionCall && <Zap size={12} style={{ color: token.colorInfo }} />}
+                {model.abilities?.vision && <Eye size={12} style={{ color: token.colorSuccess }} />}
               </div>
-            )}
+            </div>
           </div>
         </div>
 

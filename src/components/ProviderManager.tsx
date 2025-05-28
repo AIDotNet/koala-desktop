@@ -1,59 +1,35 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { ProviderIcon } from '@lobehub/icons'
 import axios from 'axios'
 import {
-  Card,
   Switch,
   Button,
   Input,
   Modal,
   Form,
   Typography,
-  Space,
   Tooltip,
   Badge,
-  Table,
-  Tag,
-  Popconfirm,
   message,
   List,
   Select,
   InputNumber,
   Checkbox,
-  Row,
-  Col,
-  Statistic,
-  Divider,
-  Alert,
-  Dropdown,
   Radio,
   theme
 } from 'antd'
+import VirtualList from 'rc-virtual-list'
 import {
   Plus,
   Settings,
-  Trash2,
-  Eye,
-  EyeOff,
-  Zap,
-  ExternalLink,
-  Key,
   Globe,
   Bot,
-  Edit,
-  Activity,
   CheckCircle,
   AlertTriangle,
-  Download,
-  Square,
   Search,
-  Filter,
-  Cpu
 } from 'lucide-react'
 import { Provider, Model, ProviderManagerProps as BaseProviderManagerProps } from '@/types/model'
 import { providerDB } from '@/utils/providerDB'
-import { getIcon, IconName } from '@/utils/iconutils'
-import { OpenAI } from '@lobehub/icons'
 import ModelListItem from './ModelListItem'
 
 const { Title, Text } = Typography
@@ -64,21 +40,6 @@ const { Option } = Select
 interface ProviderManagerProps extends BaseProviderManagerProps {
   isDarkTheme?: boolean
 }
-
-// 用于渲染提供商图标的函数
-const renderProviderIcon = (iconName?: string) => {
-  if (!iconName) return null;
-
-  try {
-    const IconComponent = getIcon(iconName as IconName);
-    if (!IconComponent) return null;
-    // 使用 React.createElement 而不是 JSX
-    return React.createElement(IconComponent);
-  } catch (error) {
-    console.error("无法渲染图标:", error);
-    return null;
-  }
-};
 
 // 自定义样式钩子
 const useProviderManagerStyles = (token: any) => {
@@ -238,6 +199,21 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
   const [searchText, setSearchText] = useState('')
   const [filterType, setFilterType] = useState<string | null>(null)
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [models, setModels] = useState<Model[]>([])
+  const [windowHeight, setWindowHeight] = useState(window.innerHeight)
+  const virtualListRef = useRef<HTMLDivElement>(null)
+
+  // 监听窗口大小变化
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowHeight(window.innerHeight)
+    }
+
+    window.addEventListener('resize', handleResize)
+    return () => {
+      window.removeEventListener('resize', handleResize)
+    }
+  }, [])
 
   // 初始化加载数据
   useEffect(() => {
@@ -274,57 +250,6 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
     }
   }, [providers, selectedProvider])
 
-  // 计算统计数据
-  const getStatistics = () => {
-    const enabledProviders = providers.filter(p => p.enabled).length
-    const totalModels = providers.reduce((sum, p) => sum + p.models.length, 0)
-    const enabledModels = providers.reduce((sum, p) =>
-      sum + p.models.filter(m => m.enabled).length, 0
-    )
-    const configuredProviders = providers.filter(p => p.apiKey && p.apiKey.trim() !== '').length
-
-    return {
-      enabledProviders,
-      totalProviders: providers.length,
-      totalModels,
-      enabledModels,
-      configuredProviders
-    }
-  }
-
-  // 格式化上下文窗口大小
-  const formatContextWindow = (tokens: number): string => {
-    if (tokens >= 1000000) {
-      return `${(tokens / 1000000).toFixed(1)}M`
-    } else if (tokens >= 1000) {
-      return `${(tokens / 1000).toFixed(0)}K`
-    }
-    return tokens.toString()
-  }
-
-  // 渲染模型能力图标
-  const renderAbilities = (model: Model): React.ReactNode[] => {
-    const abilities = [];
-
-    if (model.abilities?.functionCall) {
-      abilities.push(
-        <Tooltip key="function" title="支持函数调用">
-          <Zap size={12} style={{ color: token.colorInfo }} />
-        </Tooltip>
-      )
-    }
-
-    if (model.abilities?.vision) {
-      abilities.push(
-        <Tooltip key="vision" title="支持视觉识别">
-          <Eye size={12} style={{ color: token.colorSuccess }} />
-        </Tooltip>
-      )
-    }
-
-    return abilities
-  }
-
   // 处理提供商选择
   const handleProviderSelect = (provider: Provider) => {
     try {
@@ -354,6 +279,96 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
       console.error('切换提供商失败:', error);
       // 如果动画失败，仍然要确保提供商被选中
       setSelectedProvider(provider);
+    }
+  }
+
+  // 渲染模型列表
+  const renderModelList = () => {
+    if (!selectedProvider) return null;
+    if (models.length > 0) {
+      // 计算容器高度 - 考虑窗口高度和固定头部区域
+      const listHeight = windowHeight - 420
+      const itemHeight = 90 // 每个列表项的高度
+
+      return (
+        <div
+          ref={virtualListRef}
+          className="virtual-list-container"
+          style={{
+            height: `${listHeight}px`,
+            padding: '0 4px',
+            overflow: 'hidden'
+          }}
+        >
+          <List>
+            <VirtualList
+              data={models}
+              height={listHeight}
+              itemHeight={itemHeight}
+              itemKey="id"
+              onScroll={() => {}}
+            >
+              {(model, index) => (
+                <List.Item key={model.id}
+                style={{ padding: '4px 0', width: '100%' }}>
+                  <ModelListItem
+                    model={model}
+                    index={index}
+                    onEdit={handleEditModel}
+                    onDelete={handleDeleteModel}
+                    onToggle={onModelToggle}
+                    onProviderUpdate={onProviderUpdate}
+                    setSelectedProvider={setSelectedProvider}
+                    setIsRefreshing={setIsRefreshing}
+                  />
+                </List.Item>
+              )}
+            </VirtualList>
+          </List>
+        </div>
+      )
+    } else {
+      return (
+        <div style={styles.emptyState}>
+          <div style={styles.emptyIcon}>
+            <Bot size={40} style={{ color: token.colorTextQuaternary }} />
+          </div>
+          <Title level={3} style={{
+            color: token.colorTextSecondary,
+            marginBottom: token.marginSM,
+            fontWeight: 500
+          }}>
+            {selectedProvider.models.length > 0 ? '没有匹配的模型' : '暂无模型'}
+          </Title>
+          <Text style={{
+            color: token.colorTextTertiary,
+            marginBottom: token.marginXL,
+            maxWidth: 400,
+            lineHeight: 1.6
+          }}>
+            {selectedProvider.models.length > 0
+              ? '尝试调整搜索条件或清除筛选器以查看更多模型。'
+              : '还没有配置任何模型。添加您的第一个模型来开始使用 AI 功能。'}
+          </Text>
+          {selectedProvider.models.length === 0 && (
+            <Button
+              type="primary"
+              size="large"
+              icon={<Plus size={16} />}
+              onClick={handleAddModel}
+              style={{
+                borderRadius: token.borderRadiusLG,
+                padding: '8px 24px',
+                height: 'auto',
+                fontSize: token.fontSize,
+                fontWeight: 500,
+                boxShadow: token.boxShadowSecondary
+              }}
+            >
+              添加第一个模型
+            </Button>
+          )}
+        </div>)
     }
   }
 
@@ -535,7 +550,7 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
           m.id === editingModel.id ? modelData : m
         )
         const updatedProvider = { ...selectedProvider, models: updatedModels }
-        
+
         await providerDB.saveProvider(updatedProvider);
         onProviderUpdate(updatedProvider)
         setSelectedProvider(updatedProvider)
@@ -546,7 +561,7 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
           ...selectedProvider,
           models: [...selectedProvider.models, modelData]
         }
-        
+
         await providerDB.saveProvider(updatedProvider);
         onProviderUpdate(updatedProvider)
         setSelectedProvider(updatedProvider)
@@ -568,7 +583,7 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
 
       const updatedModels = selectedProvider.models.filter(m => m.id !== modelId)
       const updatedProvider = { ...selectedProvider, models: updatedModels }
-      
+
       await providerDB.saveProvider(updatedProvider);
       onProviderUpdate(updatedProvider)
       setSelectedProvider(updatedProvider)
@@ -646,13 +661,13 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
       // 合并现有模型和新获取的模型
       const existingModelIds = selectedProvider.models.map(m => m.id);
       const newModels = apiModels.filter((model: Model) => !existingModelIds.includes(model.id));
-      
+
       if (newModels.length > 0) {
         const updatedProvider = {
           ...selectedProvider,
           models: [...selectedProvider.models, ...newModels]
         };
-        
+
         await providerDB.saveProvider(updatedProvider);
         onProviderUpdate(updatedProvider);
         setSelectedProvider(updatedProvider);
@@ -668,23 +683,29 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
     }
   };
 
-  // 过滤模型
-  const getFilteredModels = () => {
-    if (!selectedProvider) return [];
-    
-    return selectedProvider.models.filter(model => {
-      // 按搜索文本筛选
-      const matchesSearch = !searchText || 
-        model.displayName.toLowerCase().includes(searchText.toLowerCase()) ||
-        model.id.toLowerCase().includes(searchText.toLowerCase()) ||
-        (model.description || '').toLowerCase().includes(searchText.toLowerCase());
+  useEffect(() => {
+    if (selectedProvider) {
+      const models = selectedProvider.models.filter(model => {
+        // 按搜索文本筛选
+        const matchesSearch = !searchText ||
+          model.displayName.toLowerCase().includes(searchText.toLowerCase()) ||
+          model.id.toLowerCase().includes(searchText.toLowerCase()) ||
+          (model.description || '').toLowerCase().includes(searchText.toLowerCase());
 
-      // 按类型筛选
-      const matchesType = !filterType || model.type === filterType;
+        // 按类型筛选
+        const matchesType = !filterType || model.type === filterType;
 
-      return matchesSearch && matchesType;
-    });
-  };
+        return matchesSearch && matchesType;
+      }).sort((a, b) => {
+        // 启用的模型排在最顶部
+        if (a.enabled === b.enabled) {
+          return 0;
+        }
+        return a.enabled ? -1 : 1;
+      });
+      setModels(models);
+    }
+  }, [searchText, filterType,selectedProvider]);
 
   return (
     <div style={styles.container}>
@@ -733,8 +754,8 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
                     key={provider.id}
                     style={{
                       ...styles.providerItem,
-                      ...(selectedProvider?.id === provider.id 
-                        ? styles.providerItemSelected 
+                      ...(selectedProvider?.id === provider.id
+                        ? styles.providerItemSelected
                         : styles.providerItemDefault),
                       animation: 'fadeIn 0.3s ease-out'
                     }}
@@ -758,8 +779,8 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          background: selectedProvider?.id === provider.id 
-                            ? `${token.colorPrimary}30` 
+                          background: selectedProvider?.id === provider.id
+                            ? `${token.colorPrimary}30`
                             : token.colorFillSecondary,
                           borderRadius: token.borderRadius,
                           transition: 'all 0.3s ease'
@@ -820,8 +841,8 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
                         gap: '4px'
                       }}>
                         <div style={{
-                          background: provider.apiKey 
-                            ? `${token.colorSuccess}20` 
+                          background: provider.apiKey
+                            ? `${token.colorSuccess}20`
                             : `${token.colorTextQuaternary}30`,
                           color: provider.apiKey ? token.colorSuccess : token.colorTextQuaternary,
                           fontSize: token.fontSizeSM,
@@ -1060,71 +1081,7 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
                 )}
 
                 {/* 模型列表 */}
-                {getFilteredModels().length > 0 ? (
-                  <div
-                    className="custom-scrollbar"
-                    style={{
-                      maxHeight: "calc(100vh - 420px)",
-                      overflowY: "auto",
-                      padding: '0 4px'
-                    }}
-                  >
-                    {getFilteredModels().map((model, index) => (
-                      <ModelListItem
-                        key={model.id}
-                        model={model}
-                        index={index}
-                        onEdit={handleEditModel}
-                        onDelete={handleDeleteModel}
-                        onToggle={onModelToggle}
-                        onProviderUpdate={onProviderUpdate}
-                        setSelectedProvider={setSelectedProvider}
-                        setIsRefreshing={setIsRefreshing}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <div style={styles.emptyState}>
-                    <div style={styles.emptyIcon}>
-                      <Bot size={40} style={{ color: token.colorTextQuaternary }} />
-                    </div>
-                    <Title level={3} style={{ 
-                      color: token.colorTextSecondary, 
-                      marginBottom: token.marginSM,
-                      fontWeight: 500
-                    }}>
-                      {selectedProvider.models.length > 0 ? '没有匹配的模型' : '暂无模型'}
-                    </Title>
-                    <Text style={{ 
-                      color: token.colorTextTertiary, 
-                      marginBottom: token.marginXL, 
-                      maxWidth: 400,
-                      lineHeight: 1.6
-                    }}>
-                      {selectedProvider.models.length > 0
-                        ? '尝试调整搜索条件或清除筛选器以查看更多模型。'
-                        : '还没有配置任何模型。添加您的第一个模型来开始使用 AI 功能。'}
-                    </Text>
-                    {selectedProvider.models.length === 0 && (
-                      <Button
-                        type="primary"
-                        size="large"
-                        icon={<Plus size={16} />}
-                        onClick={handleAddModel}
-                        style={{
-                          borderRadius: token.borderRadiusLG,
-                          padding: '8px 24px',
-                          height: 'auto',
-                          fontSize: token.fontSize,
-                          fontWeight: 500,
-                          boxShadow: token.boxShadowSecondary
-                        }}
-                      >
-                        添加第一个模型
-                      </Button>
-                    )}
-                  </div>
-                )}
+                {renderModelList()}
               </div>
             </>
           ) : (
@@ -1172,8 +1129,8 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
             label={<span style={{ color: token.colorText }}>提供商名称</span>}
             rules={[{ required: true, message: '请输入提供商名称' }]}
           >
-            <Input 
-              placeholder="例如：OpenAI" 
+            <Input
+              placeholder="例如：OpenAI"
               style={{ borderRadius: token.borderRadius }}
             />
           </Form.Item>
@@ -1194,8 +1151,8 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
             label={<span style={{ color: token.colorText }}>API URL</span>}
             rules={[{ required: true, message: '请输入API URL' }]}
           >
-            <Input 
-              placeholder="https://api.openai.com/v1" 
+            <Input
+              placeholder="https://api.openai.com/v1"
               style={{ borderRadius: token.borderRadius }}
             />
           </Form.Item>
@@ -1205,8 +1162,8 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
             label={<span style={{ color: token.colorText }}>API Key</span>}
             rules={[{ required: true, message: '请输入API Key' }]}
           >
-            <Input.Password 
-              placeholder="sk-..." 
+            <Input.Password
+              placeholder="sk-..."
               style={{ borderRadius: token.borderRadius }}
             />
           </Form.Item>
@@ -1215,26 +1172,26 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
             name="website"
             label={<span style={{ color: token.colorText }}>官网</span>}
           >
-            <Input 
-              placeholder="https://openai.com" 
+            <Input
+              placeholder="https://openai.com"
               style={{ borderRadius: token.borderRadius }}
             />
           </Form.Item>
 
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'flex-end', 
-            gap: token.marginXS, 
-            marginTop: token.marginLG 
+          <div style={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: token.marginXS,
+            marginTop: token.marginLG
           }}>
-            <Button 
+            <Button
               onClick={() => setIsProviderModalVisible(false)}
               style={{ borderRadius: token.borderRadius }}
             >
               取消
             </Button>
-            <Button 
-              type="primary" 
+            <Button
+              type="primary"
               htmlType="submit"
               style={{ borderRadius: token.borderRadius }}
             >
@@ -1274,8 +1231,8 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
               label={<span style={{ color: token.colorText }}>模型ID</span>}
               rules={[{ required: true, message: '请输入模型ID' }]}
             >
-              <Input 
-                placeholder="例如：gpt-4" 
+              <Input
+                placeholder="例如：gpt-4"
                 style={{ borderRadius: token.borderRadius }}
               />
             </Form.Item>
@@ -1285,8 +1242,8 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
               label={<span style={{ color: token.colorText }}>显示名称</span>}
               rules={[{ required: true, message: '请输入显示名称' }]}
             >
-              <Input 
-                placeholder="例如：GPT-4" 
+              <Input
+                placeholder="例如：GPT-4"
                 style={{ borderRadius: token.borderRadius }}
               />
             </Form.Item>
@@ -1309,7 +1266,7 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
               label={<span style={{ color: token.colorText }}>模型类型</span>}
               rules={[{ required: true, message: '请选择模型类型' }]}
             >
-              <Select 
+              <Select
                 placeholder="选择模型类型"
                 style={{ borderRadius: token.borderRadius }}
               >
@@ -1423,20 +1380,20 @@ const ProviderManager: React.FC<ProviderManagerProps> = ({
             </div>
           </div>
 
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'flex-end', 
-            gap: token.marginXS, 
-            marginTop: token.marginLG 
+          <div style={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: token.marginXS,
+            marginTop: token.marginLG
           }}>
-            <Button 
+            <Button
               onClick={() => setIsModelModalVisible(false)}
               style={{ borderRadius: token.borderRadius }}
             >
               取消
             </Button>
-            <Button 
-              type="primary" 
+            <Button
+              type="primary"
               htmlType="submit"
               style={{ borderRadius: token.borderRadius }}
             >

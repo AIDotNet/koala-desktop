@@ -16,9 +16,15 @@ class ChatSessionDB {
   private sessionStoreName = 'sessions'
   private messageStoreName = 'messages'
   private db: IDBDatabase | null = null
+  private initPromise: Promise<void> | null = null
 
   async init(): Promise<void> {
-    return new Promise((resolve, reject) => {
+    // 性能优化：避免重复初始化
+    if (this.initPromise) {
+      return this.initPromise
+    }
+
+    this.initPromise = new Promise((resolve, reject) => {
       const request = indexedDB.open(this.dbName, this.version)
 
       request.onerror = () => {
@@ -48,14 +54,15 @@ class ChatSessionDB {
           messageStore.createIndex('timestamp', 'timestamp', { unique: false })
         }
         
-        // 数据迁移逻辑
+        // 性能优化：异步执行数据迁移
         if (oldVersion === 1) {
-          this.migrateDataFromV1ToV2(db);
+          // 延迟执行迁移，避免阻塞初始化
+          setTimeout(() => this.migrateDataFromV1ToV2(db), 0);
         }
         
         // 从版本2升级到版本3，添加selectedModel字段支持
         if (oldVersion === 2) {
-          this.migrateDataFromV2ToV3(db);
+          setTimeout(() => this.migrateDataFromV2ToV3(db), 0);
         }
         
         // 从版本1直接升级到版本3
@@ -67,11 +74,15 @@ class ChatSessionDB {
         }
       }
     })
+
+    return this.initPromise
   }
   
-  // 数据迁移函数 - 从v1到v2
+  // 性能优化：批量数据迁移 - 从v1到v2
   private async migrateDataFromV1ToV2(db: IDBDatabase): Promise<void> {
     try {
+      console.log('开始数据迁移: 从v1到v2 (异步执行)')
+      
       // 获取所有会话
       const transaction = db.transaction(this.sessionStoreName, 'readonly');
       const sessionStore = transaction.objectStore(this.sessionStoreName);
@@ -81,21 +92,32 @@ class ChatSessionDB {
         request.onerror = () => reject(request.error);
       });
       
-      // 为每个会话的消息创建单独的记录
-      const messageStore = db.transaction(this.messageStoreName, 'readwrite')
-        .objectStore(this.messageStoreName);
-        
-      // 逐个处理会话
+      // 性能优化：批量处理消息
+      const batchSize = 50; // 每批处理50条消息
+      
       for (const session of sessions) {
         const messages = session.messages || [];
         
-        // 将消息添加到消息存储中
-        for (const message of messages) {
-          const messageRequest = messageStore.add(message);
-          await new Promise<void>((resolve, reject) => {
-            messageRequest.onsuccess = () => resolve();
-            messageRequest.onerror = () => reject(messageRequest.error);
-          });
+        // 分批处理消息
+        for (let i = 0; i < messages.length; i += batchSize) {
+          const batch = messages.slice(i, i + batchSize);
+          
+          const messageTransaction = db.transaction(this.messageStoreName, 'readwrite');
+          const messageStore = messageTransaction.objectStore(this.messageStoreName);
+          
+          // 批量添加消息
+          const promises = batch.map((message: Message) => 
+            new Promise<void>((resolve, reject) => {
+              const request = messageStore.add(message);
+              request.onsuccess = () => resolve();
+              request.onerror = () => reject(request.error);
+            })
+          );
+          
+          await Promise.all(promises);
+          
+          // 性能优化：让出主线程
+          await new Promise(resolve => setTimeout(resolve, 0));
         }
         
         // 更新会话对象，移除messages数组
@@ -116,10 +138,10 @@ class ChatSessionDB {
     }
   }
 
-  // 数据迁移函数 - 从v2到v3，添加selectedModel字段
+  // 性能优化：批量数据迁移 - 从v2到v3
   private async migrateDataFromV2ToV3(db: IDBDatabase): Promise<void> {
     try {
-      console.log('开始数据迁移: 从v2到v3，添加selectedModel字段支持');
+      console.log('开始数据迁移: 从v2到v3，添加selectedModel字段支持 (异步执行)');
       
       const transaction = db.transaction(this.sessionStoreName, 'readwrite');
       const sessionStore = transaction.objectStore(this.sessionStoreName);
@@ -131,20 +153,31 @@ class ChatSessionDB {
         request.onerror = () => reject(request.error);
       });
       
-      // 为每个会话添加selectedModel字段（如果不存在）
-      for (const session of sessions) {
-        if (!session.selectedModel) {
-          const updatedSession: ChatSession = {
-            ...session,
-            selectedModel: undefined // 初始值为undefined，将在首次使用时设置
-          };
-          
-          const updateRequest = sessionStore.put(updatedSession);
-          await new Promise<void>((resolve, reject) => {
-            updateRequest.onsuccess = () => resolve();
-            updateRequest.onerror = () => reject(updateRequest.error);
-          });
-        }
+      // 性能优化：批量更新会话
+      const batchSize = 20;
+      for (let i = 0; i < sessions.length; i += batchSize) {
+        const batch = sessions.slice(i, i + batchSize);
+        
+        const promises = batch.map(session => {
+          if (!session.selectedModel) {
+            const updatedSession: ChatSession = {
+              ...session,
+              selectedModel: undefined
+            };
+            
+            return new Promise<void>((resolve, reject) => {
+              const updateRequest = sessionStore.put(updatedSession);
+              updateRequest.onsuccess = () => resolve();
+              updateRequest.onerror = () => reject(updateRequest.error);
+            });
+          }
+          return Promise.resolve();
+        });
+        
+        await Promise.all(promises);
+        
+        // 让出主线程
+        await new Promise(resolve => setTimeout(resolve, 0));
       }
       
       console.log('数据迁移完成: 从v2到v3');
@@ -153,8 +186,19 @@ class ChatSessionDB {
     }
   }
 
+  // 性能优化：添加缓存机制
+  private sessionCache: ChatSession[] | null = null
+  private cacheExpiry: number = 0
+  private readonly CACHE_DURATION = 30000 // 30秒缓存
+
   async getAllSessions(): Promise<ChatSession[]> {
     if (!this.db) await this.init()
+    
+    // 性能优化：使用缓存
+    const now = Date.now()
+    if (this.sessionCache && now < this.cacheExpiry) {
+      return this.sessionCache
+    }
     
     return new Promise((resolve, reject) => {
       const transaction = this.db!.transaction([this.sessionStoreName], 'readonly')
@@ -165,6 +209,11 @@ class ChatSessionDB {
         const sessions = request.result as ChatSession[]
         // 按更新时间倒序排列
         sessions.sort((a, b) => b.updatedAt - a.updatedAt)
+        
+        // 更新缓存
+        this.sessionCache = sessions
+        this.cacheExpiry = now + this.CACHE_DURATION
+        
         resolve(sessions)
       }
 
@@ -172,6 +221,12 @@ class ChatSessionDB {
         reject(new Error('Failed to get sessions'))
       }
     })
+  }
+
+  // 性能优化：清除缓存的方法
+  public clearCache(): void {
+    this.sessionCache = null
+    this.cacheExpiry = 0
   }
 
   async getSession(id: string): Promise<ChatSession | null> {

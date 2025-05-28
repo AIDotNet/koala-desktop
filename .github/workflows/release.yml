@@ -1,0 +1,229 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., 2.3.0)'
+        required: true
+        type: string
+      prerelease:
+        description: 'Is this a pre-release?'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  # 版本管理和准备
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+
+      - name: Determine Version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+            TAG="v${VERSION}"
+          else
+            TAG="${{ github.ref_name }}"
+            VERSION="${TAG#v}"
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          echo "Version: ${VERSION}"
+          echo "Tag: ${TAG}"
+
+      - name: Update Package Version
+        run: |
+          npm version ${{ steps.version.outputs.version }} --no-git-tag-version
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add package.json
+          git commit -m "chore: bump version to ${{ steps.version.outputs.version }}" || exit 0
+
+      - name: Push Version Update
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          git tag ${{ steps.version.outputs.tag }}
+          git push origin HEAD:${{ github.ref_name }}
+          git push origin ${{ steps.version.outputs.tag }}
+
+  # 构建和发布
+  build-and-release:
+    needs: prepare
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            platform: linux
+          - os: windows-latest
+            platform: windows
+          - os: macos-latest
+            platform: macos
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Update Package Version
+        run: npm version ${{ needs.prepare.outputs.version }} --no-git-tag-version
+
+      # Linux 特定设置
+      - name: Install Linux Dependencies
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libnss3-dev libatk-bridge2.0-dev libdrm2 libxcomposite1 libxdamage1 libxrandr2 libgbm1 libxss1 libasound2-dev
+
+      # macOS 特定设置
+      - name: Setup macOS Signing
+        if: matrix.platform == 'macos'
+        run: |
+          # 这里可以添加 macOS 代码签名配置
+          echo "macOS signing setup (if needed)"
+
+      # Windows 特定设置
+      - name: Setup Windows Signing
+        if: matrix.platform == 'windows'
+        run: |
+          # 这里可以添加 Windows 代码签名配置
+          echo "Windows signing setup (if needed)"
+
+      - name: Build Application
+        run: npm run build
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # 如果需要代码签名，在这里添加相关环境变量
+          # CSC_LINK: ${{ secrets.CSC_LINK }}
+          # CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.platform }}-${{ needs.prepare.outputs.version }}
+          path: |
+            release/${{ needs.prepare.outputs.version }}/**/*
+          retention-days: 30
+
+  # 创建 GitHub Release
+  create-release:
+    needs: [prepare, build-and-release]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+
+      - name: Prepare Release Assets
+        run: |
+          mkdir -p ./release-assets
+          find ./artifacts -type f \( -name "*.exe" -o -name "*.dmg" -o -name "*.AppImage" -o -name "*.zip" -o -name "*.tar.gz" \) -exec cp {} ./release-assets/ \;
+          ls -la ./release-assets/
+
+      - name: Generate Release Notes
+        id: release-notes
+        run: |
+          # 生成发布说明
+          cat > release-notes.md << 'EOF'
+          ## 🚀 Koala Desktop v${{ needs.prepare.outputs.version }}
+          
+          ### ✨ 新功能
+          - 改进的用户界面和体验
+          - 增强的性能和稳定性
+          - 新的功能特性
+          
+          ### 🐛 修复
+          - 修复了已知问题
+          - 提升了应用稳定性
+          
+          ### 📦 下载
+          请根据您的操作系统选择对应的安装包：
+          - **Windows**: `Koala Desktop_${{ needs.prepare.outputs.version }}.exe`
+          - **macOS**: `Koala Desktop_${{ needs.prepare.outputs.version }}.dmg`
+          - **Linux**: `Koala Desktop_${{ needs.prepare.outputs.version }}.AppImage`
+          
+          ### 🔧 系统要求
+          - Windows 10 或更高版本
+          - macOS 10.15 或更高版本
+          - Ubuntu 18.04 或其他现代 Linux 发行版
+          
+          ---
+          
+          **完整更新日志**: https://github.com/AIDotNet/koala-desktop/compare/v${{ needs.prepare.outputs.version }}...HEAD
+          EOF
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ needs.prepare.outputs.tag }}
+          name: Koala Desktop v${{ needs.prepare.outputs.version }}
+          body_path: release-notes.md
+          draft: false
+          prerelease: ${{ github.event.inputs.prerelease == 'true' }}
+          files: |
+            ./release-assets/*
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # 通知和清理
+  post-release:
+    needs: [prepare, create-release]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Release Summary
+        run: |
+          echo "## 🎉 发布完成!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**版本**: ${{ needs.prepare.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**标签**: ${{ needs.prepare.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "**发布地址**: https://github.com/AIDotNet/koala-desktop/releases/tag/${{ needs.prepare.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 构建产物" >> $GITHUB_STEP_SUMMARY
+          echo "- Windows 安装包" >> $GITHUB_STEP_SUMMARY
+          echo "- macOS 安装包" >> $GITHUB_STEP_SUMMARY
+          echo "- Linux AppImage" >> $GITHUB_STEP_SUMMARY
+
+      # 可以在这里添加通知逻辑，比如发送到 Slack、Discord 等
+      # - name: Notify Success
+      #   if: success()
+      #   run: |
+      #     echo "发送成功通知" 

@@ -112,3 +112,7 @@ body:not(.dark) .glass-effect {
 .ant-menu{
   background: transparent;
 }
+
+.virtual-list-container .ant-list-item .ant-card{
+  width: 100%;
+}

@@ -1,9 +1,9 @@
 {
-  "name": "electron-vite-react",
+  "name": "koala-ai",
   "version": "2.2.0",
   "main": "dist-electron/main/index.js",
-  "description": "Electron Vite React boilerplate.",
-  "author": "草鞋没号 <308487730@qq.com>",
+  "description": "TokenAI 的一款AI客户端产品KoalaAI，用于提供AI对话能力。",
+  "author": "TokenAI 239573049@qq.com",
   "license": "MIT",
   "private": true,
   "debug": {
@@ -15,9 +15,23 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build && electron-builder",
+    "build:dir": "tsc && vite build && electron-builder --dir",
+    "build:win": "tsc && vite build && electron-builder --win",
+    "build:mac": "tsc && vite build && electron-builder --mac",
+    "build:linux": "tsc && vite build && electron-builder --linux",
     "preview": "vite preview",
     "pretest": "vite build --mode=test",
-    "test": "vitest run"
+    "test": "vitest run",
+    "version:current": "node scripts/version-manager.js current",
+    "version:info": "node scripts/version-manager.js info",
+    "version:bump": "node scripts/version-manager.js bump",
+    "version:bump:minor": "node scripts/version-manager.js bump minor",
+    "version:bump:major": "node scripts/version-manager.js bump major",
+    "version:set": "node scripts/version-manager.js set",
+    "release": "node scripts/version-manager.js release",
+    "release:push": "node scripts/version-manager.js release --push",
+    "release:prerelease": "node scripts/version-manager.js release --prerelease",
+    "tag": "node scripts/version-manager.js tag"
   },
   "dependencies": {
     "@ant-design/icons": "^6.0.0",

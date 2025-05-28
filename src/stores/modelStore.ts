@@ -1,4 +1,4 @@
-import { create } from 'zustand'
+import create from 'zustand'
 import { devtools, persist } from 'zustand/middleware'
 import { Provider, Model } from '@/types/model'
 import { providerDB } from '@/utils/providerDB'
@@ -61,7 +61,7 @@ const initialState: ModelState = {
 }
 
 // 创建模型状态管理
-export const useModelStore = create<ModelState & ModelActions>()(
+export const useModelStore = create<ModelState & ModelActions>(
   devtools(
     persist(
       (set, get) => ({
@@ -69,7 +69,7 @@ export const useModelStore = create<ModelState & ModelActions>()(
         
         // 提供商操作
         loadProviders: async () => {
-          set({ isLoadingProviders: true, error: null }, false, 'loadProviders:start')
+          set({ isLoadingProviders: true, error: null })
           
           try {
             // 首先尝试从数据库加载用户配置的提供商
@@ -92,7 +92,7 @@ export const useModelStore = create<ModelState & ModelActions>()(
             set({ 
               providers: enabledProviders, 
               isLoadingProviders: false 
-            }, false, 'loadProviders:success')
+            })
 
             // 如果当前没有选中模型，或者选中的模型不在启用列表中，自动选择第一个可用模型
             const { selectedModel } = get()
@@ -100,7 +100,7 @@ export const useModelStore = create<ModelState & ModelActions>()(
             
             if (!selectedModel || !allEnabledModels.find(m => m.id === selectedModel)) {
               if (allEnabledModels.length > 0) {
-                set({ selectedModel: allEnabledModels[0].id }, false, 'loadProviders:autoSelectModel')
+                set({ selectedModel: allEnabledModels[0].id })
               }
             }
 
@@ -109,7 +109,7 @@ export const useModelStore = create<ModelState & ModelActions>()(
             set({ 
               error: '加载提供商数据失败', 
               isLoadingProviders: false 
-            }, false, 'loadProviders:error')
+            })
 
             // 如果加载失败，使用默认的 OpenAI 提供商作为回退
             const fallbackProviders: Provider[] = [
@@ -141,17 +141,17 @@ export const useModelStore = create<ModelState & ModelActions>()(
                 ]
               }
             ]
-            set({ providers: fallbackProviders }, false, 'loadProviders:fallback')
+            set({ providers: fallbackProviders })
           }
         },
         
         setProviders: (providers: Provider[]) => {
-          set({ providers }, false, 'setProviders')
+          set({ providers })
         },
         
         refreshProviders: () => {
           const { providersVersion, loadProviders } = get()
-          set({ providersVersion: providersVersion + 1 }, false, 'refreshProviders')
+          set({ providersVersion: providersVersion + 1 })
           // 延迟一点时间再重新加载，确保设置页面的数据已经保存
           setTimeout(() => {
             loadProviders()
@@ -160,7 +160,7 @@ export const useModelStore = create<ModelState & ModelActions>()(
         
         // 模型选择操作
         setSelectedModel: (modelId: string) => {
-          set({ selectedModel: modelId }, false, 'setSelectedModel')
+          set({ selectedModel: modelId })
         },
         
         getSelectedModelData: () => {
@@ -215,16 +215,16 @@ export const useModelStore = create<ModelState & ModelActions>()(
         
         // 错误处理
         setError: (error: string | null) => {
-          set({ error }, false, 'setError')
+          set({ error })
         },
         
         clearError: () => {
-          set({ error: null }, false, 'clearError')
+          set({ error: null })
         },
         
         // 重置状态
         reset: () => {
-          set(initialState, false, 'reset')
+          set(initialState)
         },
       }),
       {

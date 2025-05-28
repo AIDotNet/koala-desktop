@@ -1,4 +1,4 @@
-import { create } from 'zustand'
+import create from 'zustand'
 import { devtools, persist } from 'zustand/middleware'
 import { Tab } from '@/components/TabBar'
 
@@ -50,7 +50,7 @@ const initialState: TabState = {
 }
 
 // 创建标签页状态管理
-export const useTabStore = create<TabState & TabActions>()(
+export const useTabStore = create<TabState & TabActions>(
   devtools(
     persist(
       (set, get) => ({
@@ -78,7 +78,7 @@ export const useTabStore = create<TabState & TabActions>()(
             tabs: [...updatedTabs, newTab],
             activeTabId: newTabId,
             tabCounter: tabCounter + 1,
-          }, false, 'addTab')
+          })
           
           return newTabId
         },
@@ -103,7 +103,7 @@ export const useTabStore = create<TabState & TabActions>()(
           set({
             tabs: filteredTabs,
             activeTabId: newActiveTabId,
-          }, false, 'removeTab')
+          })
         },
         
         setActiveTab: (tabId: string) => {
@@ -116,7 +116,7 @@ export const useTabStore = create<TabState & TabActions>()(
           set({
             tabs: updatedTabs,
             activeTabId: tabId,
-          }, false, 'setActiveTab')
+          })
         },
         
         updateTab: (tabId: string, updates: Partial<Tab>) => {
@@ -125,7 +125,7 @@ export const useTabStore = create<TabState & TabActions>()(
             tab.id === tabId ? { ...tab, ...updates } : tab
           )
           
-          set({ tabs: updatedTabs }, false, 'updateTab')
+          set({ tabs: updatedTabs })
         },
         
         // 批量操作
@@ -148,7 +148,7 @@ export const useTabStore = create<TabState & TabActions>()(
           set({
             tabs: filteredTabs,
             activeTabId: newActiveTabId,
-          }, false, 'removeTabs')
+          })
         },
         
         removeTabsByUrl: (urlPattern: string | RegExp) => {
@@ -218,7 +218,7 @@ export const useTabStore = create<TabState & TabActions>()(
         
         // 重置状态
         reset: () => {
-          set(initialState, false, 'reset')
+          set(initialState)
         },
       }),
       {

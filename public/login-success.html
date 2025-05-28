@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录成功 - Koala Desktop</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 50%, #2a2a2a 100%);
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            text-align: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* 背景动画效果 */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 20% 80%, rgba(24, 144, 255, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 40% 40%, rgba(16, 185, 129, 0.05) 0%, transparent 50%);
+            animation: backgroundShift 8s ease-in-out infinite alternate;
+        }
+
+        @keyframes backgroundShift {
+            0% { opacity: 0.3; }
+            100% { opacity: 0.6; }
+        }
+
+        .container {
+            position: relative;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 48px 40px;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.4),
+                0 0 0 1px rgba(255, 255, 255, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            max-width: 420px;
+            width: 100%;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: containerFadeIn 0.6s ease-out;
+        }
+
+        @keyframes containerFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .container:hover {
+            transform: translateY(-2px);
+            box-shadow: 
+                0 12px 40px rgba(0, 0, 0, 0.5),
+                0 0 0 1px rgba(255, 255, 255, 0.12),
+                inset 0 1px 0 rgba(255, 255, 255, 0.15);
+        }
+
+        .success-icon {
+            font-size: 64px;
+            margin-bottom: 24px;
+            animation: iconBounce 0.8s ease-out 0.2s both;
+            filter: drop-shadow(0 4px 8px rgba(16, 185, 129, 0.3));
+        }
+
+        @keyframes iconBounce {
+            0% {
+                opacity: 0;
+                transform: scale(0.3) rotate(-10deg);
+            }
+            50% {
+                transform: scale(1.1) rotate(5deg);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) rotate(0deg);
+            }
+        }
+
+        h1 {
+            margin: 0 0 12px 0;
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ffffff 0%, #e0e0e8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: titleSlideIn 0.6s ease-out 0.4s both;
+            letter-spacing: -0.5px;
+        }
+
+        @keyframes titleSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .subtitle {
+            margin: 0 0 32px 0;
+            color: #b0b0c0;
+            font-size: 16px;
+            font-weight: 400;
+            line-height: 1.5;
+            animation: subtitleSlideIn 0.6s ease-out 0.6s both;
+        }
+
+        @keyframes subtitleSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .status-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 16px 24px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 12px;
+            animation: statusFadeIn 0.6s ease-out 0.8s both;
+        }
+
+        @keyframes statusFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .status-text {
+            color: #10b981;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(16, 185, 129, 0.2);
+            border-radius: 50%;
+            border-top-color: #10b981;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 16px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #06b6d4);
+            border-radius: 2px;
+            animation: progressFill 2s ease-out;
+        }
+
+        @keyframes progressFill {
+            from { width: 0%; }
+            to { width: 100%; }
+        }
+
+        /* 错误状态样式 */
+        .error-container {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .error-text {
+            color: #ef4444;
+        }
+
+        .error-icon {
+            color: #ef4444;
+            filter: drop-shadow(0 4px 8px rgba(239, 68, 68, 0.3));
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 480px) {
+            body {
+                padding: 16px;
+            }
+            
+            .container {
+                padding: 32px 24px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            .subtitle {
+                font-size: 14px;
+            }
+        }
+
+        /* 深色模式优化 */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background: linear-gradient(135deg, #0a0a0f 0%, #1a1a24 50%, #2a2a3a 100%);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="success-icon">✅</div>
+        <h1>登录成功</h1>
+        <p class="subtitle">正在安全地处理您的登录信息，请稍候...</p>
+        
+        <div class="status-container" id="statusContainer">
+            <span class="status-text" id="statusText">验证登录令牌</span>
+            <div class="spinner" id="spinner"></div>
+        </div>
+        
+        <div class="progress-bar">
+            <div class="progress-fill"></div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            let messageSent = false; // 防止重复发送消息
+            
+            function sendMessage(messageData) {
+                if (messageSent) {
+                    console.log('消息已发送，跳过重复发送');
+                    return;
+                }
+                
+                try {
+                    window.parent.postMessage(messageData, window.location.origin);
+                    messageSent = true;
+                    console.log('已发送消息到父窗口:', messageData);
+                } catch (error) {
+                    console.error('发送消息失败:', error);
+                }
+            }
+            
+            function updateStatus(text, isError = false) {
+                const statusContainer = document.getElementById('statusContainer');
+                const statusText = document.getElementById('statusText');
+                const spinner = document.getElementById('spinner');
+                
+                if (statusContainer && statusText) {
+                    statusText.textContent = text;
+                    
+                    if (isError) {
+                        statusContainer.className = 'status-container error-container';
+                        statusText.className = 'status-text error-text';
+                        if (spinner) {
+                            spinner.style.display = 'none';
+                        }
+                    }
+                }
+            }
+            
+            try {
+                // 从 URL 参数中获取 token
+                const urlParams = new URLSearchParams(window.location.search);
+                const token = urlParams.get('token');
+                
+                console.log('登录回调页面收到 token:', token ? '***已获取***' : '未找到');
+                
+                if (token) {
+                    // 模拟处理过程
+                    setTimeout(() => {
+                        updateStatus('验证成功，正在跳转...');
+                        
+                        // 发送登录成功消息
+                        sendMessage({
+                            type: 'LOGIN_SUCCESS',
+                            token: token,
+                            timestamp: Date.now()
+                        });
+                        
+                        // 延迟一点时间让用户看到成功状态
+                        setTimeout(() => {
+                            updateStatus('登录完成');
+                        }, 500);
+                        
+                    }, 1000);
+                    
+                } else {
+                    console.error('未找到 token 参数');
+                    updateStatus('未找到登录令牌', true);
+                    
+                    // 发送错误消息
+                    sendMessage({
+                        type: 'LOGIN_ERROR',
+                        error: '未找到登录令牌',
+                        timestamp: Date.now()
+                    });
+                }
+            } catch (error) {
+                console.error('处理登录回调时出错:', error);
+                updateStatus('处理登录信息时出错', true);
+                
+                // 发送错误消息
+                sendMessage({
+                    type: 'LOGIN_ERROR',
+                    error: error.message || '未知错误',
+                    timestamp: Date.now()
+                });
+            }
+        })();
+    </script>
+</body>
+</html> 

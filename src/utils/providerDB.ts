@@ -22,7 +22,7 @@ class ProviderDB {
 
       request.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result
-        
+
         // 创建提供商存储
         if (!db.objectStoreNames.contains(this.storeName)) {
           const store = db.createObjectStore(this.storeName, { keyPath: 'id' })
@@ -35,7 +35,7 @@ class ProviderDB {
 
   async getAllProviders(): Promise<Provider[]> {
     if (!this.db) await this.init()
-    
+
     return new Promise((resolve, reject) => {
       const transaction = this.db!.transaction([this.storeName], 'readonly')
       const store = transaction.objectStore(this.storeName)
@@ -53,7 +53,7 @@ class ProviderDB {
 
   async getProvider(id: string): Promise<Provider | null> {
     if (!this.db) await this.init()
-    
+
     return new Promise((resolve, reject) => {
       const transaction = this.db!.transaction([this.storeName], 'readonly')
       const store = transaction.objectStore(this.storeName)
@@ -68,10 +68,9 @@ class ProviderDB {
       }
     })
   }
-
   async saveProvider(provider: Provider): Promise<void> {
     if (!this.db) await this.init()
-    
+
     return new Promise((resolve, reject) => {
       const transaction = this.db!.transaction([this.storeName], 'readwrite')
       const store = transaction.objectStore(this.storeName)
@@ -87,9 +86,22 @@ class ProviderDB {
     })
   }
 
+  async deleteProviderByName(name: string): Promise<void> {
+    if (!this.db) await this.init()
+
+    const providers = await this.getAllProviders()
+    const provider = providers.find(p => p.name.toLowerCase() === name.toLowerCase())
+
+    if (provider) {
+      await this.deleteProvider(provider.id)
+    } else {
+      throw new Error('未找到匹配的提供商名称')
+    }
+  }
+
   async deleteProvider(id: string): Promise<void> {
     if (!this.db) await this.init()
-    
+
     return new Promise((resolve, reject) => {
       const transaction = this.db!.transaction([this.storeName], 'readwrite')
       const store = transaction.objectStore(this.storeName)
@@ -107,7 +119,7 @@ class ProviderDB {
 
   async updateProvider(id: string, updates: Partial<Provider>): Promise<void> {
     if (!this.db) await this.init()
-    
+
     const provider = await this.getProvider(id)
     if (!provider) {
       throw new Error('提供商不存在')
@@ -199,7 +211,7 @@ class ProviderDB {
         description: 'OpenAI API 提供商',
         apiUrl: 'https://api.openai.com/v1',
         apiKey: '',
-        enabled: true,
+        enabled: false,
         models: [
           {
             id: 'gpt-4o',
@@ -267,14 +279,14 @@ class ProviderDB {
         website: 'https://openai.com'
       },
       {
-        id:'ollama',
-        name:'ollama',
-        displayName:'Ollama',
-        description:'Ollama API 提供商',
-        apiUrl:'http://localhost:11434/v1',
-        apiKey:'',
-        enabled:true,
-        models:[
+        id: 'ollama',
+        name: 'ollama',
+        displayName: 'Ollama',
+        description: 'Ollama API 提供商',
+        apiUrl: 'http://localhost:11434/v1',
+        apiKey: '',
+        enabled: false,
+        models: [
           {
             abilities: {
               reasoning: true,
@@ -286,7 +298,7 @@ class ProviderDB {
             enabled: true,
             id: 'deepseek-r1',
             type: 'chat',
-            provider:'ollama',
+            provider: 'ollama',
           },
           {
             contextWindowTokens: 65_536,
@@ -295,7 +307,7 @@ class ProviderDB {
             displayName: 'DeepSeek V3 671B',
             id: 'deepseek-v3',
             type: 'chat',
-            provider:'ollama',
+            provider: 'ollama',
           },
           {
             abilities: {
@@ -307,7 +319,7 @@ class ProviderDB {
             displayName: 'Llama 3.1 8B',
             id: 'llama3.1',
             type: 'chat',
-            provider:'ollama',
+            provider: 'ollama',
           },
           {
             contextWindowTokens: 128_000,
@@ -316,7 +328,7 @@ class ProviderDB {
             displayName: 'Llama 3.1 70B',
             id: 'llama3.1:70b',
             type: 'chat',
-            provider:'ollama',
+            provider: 'ollama',
           },
           {
             contextWindowTokens: 128_000,
@@ -325,7 +337,7 @@ class ProviderDB {
             displayName: 'Llama 3.1 405B',
             id: 'llama3.1:405b',
             type: 'chat',
-            provider:'ollama',
+            provider: 'ollama',
           },
           {
             contextWindowTokens: 16_384,
@@ -333,7 +345,7 @@ class ProviderDB {
               'Code Llama 是一款专注于代码生成和讨论的 LLM，结合广泛的编程语言支持，适用于开发者环境。',
             displayName: 'Code Llama 7B',
             id: 'codellama',
-            provider:'ollama',
+            provider: 'ollama',
             type: 'chat',
           },
           {
@@ -343,7 +355,7 @@ class ProviderDB {
             displayName: 'Code Llama 13B',
             id: 'codellama:13b',
             type: 'chat',
-            provider:'ollama',
+            provider: 'ollama',
           },
           {
             contextWindowTokens: 16_384,
@@ -352,7 +364,7 @@ class ProviderDB {
             displayName: 'Code Llama 34B',
             id: 'codellama:34b',
             type: 'chat',
-            provider:'ollama',
+            provider: 'ollama',
           },
           {
             contextWindowTokens: 16_384,
@@ -361,7 +373,7 @@ class ProviderDB {
             displayName: 'Code Llama 70B',
             id: 'codellama:70b',
             type: 'chat',
-            provider:'ollama',
+            provider: 'ollama',
           },
           {
             abilities: {
@@ -375,7 +387,7 @@ class ProviderDB {
             id: 'qwq',
             releasedAt: '2024-11-28',
             type: 'chat',
-            provider:'ollama',
+            provider: 'ollama',
           },
           {
             abilities: {
@@ -387,16 +399,16 @@ class ProviderDB {
             enabled: true,
             id: 'qwen3',
             type: 'chat',
-            provider:'ollama',
+            provider: 'ollama',
           },
-        
+
           {
             contextWindowTokens: 128_000,
             description: 'Qwen2.5 是阿里巴巴的新一代大规模语言模型，以优异的性能支持多元化的应用需求。',
             displayName: 'Qwen2.5 0.5B',
             id: 'qwen2.5:0.5b',
             type: 'chat',
-            provider:'ollama',
+            provider: 'ollama',
           },
           {
             contextWindowTokens: 128_000,
@@ -404,7 +416,7 @@ class ProviderDB {
             displayName: 'Qwen2.5 1.5B',
             id: 'qwen2.5:1.5b',
             type: 'chat',
-            provider:'ollama',
+            provider: 'ollama',
           },
           {
             abilities: {
@@ -415,7 +427,7 @@ class ProviderDB {
             displayName: 'Qwen2.5 7B',
             id: 'qwen2.5',
             type: 'chat',
-            provider:'ollama',
+            provider: 'ollama',
           },
           {
             contextWindowTokens: 128_000,
@@ -423,7 +435,7 @@ class ProviderDB {
             displayName: 'Qwen2.5 72B',
             id: 'qwen2.5:72b',
             type: 'chat',
-            provider:'ollama',
+            provider: 'ollama',
           },
           {
             abilities: {
@@ -434,7 +446,7 @@ class ProviderDB {
             displayName: 'CodeQwen1.5 7B',
             id: 'codeqwen',
             type: 'chat',
-            provider:'ollama',
+            provider: 'ollama',
           },
           {
             abilities: {
@@ -445,7 +457,7 @@ class ProviderDB {
             displayName: 'Qwen2 0.5B',
             id: 'qwen2:0.5b',
             type: 'chat',
-            provider:'ollama',
+            provider: 'ollama',
           },
           {
             abilities: {
@@ -456,7 +468,7 @@ class ProviderDB {
             displayName: 'Qwen2 1.5B',
             id: 'qwen2:1.5b',
             type: 'chat',
-            provider:'ollama',
+            provider: 'ollama',
           },
           {
             abilities: {
@@ -467,7 +479,7 @@ class ProviderDB {
             displayName: 'Qwen2 7B',
             id: 'qwen2',
             type: 'chat',
-            provider:'ollama',
+            provider: 'ollama',
           },
           {
             abilities: {
@@ -478,7 +490,7 @@ class ProviderDB {
             displayName: 'Qwen2 72B',
             id: 'qwen2:72b',
             type: 'chat',
-            provider:'ollama',
+            provider: 'ollama',
           },
           {
             contextWindowTokens: 8192,
@@ -486,7 +498,7 @@ class ProviderDB {
             displayName: 'Gemma 2 2B',
             id: 'gemma2:2b',
             type: 'chat',
-            provider:'ollama',
+            provider: 'ollama',
           },
           {
             contextWindowTokens: 8192,
@@ -494,7 +506,7 @@ class ProviderDB {
             displayName: 'Gemma 2 9B',
             id: 'gemma2',
             type: 'chat',
-            provider:'ollama',
+            provider: 'ollama',
           },
           {
             contextWindowTokens: 8192,
@@ -502,7 +514,7 @@ class ProviderDB {
             displayName: 'Gemma 2 27B',
             id: 'gemma2:27b',
             type: 'chat',
-            provider:'ollama',
+            provider: 'ollama',
           },
           {
             contextWindowTokens: 8192,
@@ -510,7 +522,7 @@ class ProviderDB {
             displayName: 'CodeGemma 2B',
             id: 'codegemma:2b',
             type: 'chat',
-            provider:'ollama',
+            provider: 'ollama',
           },
           {
             contextWindowTokens: 8192,
@@ -518,14 +530,14 @@ class ProviderDB {
             displayName: 'CodeGemma 7B',
             id: 'codegemma',
             type: 'chat',
-            provider:'ollama',
+            provider: 'ollama',
           },
           {
             contextWindowTokens: 128_000,
             description: 'Phi-3 是微软推出的轻量级开放模型，适用于高效集成和大规模知识推理。',
             displayName: 'Phi-3 3.8B',
             id: 'phi3',
-            provider:'ollama',
+            provider: 'ollama',
             type: 'chat',
           },
           {
@@ -534,7 +546,7 @@ class ProviderDB {
             displayName: 'Phi-3 14B',
             id: 'phi3:14b',
             type: 'chat',
-            provider:'ollama',
+            provider: 'ollama',
           },
           {
             contextWindowTokens: 32_768,
@@ -542,7 +554,7 @@ class ProviderDB {
               'WizardLM 2 是微软AI提供的语言模型，在复杂对话、多语言、推理和智能助手领域表现尤为出色。',
             displayName: 'WizardLM 2 7B',
             id: 'wizardlm2',
-            provider:'ollama',
+            provider: 'ollama',
             type: 'chat',
           },
           {
@@ -551,7 +563,7 @@ class ProviderDB {
               'WizardLM 2 是微软AI提供的语言模型，在复杂对话、多语言、推理和智能助手领域表现尤为出色。',
             displayName: 'WizardLM 2 8x22B',
             id: 'wizardlm2:8x22b',
-            provider:'ollama',
+            provider: 'ollama',
             type: 'chat',
           },
           {
@@ -560,7 +572,7 @@ class ProviderDB {
             displayName: 'MathΣtral 7B',
             id: 'mathstral',
             type: 'chat',
-            provider:'ollama',
+            provider: 'ollama',
           },
           {
             abilities: {
@@ -570,7 +582,7 @@ class ProviderDB {
             description: 'Mistral 是 Mistral AI 发布的 7B 模型，适合多变的语言处理需求。',
             displayName: 'Mistral 7B',
             id: 'mistral',
-            provider:'ollama',
+            provider: 'ollama',
             type: 'chat',
           },
           {
@@ -582,8 +594,8 @@ class ProviderDB {
               'Mixtral 是 Mistral AI 的专家模型，具有开源权重，并在代码生成和语言理解方面提供支持。',
             displayName: 'Mixtral 8x7B',
             id: 'mixtral',
-            type: 'chat', 
-            provider:'ollama',
+            type: 'chat',
+            provider: 'ollama',
           },
           {
             abilities: {
@@ -595,7 +607,7 @@ class ProviderDB {
             displayName: 'Mixtral 8x22B',
             id: 'mixtral:8x22b',
             type: 'chat',
-            provider:'ollama',
+            provider: 'ollama',
           },
           {
             contextWindowTokens: 128_000,
@@ -604,7 +616,7 @@ class ProviderDB {
             displayName: 'Mixtral Large 123B',
             id: 'mistral-large',
             type: 'chat',
-            provider:'ollama',
+            provider: 'ollama',
           },
           {
             abilities: {
@@ -615,7 +627,7 @@ class ProviderDB {
             displayName: 'Mixtral Nemo 12B',
             id: 'mistral-nemo',
             type: 'chat',
-            provider:'ollama',
+            provider: 'ollama',
           },
           {
             contextWindowTokens: 32_768,
@@ -623,7 +635,7 @@ class ProviderDB {
             displayName: 'Codestral 22B',
             id: 'codestral',
             type: 'chat',
-            provider:'ollama',
+            provider: 'ollama',
           },
           {
             contextWindowTokens: 8192,
@@ -631,7 +643,7 @@ class ProviderDB {
             displayName: 'Aya 23 8B',
             id: 'aya',
             type: 'chat',
-            provider:'ollama',
+            provider: 'ollama',
           },
           {
             contextWindowTokens: 8192,
@@ -639,7 +651,7 @@ class ProviderDB {
             displayName: 'Aya 23 35B',
             id: 'aya:35b',
             type: 'chat',
-            provider:'ollama',
+            provider: 'ollama',
           },
           {
             abilities: {
@@ -650,7 +662,7 @@ class ProviderDB {
             displayName: 'Command R 35B',
             id: 'command-r',
             type: 'chat',
-            provider:'ollama',
+            provider: 'ollama',
           },
           {
             abilities: {
@@ -661,7 +673,7 @@ class ProviderDB {
             displayName: 'Command R+ 104B',
             id: 'command-r-plus',
             type: 'chat',
-            provider:'ollama',
+            provider: 'ollama',
           },
           {
             contextWindowTokens: 32_768,
@@ -669,7 +681,7 @@ class ProviderDB {
             displayName: 'DeepSeek V2 16B',
             id: 'deepseek-v2',
             type: 'chat',
-            provider:'ollama',
+            provider: 'ollama',
           },
           {
             contextWindowTokens: 128_000,
@@ -677,7 +689,7 @@ class ProviderDB {
             displayName: 'DeepSeek V2 236B',
             id: 'deepseek-v2:236b',
             type: 'chat',
-            provider:'ollama',
+            provider: 'ollama',
           },
           {
             contextWindowTokens: 128_000,
@@ -686,7 +698,7 @@ class ProviderDB {
             displayName: 'DeepSeek Coder V2 16B',
             id: 'deepseek-coder-v2',
             type: 'chat',
-            provider:'ollama',
+            provider: 'ollama',
           },
           {
             contextWindowTokens: 128_000,
@@ -695,7 +707,7 @@ class ProviderDB {
             displayName: 'DeepSeek Coder V2 236B',
             id: 'deepseek-coder-v2:236b',
             type: 'chat',
-            provider:'ollama',
+            provider: 'ollama',
           },
           {
             abilities: {
@@ -706,7 +718,7 @@ class ProviderDB {
             displayName: 'LLaVA 7B',
             id: 'llava',
             type: 'chat',
-            provider:'ollama',
+            provider: 'ollama',
           },
           {
             abilities: {
@@ -717,7 +729,7 @@ class ProviderDB {
             displayName: 'LLaVA 13B',
             id: 'llava:13b',
             type: 'chat',
-            provider:'ollama',
+            provider: 'ollama',
           },
           {
             abilities: {
@@ -728,7 +740,7 @@ class ProviderDB {
             displayName: 'LLaVA 34B',
             id: 'llava:34b',
             type: 'chat',
-            provider:'ollama',
+            provider: 'ollama',
           },
           {
             abilities: {
@@ -740,21 +752,21 @@ class ProviderDB {
             displayName: 'MiniCPM-V 8B',
             id: 'minicpm-v',
             type: 'chat',
-            provider:'ollama',
+            provider: 'ollama',
           },
         ],
         icon: 'Ollama',
-        website:'https://ollama.com'
+        website: 'https://ollama.com'
       },
       {
-        id:'deepseek',
-        name:'deepseek',
-        displayName:'DeepSeek',
-        description:'DeepSeek API 提供商',
-        apiUrl:'https://api.deepseek.com/v1',
-        apiKey:'',
-        enabled:true,
-        models:[
+        id: 'deepseek',
+        name: 'deepseek',
+        displayName: 'DeepSeek',
+        description: 'DeepSeek API 提供商',
+        apiUrl: 'https://api.deepseek.com/v1',
+        apiKey: '',
+        enabled: false,
+        models: [
           {
             abilities: {
               functionCall: true,
@@ -765,7 +777,7 @@ class ProviderDB {
             displayName: 'DeepSeek V3',
             enabled: true,
             id: 'deepseek-chat',
-            provider:'deepseek',
+            provider: 'deepseek',
             pricing: {
               cachedInput: 0.5,
               input: 2,
@@ -784,7 +796,7 @@ class ProviderDB {
             displayName: 'DeepSeek R1',
             enabled: true,
             id: 'deepseek-reasoner',
-            provider:'deepseek',
+            provider: 'deepseek',
             pricing: {
               cachedInput: 1,
               input: 4,
@@ -795,17 +807,17 @@ class ProviderDB {
           },
         ],
         icon: 'DeepSeek',
-        website:'https://deepseek.com'
+        website: 'https://deepseek.com'
       },
       {
-        id:'github',
-        name:'github',
-        displayName:'GitHub',
-        description:'GitHub API 提供商',
-        apiUrl:'https://models.github.ai/orgs',
-        apiKey:'',
-        enabled:true,
-        models:[
+        id: 'github',
+        name: 'github',
+        displayName: 'GitHub',
+        description: 'GitHub API 提供商',
+        apiUrl: 'https://models.github.ai/orgs',
+        apiKey: '',
+        enabled: false,
+        models: [
           {
             abilities: {
               functionCall: true,
@@ -825,7 +837,7 @@ class ProviderDB {
             },
             releasedAt: '2025-04-17',
             type: 'chat',
-            provider:'github',
+            provider: 'github',
           },
           {
             abilities: {
@@ -847,7 +859,7 @@ class ProviderDB {
             },
             releasedAt: '2025-04-17',
             type: 'chat',
-            provider:'github',
+            provider: 'github',
           },
           {
             abilities: {
@@ -867,7 +879,7 @@ class ProviderDB {
             },
             releasedAt: '2025-04-14',
             type: 'chat',
-            provider:'github',
+            provider: 'github',
           },
           {
             abilities: {
@@ -888,7 +900,7 @@ class ProviderDB {
             },
             releasedAt: '2025-04-14',
             type: 'chat',
-            provider:'github',
+            provider: 'github',
           },
           {
             abilities: {
@@ -907,7 +919,7 @@ class ProviderDB {
             },
             releasedAt: '2025-04-14',
             type: 'chat',
-            provider:'github',
+            provider: 'github',
           },
           {
             abilities: {
@@ -919,7 +931,7 @@ class ProviderDB {
             id: 'o4-mini',
             maxOutput: 100_000,
             type: 'chat',
-            provider:'github',
+            provider: 'github',
           },
           {
             abilities: {
@@ -932,7 +944,7 @@ class ProviderDB {
             id: 'o3',
             maxOutput: 100_000,
             type: 'chat',
-            provider:'github',
+            provider: 'github',
           },
           {
             abilities: {
@@ -952,7 +964,7 @@ class ProviderDB {
             },
             releasedAt: '2025-01-31',
             type: 'chat',
-            provider:'github',
+            provider: 'github',
           },
           {
             abilities: {
@@ -971,7 +983,7 @@ class ProviderDB {
             },
             releasedAt: '2024-09-12',
             type: 'chat',
-            provider:'github',
+            provider: 'github',
           },
           {
             abilities: {
@@ -991,7 +1003,7 @@ class ProviderDB {
             },
             releasedAt: '2024-12-17',
             type: 'chat',
-            provider:'github',
+            provider: 'github',
           },
           {
             abilities: {
@@ -1009,7 +1021,7 @@ class ProviderDB {
             },
             releasedAt: '2024-09-12',
             type: 'chat',
-            provider:'github',
+            provider: 'github',
           },
           {
             abilities: {
@@ -1021,7 +1033,7 @@ class ProviderDB {
             id: 'gpt-4.1',
             maxOutput: 33_792,
             type: 'chat',
-            provider:'github',
+            provider: 'github',
           },
           {
             abilities: {
@@ -1033,7 +1045,7 @@ class ProviderDB {
             id: 'gpt-4.1-mini',
             maxOutput: 33_792,
             type: 'chat',
-            provider:'github',
+            provider: 'github',
           },
           {
             abilities: {
@@ -1044,7 +1056,7 @@ class ProviderDB {
             displayName: 'OpenAI GPT-4.1 nano',
             id: 'gpt-4.1-nano',
             maxOutput: 33_792,
-            provider:'github',
+            provider: 'github',
             type: 'chat',
           },
           {
@@ -1058,7 +1070,7 @@ class ProviderDB {
             id: 'gpt-4o-mini',
             maxOutput: 4096,
             type: 'chat',
-            provider:'github',
+            provider: 'github',
           },
           {
             abilities: {
@@ -1070,7 +1082,7 @@ class ProviderDB {
             displayName: 'GPT-4o',
             id: 'gpt-4o',
             maxOutput: 16_384,
-            provider:'github',
+            provider: 'github',
             type: 'chat',
           },
           {
@@ -1082,7 +1094,7 @@ class ProviderDB {
             id: 'MAI-DS-R1',
             maxOutput: 4096,
             type: 'chat',
-            provider:'github',
+            provider: 'github',
           },
           {
             abilities: {
@@ -1093,7 +1105,7 @@ class ProviderDB {
             id: 'DeepSeek-R1',
             maxOutput: 4096,
             type: 'chat',
-            provider:'github',
+            provider: 'github',
           },
           {
             abilities: {
@@ -1104,7 +1116,7 @@ class ProviderDB {
             id: 'DeepSeek-V3-0324',
             maxOutput: 4096,
             type: 'chat',
-            provider:'github',
+            provider: 'github',
           },
           {
             abilities: {
@@ -1117,7 +1129,7 @@ class ProviderDB {
             id: 'ai21-jamba-1.5-mini',
             maxOutput: 4096,
             type: 'chat',
-            provider:'github',
+            provider: 'github',
           },
           {
             abilities: {
@@ -1130,7 +1142,7 @@ class ProviderDB {
             id: 'ai21-jamba-1.5-large',
             maxOutput: 4096,
             type: 'chat',
-            provider:'github',
+            provider: 'github',
           },
           {
             contextWindowTokens: 131_072,
@@ -1139,7 +1151,7 @@ class ProviderDB {
             id: 'cohere-command-r',
             maxOutput: 4096,
             type: 'chat',
-            provider:'github',
+            provider: 'github',
           },
           {
             contextWindowTokens: 131_072,
@@ -1148,7 +1160,7 @@ class ProviderDB {
             id: 'cohere-command-r-plus',
             maxOutput: 4096,
             type: 'chat',
-            provider:'github',
+            provider: 'github',
           },
           {
             contextWindowTokens: 131_072,
@@ -1158,7 +1170,7 @@ class ProviderDB {
             id: 'mistral-nemo',
             maxOutput: 4096,
             type: 'chat',
-            provider:'github',
+            provider: 'github',
           },
           {
             contextWindowTokens: 131_072,
@@ -1167,7 +1179,7 @@ class ProviderDB {
             id: 'mistral-small',
             maxOutput: 4096,
             type: 'chat',
-            provider:'github',
+            provider: 'github',
           },
           {
             contextWindowTokens: 131_072,
@@ -1177,7 +1189,7 @@ class ProviderDB {
             id: 'mistral-large',
             maxOutput: 4096,
             type: 'chat',
-            provider:'github',
+            provider: 'github',
           },
           {
             contextWindowTokens: 262_144,
@@ -1185,7 +1197,7 @@ class ProviderDB {
             id: 'Codestral-2501',
             maxOutput: 4096,
             type: 'chat',
-            provider:'github',
+            provider: 'github',
           },
           {
             abilities: {
@@ -1197,7 +1209,7 @@ class ProviderDB {
             id: 'llama-3.2-11b-vision-instruct',
             maxOutput: 4096,
             type: 'chat',
-            provider:'github',
+            provider: 'github',
           },
           {
             abilities: {
@@ -1209,7 +1221,7 @@ class ProviderDB {
             id: 'llama-3.2-90b-vision-instruct',
             maxOutput: 4096,
             type: 'chat',
-            provider:'github',
+            provider: 'github',
           },
           {
             abilities: {
@@ -1222,7 +1234,7 @@ class ProviderDB {
             enabled: true,
             id: 'llama-3.3-70b-instruct',
             type: 'chat',
-            provider:'github',
+            provider: 'github',
           },
           {
             contextWindowTokens: 10_240_000,
@@ -1230,7 +1242,7 @@ class ProviderDB {
             id: 'llama-4-Scout-17B-16E-Instruct',
             maxOutput: 4096,
             type: 'chat',
-            provider:'github',
+            provider: 'github',
           },
           {
             contextWindowTokens: 10_240_000,
@@ -1238,7 +1250,7 @@ class ProviderDB {
             id: 'llama-4-Maverick-17B-128E-Instruct-FP8',
             maxOutput: 4096,
             type: 'chat',
-            provider:'github',
+            provider: 'github',
           },
           {
             contextWindowTokens: 131_072,
@@ -1248,7 +1260,7 @@ class ProviderDB {
             id: 'meta-llama-3.1-8b-instruct',
             maxOutput: 4096,
             type: 'chat',
-            provider:'github',
+            provider: 'github',
           },
           {
             contextWindowTokens: 131_072,
@@ -1257,7 +1269,7 @@ class ProviderDB {
             displayName: 'Meta Llama 3.1 70B',
             id: 'meta-llama-3.1-70b-instruct',
             maxOutput: 4096,
-            provider:'github',
+            provider: 'github',
             type: 'chat',
           },
           {
@@ -1268,7 +1280,7 @@ class ProviderDB {
             id: 'meta-llama-3.1-405b-instruct',
             maxOutput: 4096,
             type: 'chat',
-            provider:'github',
+            provider: 'github',
           },
           {
             contextWindowTokens: 8192,
@@ -1277,7 +1289,7 @@ class ProviderDB {
             id: 'meta-llama-3-8b-instruct',
             maxOutput: 4096,
             type: 'chat',
-            provider:'github',
+            provider: 'github',
           },
           {
             contextWindowTokens: 8192,
@@ -1286,7 +1298,7 @@ class ProviderDB {
             id: 'meta-llama-3-70b-instruct',
             maxOutput: 4096,
             type: 'chat',
-            provider:'github',
+            provider: 'github',
           },
           {
             contextWindowTokens: 16_384,
@@ -1294,7 +1306,7 @@ class ProviderDB {
             id: 'Phi-4',
             maxOutput: 16_384,
             type: 'chat',
-            provider:'github',
+            provider: 'github',
           },
           {
             contextWindowTokens: 131_072,
@@ -1302,8 +1314,8 @@ class ProviderDB {
             id: 'Phi-3.5-MoE-instruct',
             maxOutput: 4096,
             type: 'chat',
-            description:'Phi-3.5 MoE模型的更新版。',
-            provider:'github',
+            description: 'Phi-3.5 MoE模型的更新版。',
+            provider: 'github',
           },
           {
             contextWindowTokens: 131_072,
@@ -1312,7 +1324,7 @@ class ProviderDB {
             id: 'Phi-3.5-mini-instruct',
             maxOutput: 4096,
             type: 'chat',
-            provider:'github',
+            provider: 'github',
           },
           {
             abilities: {
@@ -1324,7 +1336,7 @@ class ProviderDB {
             id: 'Phi-3.5-vision-instrust',
             maxOutput: 4096,
             type: 'chat',
-            provider:'github',
+            provider: 'github',
           },
           {
             contextWindowTokens: 4096,
@@ -1332,7 +1344,7 @@ class ProviderDB {
             displayName: 'Phi-3-mini 4K',
             id: 'Phi-3-mini-4k-instruct',
             maxOutput: 4096,
-            provider:'github',
+            provider: 'github',
             type: 'chat',
           },
           {
@@ -1341,7 +1353,7 @@ class ProviderDB {
             displayName: 'Phi-3-mini 128K',
             id: 'Phi-3-mini-128k-instruct',
             maxOutput: 4096,
-            provider:'github',
+            provider: 'github',
             type: 'chat',
           },
           {
@@ -1351,7 +1363,7 @@ class ProviderDB {
             id: 'Phi-3-small-8k-instruct',
             maxOutput: 4096,
             type: 'chat',
-            provider:'github',
+            provider: 'github',
           },
           {
             contextWindowTokens: 131_072,
@@ -1360,7 +1372,7 @@ class ProviderDB {
             id: 'Phi-3-small-128k-instruct',
             maxOutput: 4096,
             type: 'chat',
-            provider:'github',
+            provider: 'github',
           },
           {
             contextWindowTokens: 4096,
@@ -1369,7 +1381,7 @@ class ProviderDB {
             id: 'Phi-3-medium-4k-instruct',
             maxOutput: 4096,
             type: 'chat',
-            provider:'github',
+            provider: 'github',
           },
           {
             contextWindowTokens: 131_072,
@@ -1378,7 +1390,7 @@ class ProviderDB {
             id: 'Phi-3-medium-128k-instruct',
             maxOutput: 4096,
             type: 'chat',
-            provider:'github',
+            provider: 'github',
           },
         ]
       }

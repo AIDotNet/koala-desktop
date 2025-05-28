@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { Layout, Button, Typography, Space, Tooltip, message } from 'antd'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import {
@@ -27,6 +27,57 @@ import { AIMessageService } from '@/services/AIMessageService'
 
 const { Sider, Content } = Layout
 const { Title, Text } = Typography
+
+// 性能优化：使用React.memo优化加载动画组件
+const LoadingSpinner: React.FC<{ isDarkTheme: boolean }> = React.memo(({ isDarkTheme }) => {
+  // 性能优化：使用useMemo缓存样式对象
+  const spinnerStyle = useMemo(() => ({
+    width: '48px',
+    height: '48px',
+    border: `3px solid ${isDarkTheme ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
+    borderTop: `3px solid ${isDarkTheme ? '#1890ff' : '#3b82f6'}`,
+    borderRadius: '50%',
+    animation: 'spin 1s linear infinite'
+  }), [isDarkTheme])
+
+  const textStyle = useMemo(() => ({
+    fontSize: '16px',
+    color: isDarkTheme ? '#b3b3b3' : '#6b7280',
+    fontWeight: '500',
+    letterSpacing: '0.5px'
+  }), [isDarkTheme])
+
+  return (
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '24px'
+    }}>
+      {/* 主要的旋转圆环 */}
+      <div style={spinnerStyle} />
+      
+      {/* 加载文本 */}
+      <div style={textStyle}>
+        正在初始化...
+      </div>
+      
+      {/* CSS 动画定义 */}
+      <style>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
+        }
+      `}</style>
+    </div>
+  )
+})
 
 interface HomeProps {
   isDarkTheme: boolean
@@ -81,8 +132,8 @@ const Home: React.FC<HomeProps> = ({
   const [streamingMessages, setStreamingMessages] = useState<{ [key: string]: Message }>({})
   const styles = createStyles(isDarkTheme);
 
-  // 优化的暗黑主题颜色变量 - 参考新版QQ设计
-  const theme = {
+  // 性能优化：使用useMemo缓存主题配置
+  const theme = useMemo(() => ({
     colors: {
       // 背景色系
       bg: {
@@ -118,26 +169,30 @@ const Home: React.FC<HomeProps> = ({
       background: isDarkTheme ? 'rgba(26, 26, 26, 0.8)' : 'rgba(255, 255, 255, 0.8)',
       backdropFilter: 'blur(12px)',
     }
-  };
+  }), [isDarkTheme]);
 
   // 判断是否在欢迎页面模式
   const isWelcomeMode = !sessionId
+
+  // 性能优化：使用useCallback优化函数
+  const clearSessionData = useCallback(() => {
+    setSessionMessages([])
+    setStreamingMessages({})
+  }, [])
 
   // 监听 sessionId 变化，确保切换会话时清空消息记录
   useEffect(() => {
     if (!sessionId) {
       // 如果没有 sessionId（回到首页），立即清空消息记录
-      setSessionMessages([])
-      setStreamingMessages({})
+      clearSessionData()
     }
-  }, [sessionId])
+  }, [sessionId, clearSessionData])
 
-  // 新增：加载会话消息的方法，使用useCallback包装
+  // 性能优化：使用useCallback包装加载会话消息的方法
   const loadSessionMessages = useCallback(async (sid: string) => {
     try {
       // 先清空当前消息记录和流式消息
-      setSessionMessages([])
-      setStreamingMessages({})
+      clearSessionData()
 
       const messages = await chatSessionDB.getMessagesForSession(sid)
       setSessionMessages(messages)
@@ -145,114 +200,136 @@ const Home: React.FC<HomeProps> = ({
       console.error('Failed to load session messages:', error)
       message.error('加载会话消息失败')
       // 出错时也要清空消息记录
-      setSessionMessages([])
-      setStreamingMessages({})
+      clearSessionData()
     }
-  }, []);
+  }, [clearSessionData]);
+
+  // 性能优化：使用useCallback优化providers加载
+  const loadProviders = useCallback(async () => {
+    try {
+      // 首先尝试从数据库加载用户配置的提供商
+      let dbProviders = await providerDB.getAllProviders()
+
+      // 如果数据库为空，初始化默认提供商
+      if (dbProviders.length === 0) {
+        dbProviders = await providerDB.initializeDefaultProviders()
+      }
+
+      // 只保留启用的提供商，并且只保留启用的模型
+      const enabledProviders = dbProviders
+        .filter(provider => provider.enabled)
+        .map(provider => ({
+          ...provider,
+          models: provider.models.filter(model => model.enabled)
+        }))
+        .filter(provider => provider.models.length > 0) // 只保留有启用模型的提供商
+
+      setProviders(enabledProviders)
+
+      // 如果当前没有选中模型，或者选中的模型不在启用列表中，自动选择第一个可用模型
+      const allEnabledModels = enabledProviders.flatMap(p => p.models)
+      if (!selectedModel || !allEnabledModels.find(m => m.id === selectedModel)) {
+        if (allEnabledModels.length > 0) {
+          setSelectedModel(allEnabledModels[0].id)
+        }
+      }
+
+    } catch (error) {
+      console.error('Failed to load provider data:', error)
+      message.error('加载提供商数据失败')
+
+      // 如果加载失败，使用默认的 OpenAI 提供商作为回退
+      const fallbackProviders: Provider[] = [
+        {
+          id: 'openai',
+          name: 'openai',
+          displayName: 'OpenAI',
+          description: 'OpenAI 官方 API 服务',
+          apiUrl: 'https://api.openai.com/v1',
+          apiKey: '',
+          enabled: true,
+          icon: 'OpenAI',
+          website: 'https://openai.com',
+          models: [
+            {
+              id: 'gpt-4-turbo',
+              displayName: 'GPT-4 Turbo',
+              description: '最新的 GPT-4 Turbo 模型具备视觉功能',
+              provider: 'openai',
+              type: 'chat',
+              enabled: true,
+              contextWindowTokens: 128000,
+              maxOutput: 4096,
+              abilities: {
+                functionCall: true,
+                vision: true
+              }
+            }
+          ]
+        }
+      ]
+      setProviders(fallbackProviders)
+    }
+  }, [selectedModel])
 
   // 初始化服务商数据 - 从数据库加载用户配置
   useEffect(() => {
-    const loadProviders = async () => {
-      try {
-        // 首先尝试从数据库加载用户配置的提供商
-        let dbProviders = await providerDB.getAllProviders()
-
-        // 如果数据库为空，初始化默认提供商
-        if (dbProviders.length === 0) {
-          dbProviders = await providerDB.initializeDefaultProviders()
-        }
-
-        // 只保留启用的提供商，并且只保留启用的模型
-        const enabledProviders = dbProviders
-          .filter(provider => provider.enabled)
-          .map(provider => ({
-            ...provider,
-            models: provider.models.filter(model => model.enabled)
-          }))
-          .filter(provider => provider.models.length > 0) // 只保留有启用模型的提供商
-
-        setProviders(enabledProviders)
-
-        // 如果当前没有选中模型，或者选中的模型不在启用列表中，自动选择第一个可用模型
-        const allEnabledModels = enabledProviders.flatMap(p => p.models)
-        if (!selectedModel || !allEnabledModels.find(m => m.id === selectedModel)) {
-          if (allEnabledModels.length > 0) {
-            setSelectedModel(allEnabledModels[0].id)
-          }
-        }
-
-      } catch (error) {
-        console.error('Failed to load provider data:', error)
-        message.error('加载提供商数据失败')
-
-        // 如果加载失败，使用默认的 OpenAI 提供商作为回退
-        const fallbackProviders: Provider[] = [
-          {
-            id: 'openai',
-            name: 'openai',
-            displayName: 'OpenAI',
-            description: 'OpenAI 官方 API 服务',
-            apiUrl: 'https://api.openai.com/v1',
-            apiKey: '',
-            enabled: true,
-            icon: 'OpenAI',
-            website: 'https://openai.com',
-            models: [
-              {
-                id: 'gpt-4-turbo',
-                displayName: 'GPT-4 Turbo',
-                description: '最新的 GPT-4 Turbo 模型具备视觉功能',
-                provider: 'openai',
-                type: 'chat',
-                enabled: true,
-                contextWindowTokens: 128000,
-                maxOutput: 4096,
-                abilities: {
-                  functionCall: true,
-                  vision: true
-                }
-              }
-            ]
-          }
-        ]
-        setProviders(fallbackProviders)
-      }
-    }
-
     loadProviders()
-  }, [providersVersion]) // 当providersVersion变化时重新加载
+  }, [providersVersion, loadProviders]) // 当providersVersion变化时重新加载
+
+  // 性能优化：使用useCallback优化窗口焦点处理
+  const handleWindowFocus = useCallback(() => {
+    // 延迟一点时间再重新加载，确保设置页面的数据已经保存
+    setTimeout(() => {
+      setProvidersVersion(prev => prev + 1)
+    }, 100)
+  }, [])
 
   // 监听窗口焦点事件，当从设置页面返回时重新加载providers
   useEffect(() => {
-    const handleFocus = () => {
-      // 延迟一点时间再重新加载，确保设置页面的数据已经保存
-      setTimeout(() => {
-        setProvidersVersion(prev => prev + 1)
-      }, 100)
-    }
-
-    window.addEventListener('focus', handleFocus)
+    window.addEventListener('focus', handleWindowFocus)
     return () => {
-      window.removeEventListener('focus', handleFocus)
+      window.removeEventListener('focus', handleWindowFocus)
+    }
+  }, [handleWindowFocus])
+
+  // 性能优化：使用useCallback优化数据库初始化
+  const initializeDB = useCallback(async () => {
+    try {
+      await chatSessionDB.init()
+      const sessions = await chatSessionDB.getAllSessions()
+      setChatSessions(sessions)
+      setIsInitialized(true)
+    } catch (error) {
+      console.error('Failed to initialize database:', error)
+      message.error('数据库初始化失败')
     }
   }, [])
 
   // 初始化数据库和加载会话
   useEffect(() => {
-    const initializeDB = async () => {
-      try {
-        await chatSessionDB.init()
-        const sessions = await chatSessionDB.getAllSessions()
-        setChatSessions(sessions)
-        setIsInitialized(true)
-      } catch (error) {
-        console.error('Failed to initialize database:', error)
-        message.error('数据库初始化失败')
+    initializeDB()
+  }, [initializeDB])
+
+  // 性能优化：使用useMemo缓存当前会话
+  const currentSession = useMemo(() => 
+    chatSessions.find(session => session.id === sessionId), 
+    [chatSessions, sessionId]
+  )
+
+  // 性能优化：组件卸载时清理资源
+  useEffect(() => {
+    return () => {
+      // 清理流式消息状态
+      setStreamingMessages({})
+      // 清理AI服务资源
+      aiMessageService.cleanup()
+      // 清理数据库缓存
+      if (chatSessionDB && typeof chatSessionDB.clearCache === 'function') {
+        chatSessionDB.clearCache()
       }
     }
-
-    initializeDB()
-  }, [])
+  }, [aiMessageService])
 
   // 验证会话是否存在，如果不存在则回到首页
   useEffect(() => {
@@ -261,15 +338,13 @@ const Home: React.FC<HomeProps> = ({
       if (!sessionExists) {
         console.log('会话不存在，回到首页')
         // 清空消息记录
-        setSessionMessages([])
-        setStreamingMessages({})
+        clearSessionData()
         navigate('/')
       } else {
         // 会话存在，加载该会话的消息
         loadSessionMessages(sessionId)
 
         // 恢复该会话的模型选择
-        const currentSession = chatSessions.find(session => session.id === sessionId)
         if (currentSession?.selectedModel && currentSession.selectedModel !== selectedModel) {
           // 验证模型是否仍然可用
           const allEnabledModels = providers.flatMap(p => p.models)
@@ -281,12 +356,9 @@ const Home: React.FC<HomeProps> = ({
       }
     } else if (isInitialized && !sessionId) {
       // 如果没有会话ID（在首页），清空消息记录
-      setSessionMessages([])
-      setStreamingMessages({})
+      clearSessionData()
     }
-  }, [isInitialized, sessionId, chatSessions, navigate, loadSessionMessages, providers, selectedModel])
-
-  const currentSession = chatSessions.find(session => session.id === sessionId)
+  }, [isInitialized, sessionId, chatSessions, navigate, loadSessionMessages, providers, selectedModel, currentSession, clearSessionData])
 
   // 监听路由变化，检查URL中是否有初始消息
   useEffect(() => {
@@ -329,7 +401,7 @@ const Home: React.FC<HomeProps> = ({
     };
 
     checkInitialMessageInURL();
-  }, [location, sessionId, initialQuery, navigate]);
+  }, [location, sessionId, initialQuery, navigate, selectedModel]);
 
   // 更新页面标题
   useEffect(() => {
@@ -340,7 +412,8 @@ const Home: React.FC<HomeProps> = ({
     }
   }, [currentSession]);
 
-  const handleSendMessage = async (messageText?: string) => {
+  // 性能优化：使用useCallback优化发送消息函数
+  const handleSendMessage = useCallback(async (messageText?: string) => {
     const text = messageText || inputValue;
     if (!text.trim()) return;
 
@@ -417,10 +490,6 @@ const Home: React.FC<HomeProps> = ({
       sessionMessages.push(userMessage);
       // 添加用户消息到数据库
       await chatSessionDB.addMessage(targetSessionId, userMessage);
-
-      // // 重新加载会话数据
-      // const updatedSessions = await chatSessionDB.getAllSessions();
-      // setChatSessions(updatedSessions);
 
       setInputValue('');
       setIsLoading(true);
@@ -566,7 +635,7 @@ const Home: React.FC<HomeProps> = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [inputValue, selectedModel, providers, isWelcomeMode, sessionId, navigate, sessionMessages, aiMessageService]);
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -1150,13 +1219,20 @@ const Home: React.FC<HomeProps> = ({
   if (!isInitialized) {
     return (
       <div style={{
-        height: '100%',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: '100vw',
+        height: '100vh',
         background: theme.colors.bg.primary,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
+        zIndex: 9999,
       }}>
-        <div style={{ color: theme.colors.text.primary }}>加载中...</div>
+        <LoadingSpinner isDarkTheme={isDarkTheme} />
       </div>
     )
   }

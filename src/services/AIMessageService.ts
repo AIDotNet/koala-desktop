@@ -10,6 +10,9 @@ import { Provider, Model } from '@/types/model';
 export class AIMessageService {
   private static instance: AIMessageService;
   private serviceFactory: AIServiceFactory;
+  // 性能优化：添加防抖和节流控制
+  private updateThrottleMap: Map<string, number> = new Map();
+  private readonly UPDATE_THROTTLE_MS = 50; // 50ms节流
 
   constructor() {
     this.serviceFactory = AIServiceFactory.getInstance();
@@ -23,6 +26,29 @@ export class AIMessageService {
       AIMessageService.instance = new AIMessageService();
     }
     return AIMessageService.instance;
+  }
+
+  /**
+   * 性能优化：节流更新函数
+   */
+  private throttleUpdate(key: string, callback: () => void): void {
+    const now = Date.now();
+    const lastUpdate = this.updateThrottleMap.get(key) || 0;
+    
+    if (now - lastUpdate >= this.UPDATE_THROTTLE_MS) {
+      this.updateThrottleMap.set(key, now);
+      callback();
+    } else {
+      // 延迟执行最后一次更新
+      setTimeout(() => {
+        const currentTime = Date.now();
+        const currentLastUpdate = this.updateThrottleMap.get(key) || 0;
+        if (currentTime - currentLastUpdate >= this.UPDATE_THROTTLE_MS) {
+          this.updateThrottleMap.set(key, currentTime);
+          callback();
+        }
+      }, this.UPDATE_THROTTLE_MS);
+    }
   }
 
   /**
@@ -81,6 +107,7 @@ export class AIMessageService {
         let isFirstChunk = true;
         let tokens = 0;
         const startTime = Date.now();
+        const messageId = assistantMessage.id;
         
         await aiService.streamChatCompletion(
           params,
@@ -92,28 +119,31 @@ export class AIMessageService {
             fullContent += content;
             tokens += this.estimateTokenCount(content);
             
-            // 更新消息内容
-            const updatedMessage: Message = {
-              ...assistantMessage,
-              content: [
-                {
-                  type: 'content',
-                  content: fullContent,
-                  status: 'success',
-                  timestamp: Date.now()
-                } as AssistantMessageBlock
-              ],
-              usage: {
-                ...assistantMessage.usage,
-                output_tokens: tokens,
-                total_tokens: assistantMessage.usage.input_tokens + tokens,
-                generation_time: Date.now() - startTime,
-                first_token_time: isFirstChunk ? Date.now() - startTime : assistantMessage.usage.first_token_time
-              }
-            };
-            
-            // 回调更新后的消息
-            onStreamMessage(updatedMessage);
+            // 性能优化：使用节流更新
+            this.throttleUpdate(messageId, () => {
+              // 更新消息内容
+              const updatedMessage: Message = {
+                ...assistantMessage,
+                content: [
+                  {
+                    type: 'content',
+                    content: fullContent,
+                    status: 'success',
+                    timestamp: Date.now()
+                  } as AssistantMessageBlock
+                ],
+                usage: {
+                  ...assistantMessage.usage,
+                  output_tokens: tokens,
+                  total_tokens: assistantMessage.usage.input_tokens + tokens,
+                  generation_time: Date.now() - startTime,
+                  first_token_time: isFirstChunk ? Date.now() - startTime : assistantMessage.usage.first_token_time
+                }
+              };
+              
+              // 回调更新后的消息
+              onStreamMessage(updatedMessage);
+            });
             
             if (isFirstChunk) {
               isFirstChunk = false;
@@ -135,6 +165,9 @@ export class AIMessageService {
               error: error.message || '未知错误'
             };
             onStreamMessage(errorMessage);
+            
+            // 清理节流映射
+            this.updateThrottleMap.delete(messageId);
           },
           () => {
             const finalMessage: Message = {
@@ -156,6 +189,9 @@ export class AIMessageService {
               status: 'sent'
             };
             onStreamMessage(finalMessage);
+            
+            // 清理节流映射
+            this.updateThrottleMap.delete(messageId);
           }
         );
         
@@ -275,7 +311,7 @@ export class AIMessageService {
           model.displayName
         );
         
-        // 创建一个消息队列和控制变量
+        // 性能优化：减少消息队列大小和处理频率
         const messageQueue: Message[] = [];
         let isComplete = false;
         let error: Error | null = null;
@@ -283,6 +319,9 @@ export class AIMessageService {
         let isFirstChunk = true;
         let tokens = 0;
         const startTime = Date.now();
+        const messageId = assistantMessage.id;
+        let lastYieldTime = 0;
+        const YIELD_THROTTLE_MS = 100; // 100ms节流产出
         
         // 发出初始消息
         yield {
@@ -312,28 +351,34 @@ export class AIMessageService {
                 fullContent += content;
                 tokens += this.estimateTokenCount(content);
                 
-                // 更新消息内容
-                const updatedMessage: Message = {
-                  ...assistantMessage,
-                  content: [
-                    {
-                      type: 'content',
-                      content: fullContent,
-                      status: 'success',
-                      timestamp: Date.now()
-                    } as AssistantMessageBlock
-                  ],
-                  usage: {
-                    ...assistantMessage.usage,
-                    output_tokens: tokens,
-                    total_tokens: assistantMessage.usage.input_tokens + tokens,
-                    generation_time: Date.now() - startTime,
-                    first_token_time: isFirstChunk ? Date.now() - startTime : assistantMessage.usage.first_token_time
-                  }
-                };
-                
-                // 将更新的消息添加到队列
-                messageQueue.push(updatedMessage);
+                // 性能优化：节流消息更新
+                const now = Date.now();
+                if (now - lastYieldTime >= YIELD_THROTTLE_MS) {
+                  lastYieldTime = now;
+                  
+                  // 更新消息内容
+                  const updatedMessage: Message = {
+                    ...assistantMessage,
+                    content: [
+                      {
+                        type: 'content',
+                        content: fullContent,
+                        status: 'success',
+                        timestamp: Date.now()
+                      } as AssistantMessageBlock
+                    ],
+                    usage: {
+                      ...assistantMessage.usage,
+                      output_tokens: tokens,
+                      total_tokens: assistantMessage.usage.input_tokens + tokens,
+                      generation_time: Date.now() - startTime,
+                      first_token_time: isFirstChunk ? Date.now() - startTime : assistantMessage.usage.first_token_time
+                    }
+                  };
+                  
+                  // 将更新的消息添加到队列
+                  messageQueue.push(updatedMessage);
+                }
                 
                 if (isFirstChunk) {
                   isFirstChunk = false;
@@ -363,6 +408,9 @@ export class AIMessageService {
                 
                 // 标记流程完成
                 isComplete = true;
+                
+                // 清理节流映射
+                this.updateThrottleMap.delete(messageId);
                 resolve();
               },
               () => {
@@ -391,11 +439,15 @@ export class AIMessageService {
                 
                 // 标记流程完成
                 isComplete = true;
+                
+                // 清理节流映射
+                this.updateThrottleMap.delete(messageId);
                 resolve();
               }
             ).catch(err => {
               error = err instanceof Error ? err : new Error(String(err));
               isComplete = true;
+              this.updateThrottleMap.delete(messageId);
               reject(error);
             });
           });
@@ -409,8 +461,8 @@ export class AIMessageService {
               // 出现错误，抛出
               throw error;
             } else {
-              // 等待一小段时间再检查
-              await new Promise<void>(resolve => setTimeout(resolve, 10));
+              // 性能优化：增加等待时间，减少CPU占用
+              await new Promise<void>(resolve => setTimeout(resolve, 20));
             }
           }
           
@@ -467,6 +519,13 @@ export class AIMessageService {
     }).bind(this)();
     
     return run;
+  }
+
+  /**
+   * 性能优化：清理资源
+   */
+  public cleanup(): void {
+    this.updateThrottleMap.clear();
   }
 
   /**
