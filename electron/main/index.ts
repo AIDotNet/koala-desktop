@@ -52,22 +52,32 @@ app.commandLine.appendSwitch('--disable-ipc-flooding-protection')
 // ICU 数据文件配置 - 修复 ICU 错误
 if (!VITE_DEV_SERVER_URL) {
   // 生产环境下设置 ICU 数据文件路径
-  const icuDataPath = path.join(process.resourcesPath, '..', 'icudtl.dat')
-  const localesPath = path.join(process.resourcesPath, '..', 'locales')
+  let icuDataPath: string
+  let localesPath: string
   
-  // 设置 ICU 数据文件路径
-  app.commandLine.appendSwitch('--icu-data-file', icuDataPath)
-  app.commandLine.appendSwitch('--locales-dir', localesPath)
-  
-  // 确保 ICU 数据文件存在
-  try {
-    if (fsSync.existsSync(icuDataPath)) {
-      console.log('ICU data file found at:', icuDataPath)
-    } else {
-      console.warn('ICU data file not found at:', icuDataPath)
+  if (process.platform === 'win32') {
+    // Windows 平台使用自定义路径
+    icuDataPath = path.join(process.resourcesPath, '..', 'icudtl.dat')
+    localesPath = path.join(process.resourcesPath, '..', 'locales')
+    
+    // 设置 ICU 数据文件路径
+    app.commandLine.appendSwitch('--icu-data-file', icuDataPath)
+    app.commandLine.appendSwitch('--locales-dir', localesPath)
+    
+    // 确保 ICU 数据文件存在
+    try {
+      if (fsSync.existsSync(icuDataPath)) {
+        console.log('ICU data file found at:', icuDataPath)
+      } else {
+        console.warn('ICU data file not found at:', icuDataPath)
+      }
+    } catch (error) {
+      console.error('Error checking ICU data file:', error)
     }
-  } catch (error) {
-    console.error('Error checking ICU data file:', error)
+  } else {
+    // Linux/Mac 平台使用 Electron 内置的 ICU 数据
+    console.log('Using built-in ICU data for platform:', process.platform)
+    // 不需要额外配置，Electron 会自动处理
   }
 }
 
