@@ -77,14 +77,12 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest, windows-latest]
         include:
           - os: ubuntu-latest
             platform: linux
           - os: windows-latest
             platform: windows
-          - os: macos-latest
-            platform: macos
 
     steps:
       - name: Checkout Code
@@ -111,12 +109,12 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libnss3-dev libatk-bridge2.0-dev libdrm2 libxcomposite1 libxdamage1 libxrandr2 libgbm1 libxss1 libasound2-dev
 
-      # macOS 特定设置
-      - name: Setup macOS Signing
-        if: matrix.platform == 'macos'
-        run: |
-          # 这里可以添加 macOS 代码签名配置
-          echo "macOS signing setup (if needed)"
+      # # macOS 特定设置
+      # - name: Setup macOS Signing
+      #   if: matrix.platform == 'macos'
+      #   run: |
+      #     # 这里可以添加 macOS 代码签名配置
+      #     echo "macOS signing setup (if needed)"
 
       # Windows 特定设置
       - name: Setup Windows Signing
@@ -185,12 +183,11 @@ jobs:
           ### 📦 下载
           请根据您的操作系统选择对应的安装包：
           - **Windows**: `Koala Desktop_${{ needs.prepare.outputs.version }}.exe`
-          - **macOS**: `Koala Desktop_${{ needs.prepare.outputs.version }}.dmg`
+          # - **macOS**: `Koala Desktop_${{ needs.prepare.outputs.version }}.dmg`
           - **Linux**: `Koala Desktop_${{ needs.prepare.outputs.version }}.AppImage`
           
           ### 🔧 系统要求
           - Windows 10 或更高版本
-          - macOS 10.15 或更高版本
           - Ubuntu 18.04 或其他现代 Linux 发行版
           
           ---
@@ -230,7 +227,6 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 📦 构建产物" >> $GITHUB_STEP_SUMMARY
           echo "- Windows 安装包" >> $GITHUB_STEP_SUMMARY
-          echo "- macOS 安装包" >> $GITHUB_STEP_SUMMARY
           echo "- Linux AppImage" >> $GITHUB_STEP_SUMMARY
 
       # 可以在这里添加通知逻辑，比如发送到 Slack、Discord 等
