@@ -20,10 +20,7 @@ import {
   Tooltip,
   Empty,
   Result,
-  message,
-  Select,
-  Slider,
-  ColorPicker
+  message
 } from 'antd'
 import {
   Settings as SettingsIcon,
@@ -39,14 +36,7 @@ import {
   TrendingUp,
   Activity,
   CheckCircle,
-  RefreshCw,
-  Monitor,
-  Smartphone,
-  Sun,
-  Moon,
-  Contrast,
-  Type,
-  Maximize2
+  RefreshCw
 } from 'lucide-react'
 import ProviderManager from '@/components/ProviderManager'
 import { Provider, Model } from '@/types/model'
@@ -55,12 +45,10 @@ import { dataManager, type AppConfig, type ReleaseInfo } from '@/services/dataMa
 
 const { Sider, Content } = Layout
 const { Title, Text, Paragraph } = Typography
-const { Option } = Select
 
 interface SettingsProps {
   isDarkTheme: boolean
   onNavigate?: (url: string) => void
-  onThemeChange?: (isDark: boolean) => void
 }
 
 interface UpdateStatus {
@@ -72,59 +60,13 @@ interface UpdateStatus {
   error?: string
 }
 
-// 外观设置接口
-interface AppearanceSettings {
-  theme: 'light' | 'dark' | 'auto'
-  compactMode: boolean
-  animations: boolean
-  language: string
-  fontSize: number
-  primaryColor: string
-  borderRadius: number
-  windowOpacity: number
-}
-
-// 语言选项
-const languageOptions = [
-  { value: 'zh-CN', label: '简体中文', flag: '🇨🇳' },
-  { value: 'en-US', label: 'English', flag: '🇺🇸' },
-  { value: 'ja-JP', label: '日本語', flag: '🇯🇵' },
-  { value: 'ko-KR', label: '한국어', flag: '🇰🇷' },
-  { value: 'fr-FR', label: 'Français', flag: '🇫🇷' },
-  { value: 'de-DE', label: 'Deutsch', flag: '🇩🇪' },
-  { value: 'es-ES', label: 'Español', flag: '🇪🇸' },
-  { value: 'ru-RU', label: 'Русский', flag: '🇷🇺' }
-]
-
-// 主题预设
-const themePresets = [
-  { name: '默认蓝', color: '#1890ff', description: '经典蓝色主题' },
-  { name: '科技紫', color: '#722ed1', description: '现代科技感' },
-  { name: '自然绿', color: '#52c41a', description: '清新自然' },
-  { name: '活力橙', color: '#fa8c16', description: '温暖活力' },
-  { name: '优雅红', color: '#f5222d', description: '经典红色' },
-  { name: '深海蓝', color: '#13c2c2', description: '深邃海洋' }
-]
-
-const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate, onThemeChange }) => {
+const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate }) => {
   const [selectedKey, setSelectedKey] = useState<string>('models')
   const [providers, setProviders] = useState<Provider[]>([])
   const [updateStatus, setUpdateStatus] = useState<UpdateStatus>({
     checking: false,
     hasUpdate: false,
     currentVersion: '2.2.0'
-  })
-
-  // 外观设置状态
-  const [appearanceSettings, setAppearanceSettings] = useState<AppearanceSettings>({
-    theme: 'auto',
-    compactMode: false,
-    animations: true,
-    language: 'zh-CN',
-    fontSize: 14,
-    primaryColor: '#1890ff',
-    borderRadius: 8,
-    windowOpacity: 100
   })
 
   // 从IndexedDB加载提供商数据
@@ -160,160 +102,6 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate, onThemeCha
     }
     initUpdateStatus()
   }, [])
-
-  // 加载外观设置
-  useEffect(() => {
-    const loadAppearanceSettings = () => {
-      try {
-        const savedSettings = localStorage.getItem('appearanceSettings')
-        if (savedSettings) {
-          const parsed = JSON.parse(savedSettings)
-          setAppearanceSettings(prev => ({ ...prev, ...parsed }))
-        }
-
-        // 同步当前主题状态
-        const savedTheme = localStorage.getItem('theme')
-        if (savedTheme) {
-          setAppearanceSettings(prev => ({ 
-            ...prev, 
-            theme: savedTheme as 'light' | 'dark' | 'auto'
-          }))
-        }
-      } catch (error) {
-        console.error('加载外观设置失败:', error)
-      }
-    }
-
-    loadAppearanceSettings()
-  }, [])
-
-  // 保存外观设置
-  const saveAppearanceSettings = (newSettings: Partial<AppearanceSettings>) => {
-    const updatedSettings = { ...appearanceSettings, ...newSettings }
-    setAppearanceSettings(updatedSettings)
-    localStorage.setItem('appearanceSettings', JSON.stringify(updatedSettings))
-    message.success('设置已保存')
-  }
-
-  // 主题切换处理
-  const handleThemeChange = (theme: 'light' | 'dark' | 'auto') => {
-    saveAppearanceSettings({ theme })
-    localStorage.setItem('theme', theme)
-    
-    let shouldUseDark = false
-    if (theme === 'dark') {
-      shouldUseDark = true
-    } else if (theme === 'light') {
-      shouldUseDark = false
-    } else {
-      // auto 模式，跟随系统
-      shouldUseDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-    }
-    
-    onThemeChange?.(shouldUseDark)
-    
-    // 更新 body 类名
-    if (shouldUseDark) {
-      document.body.classList.add('dark')
-    } else {
-      document.body.classList.remove('dark')
-    }
-  }
-
-  // 紧凑模式切换
-  const handleCompactModeChange = (checked: boolean) => {
-    saveAppearanceSettings({ compactMode: checked })
-    
-    // 应用紧凑模式样式
-    if (checked) {
-      document.body.classList.add('compact-mode')
-    } else {
-      document.body.classList.remove('compact-mode')
-    }
-  }
-
-  // 动画效果切换
-  const handleAnimationsChange = (checked: boolean) => {
-    saveAppearanceSettings({ animations: checked })
-    
-    // 应用动画设置
-    if (!checked) {
-      document.body.classList.add('no-animations')
-    } else {
-      document.body.classList.remove('no-animations')
-    }
-  }
-
-  // 语言切换
-  const handleLanguageChange = (language: string) => {
-    saveAppearanceSettings({ language })
-    // 这里可以集成 i18n 库来实际切换语言
-    message.success(`语言已切换为 ${languageOptions.find(l => l.value === language)?.label}`)
-  }
-
-  // 字体大小调整
-  const handleFontSizeChange = (fontSize: number) => {
-    saveAppearanceSettings({ fontSize })
-    
-    // 应用字体大小
-    document.documentElement.style.setProperty('--app-font-size', `${fontSize}px`)
-  }
-
-  // 主色调切换
-  const handlePrimaryColorChange = (color: string) => {
-    saveAppearanceSettings({ primaryColor: color })
-    
-    // 应用主色调
-    document.documentElement.style.setProperty('--app-primary-color', color)
-  }
-
-  // 圆角调整
-  const handleBorderRadiusChange = (borderRadius: number) => {
-    saveAppearanceSettings({ borderRadius })
-    
-    // 应用圆角设置
-    document.documentElement.style.setProperty('--app-border-radius', `${borderRadius}px`)
-  }
-
-  // 窗口透明度调整
-  const handleWindowOpacityChange = (opacity: number) => {
-    saveAppearanceSettings({ windowOpacity: opacity })
-    
-    // 应用透明度设置
-    if (window.electronAPI) {
-      window.electronAPI.setWindowOpacity(opacity / 100)
-    }
-  }
-
-  // 重置外观设置
-  const handleResetAppearance = () => {
-    const defaultSettings: AppearanceSettings = {
-      theme: 'auto',
-      compactMode: false,
-      animations: true,
-      language: 'zh-CN',
-      fontSize: 14,
-      primaryColor: '#1890ff',
-      borderRadius: 8,
-      windowOpacity: 100
-    }
-    
-    setAppearanceSettings(defaultSettings)
-    localStorage.setItem('appearanceSettings', JSON.stringify(defaultSettings))
-    localStorage.setItem('theme', 'auto')
-    
-    // 重置样式
-    document.body.classList.remove('compact-mode', 'no-animations')
-    document.documentElement.style.removeProperty('--app-font-size')
-    document.documentElement.style.removeProperty('--app-primary-color')
-    document.documentElement.style.removeProperty('--app-border-radius')
-    
-    if (window.electronAPI) {
-      window.electronAPI.setWindowOpacity(1)
-    }
-    
-    message.success('外观设置已重置')
-  }
 
   // 检查更新
   const checkForUpdates = async () => {
@@ -390,11 +178,6 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate, onThemeCha
       key: 'data',
       icon: <Database size={16} />,
       label: '数据管理',
-    },
-    {
-      key: 'appearance',
-      icon: <Palette size={16} />,
-      label: '外观设置',
     },
     {
       key: 'about',
@@ -622,7 +405,7 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate, onThemeCha
             />
           </div>
         )
-      case 'appearance':
+      case 'privacy':
         return (
           <div style={{ padding: '24px' }}>
             <div style={{ marginBottom: '24px' }}>
@@ -635,17 +418,16 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate, onThemeCha
                   alignItems: 'center'
                 }}
               >
-                <Palette style={{ marginRight: '12px' }} size={24} />
-                外观设置
+                <Shield style={{ marginRight: '12px' }} size={24} />
+                隐私安全
               </Title>
               <Text style={{ color: isDarkTheme ? '#9ca3af' : '#6b7280' }}>
-                自定义应用的外观和主题设置
+                保护您的隐私和数据安全
               </Text>
             </div>
 
             <Row gutter={[24, 24]}>
-              {/* 主题设置 */}
-              <Col xs={24} lg={12}>
+              <Col xs={24}>
                 <Card
                   title={
                     <span style={{
@@ -653,233 +435,8 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate, onThemeCha
                       display: 'flex',
                       alignItems: 'center'
                     }}>
-                      <Palette style={{ marginRight: '8px' }} size={16} />
-                      主题设置
-                    </span>
-                  }
-                  style={{
-                    background: isDarkTheme ? '#2a2a2a' : '#ffffff',
-                    borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.1)' : '#e5e7eb',
-                  }}
-                >
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                    {/* 主题模式选择 */}
-                    <div>
-                      <Text style={{
-                        color: isDarkTheme ? '#ffffff' : '#1f2937',
-                        display: 'block',
-                        marginBottom: '12px',
-                        fontWeight: 500
-                      }}>主题模式</Text>
-                      <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(3, 1fr)',
-                        gap: '8px'
-                      }}>
-                        <Button
-                          type={appearanceSettings.theme === 'light' ? 'primary' : 'default'}
-                          icon={<Sun size={16} />}
-                          onClick={() => handleThemeChange('light')}
-                          style={{ height: '48px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}
-                        >
-                          <span style={{ fontSize: '12px', marginTop: '4px' }}>浅色</span>
-                        </Button>
-                        <Button
-                          type={appearanceSettings.theme === 'dark' ? 'primary' : 'default'}
-                          icon={<Moon size={16} />}
-                          onClick={() => handleThemeChange('dark')}
-                          style={{ height: '48px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}
-                        >
-                          <span style={{ fontSize: '12px', marginTop: '4px' }}>深色</span>
-                        </Button>
-                        <Button
-                          type={appearanceSettings.theme === 'auto' ? 'primary' : 'default'}
-                          icon={<Monitor size={16} />}
-                          onClick={() => handleThemeChange('auto')}
-                          style={{ height: '48px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}
-                        >
-                          <span style={{ fontSize: '12px', marginTop: '4px' }}>自动</span>
-                        </Button>
-                      </div>
-                    </div>
-
-                    <Divider style={{ borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.1)' : '#e5e7eb', margin: 0 }} />
-
-                    {/* 界面选项 */}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div>
-                        <Text style={{
-                          color: isDarkTheme ? '#ffffff' : '#1f2937',
-                          display: 'block'
-                        }}>紧凑模式</Text>
-                        <Text style={{
-                          color: isDarkTheme ? '#9ca3af' : '#6b7280',
-                          fontSize: '14px'
-                        }}>减少界面元素间距</Text>
-                      </div>
-                      <Switch 
-                        checked={appearanceSettings.compactMode}
-                        onChange={handleCompactModeChange}
-                      />
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div>
-                        <Text style={{
-                          color: isDarkTheme ? '#ffffff' : '#1f2937',
-                          display: 'block'
-                        }}>动画效果</Text>
-                        <Text style={{
-                          color: isDarkTheme ? '#9ca3af' : '#6b7280',
-                          fontSize: '14px'
-                        }}>启用界面过渡动画</Text>
-                      </div>
-                      <Switch 
-                        checked={appearanceSettings.animations}
-                        onChange={handleAnimationsChange}
-                      />
-                    </div>
-
-                    {/* 字体大小 */}
-                    <div>
-                      <Text style={{
-                        color: isDarkTheme ? '#ffffff' : '#1f2937',
-                        display: 'block',
-                        marginBottom: '12px'
-                      }}>字体大小: {appearanceSettings.fontSize}px</Text>
-                      <Slider
-                        min={12}
-                        max={20}
-                        value={appearanceSettings.fontSize}
-                        onChange={handleFontSizeChange}
-                        marks={{
-                          12: '小',
-                          14: '中',
-                          16: '大',
-                          20: '特大'
-                        }}
-                      />
-                    </div>
-                  </div>
-                </Card>
-              </Col>
-
-              {/* 颜色和样式 */}
-              <Col xs={24} lg={12}>
-                <Card
-                  title={
-                    <span style={{
-                      color: isDarkTheme ? '#ffffff' : '#1f2937',
-                      display: 'flex',
-                      alignItems: 'center'
-                    }}>
-                      <Contrast style={{ marginRight: '8px' }} size={16} />
-                      颜色和样式
-                    </span>
-                  }
-                  style={{
-                    background: isDarkTheme ? '#2a2a2a' : '#ffffff',
-                    borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.1)' : '#e5e7eb',
-                  }}
-                >
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                    {/* 主色调选择 */}
-                    <div>
-                      <Text style={{
-                        color: isDarkTheme ? '#ffffff' : '#1f2937',
-                        display: 'block',
-                        marginBottom: '12px',
-                        fontWeight: 500
-                      }}>主色调</Text>
-                      <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(3, 1fr)',
-                        gap: '8px',
-                        marginBottom: '12px'
-                      }}>
-                        {themePresets.map((preset, index) => (
-                          <Tooltip key={index} title={preset.description}>
-                            <Button
-                              style={{
-                                backgroundColor: preset.color,
-                                borderColor: preset.color,
-                                color: '#ffffff',
-                                height: '40px'
-                              }}
-                              onClick={() => handlePrimaryColorChange(preset.color)}
-                            >
-                              {preset.name}
-                            </Button>
-                          </Tooltip>
-                        ))}
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <Text style={{ color: isDarkTheme ? '#9ca3af' : '#6b7280' }}>自定义:</Text>
-                        <ColorPicker
-                          value={appearanceSettings.primaryColor}
-                          onChange={(color) => handlePrimaryColorChange(color.toHexString())}
-                        />
-                      </div>
-                    </div>
-
-                    <Divider style={{ borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.1)' : '#e5e7eb', margin: 0 }} />
-
-                    {/* 圆角设置 */}
-                    <div>
-                      <Text style={{
-                        color: isDarkTheme ? '#ffffff' : '#1f2937',
-                        display: 'block',
-                        marginBottom: '12px'
-                      }}>圆角大小: {appearanceSettings.borderRadius}px</Text>
-                      <Slider
-                        min={0}
-                        max={16}
-                        value={appearanceSettings.borderRadius}
-                        onChange={handleBorderRadiusChange}
-                        marks={{
-                          0: '直角',
-                          4: '小',
-                          8: '中',
-                          12: '大',
-                          16: '圆润'
-                        }}
-                      />
-                    </div>
-
-                    {/* 窗口透明度 */}
-                    <div>
-                      <Text style={{
-                        color: isDarkTheme ? '#ffffff' : '#1f2937',
-                        display: 'block',
-                        marginBottom: '12px'
-                      }}>窗口透明度: {appearanceSettings.windowOpacity}%</Text>
-                      <Slider
-                        min={70}
-                        max={100}
-                        value={appearanceSettings.windowOpacity}
-                        onChange={handleWindowOpacityChange}
-                        marks={{
-                          70: '70%',
-                          85: '85%',
-                          100: '100%'
-                        }}
-                      />
-                    </div>
-                  </div>
-                </Card>
-              </Col>
-
-              {/* 语言设置 */}
-              <Col xs={24} lg={12}>
-                <Card
-                  title={
-                    <span style={{
-                      color: isDarkTheme ? '#ffffff' : '#1f2937',
-                      display: 'flex',
-                      alignItems: 'center'
-                    }}>
-                      <Globe style={{ marginRight: '8px' }} size={16} />
-                      语言设置
+                      <Shield style={{ marginRight: '8px' }} size={16} />
+                      隐私保护
                     </span>
                   }
                   style={{
@@ -888,76 +445,69 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate, onThemeCha
                   }}
                 >
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    <div>
-                      <Text style={{
-                        color: isDarkTheme ? '#ffffff' : '#1f2937',
-                        display: 'block',
-                        marginBottom: '12px'
-                      }}>界面语言</Text>
-                      <Select
-                        value={appearanceSettings.language}
-                        onChange={handleLanguageChange}
-                        style={{ width: '100%' }}
-                        size="large"
-                      >
-                        {languageOptions.map(option => (
-                          <Option key={option.value} value={option.value}>
-                            <span style={{ marginRight: '8px' }}>{option.flag}</span>
-                            {option.label}
-                          </Option>
-                        ))}
-                      </Select>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div>
+                        <Text style={{
+                          color: isDarkTheme ? '#ffffff' : '#1f2937',
+                          display: 'block'
+                        }}>本地存储</Text>
+                        <Text style={{
+                          color: isDarkTheme ? '#9ca3af' : '#6b7280',
+                          fontSize: '14px'
+                        }}>所有数据仅存储在本地设备</Text>
+                      </div>
+                      <CheckCircle style={{ color: '#10b981' }} size={20} />
                     </div>
-                    
-                    <Alert
-                      message="语言提示"
-                      description="更改语言后需要重启应用才能完全生效。部分界面元素可能需要手动刷新。"
-                      type="info"
-                      showIcon
-                      size="small"
-                      style={{
-                        background: isDarkTheme ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.05)',
-                        borderColor: isDarkTheme ? '#3b82f6' : '#93c5fd',
-                      }}
-                    />
-                  </div>
-                </Card>
-              </Col>
 
-              {/* 重置设置 */}
-              <Col xs={24} lg={12}>
-                <Card
-                  title={
-                    <span style={{
-                      color: isDarkTheme ? '#ffffff' : '#1f2937',
-                      display: 'flex',
-                      alignItems: 'center'
-                    }}>
-                      <RefreshCw style={{ marginRight: '8px' }} size={16} />
-                      重置设置
-                    </span>
-                  }
-                  style={{
-                    background: isDarkTheme ? '#2a2a2a' : '#ffffff',
-                    borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.1)' : '#e5e7eb',
-                  }}
-                >
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    <Text style={{ color: isDarkTheme ? '#9ca3af' : '#6b7280' }}>
-                      将所有外观设置恢复为默认值。这将重置主题、颜色、字体大小等所有自定义设置。
-                    </Text>
-                    <Button 
-                      danger 
-                      icon={<RefreshCw size={16} />}
-                      onClick={handleResetAppearance}
-                      style={{ alignSelf: 'flex-start' }}
-                    >
-                      重置所有外观设置
-                    </Button>
+                    <Divider style={{ borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.1)' : '#e5e7eb' }} />
+
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div>
+                        <Text style={{
+                          color: isDarkTheme ? '#ffffff' : '#1f2937',
+                          display: 'block'
+                        }}>数据加密</Text>
+                        <Text style={{
+                          color: isDarkTheme ? '#9ca3af' : '#6b7280',
+                          fontSize: '14px'
+                        }}>敏感数据使用AES加密存储</Text>
+                      </div>
+                      <CheckCircle style={{ color: '#10b981' }} size={20} />
+                    </div>
+
+                    <Divider style={{ borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.1)' : '#e5e7eb' }} />
+
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div>
+                        <Text style={{
+                          color: isDarkTheme ? '#ffffff' : '#1f2937',
+                          display: 'block'
+                        }}>匿名使用统计</Text>
+                        <Text style={{
+                          color: isDarkTheme ? '#9ca3af' : '#6b7280',
+                          fontSize: '14px'
+                        }}>帮助改进产品体验</Text>
+                      </div>
+                      <Switch />
+                    </div>
                   </div>
                 </Card>
               </Col>
             </Row>
+
+            <div style={{ marginTop: '24px' }}>
+              <Alert
+                message="隐私承诺"
+                description="我们承诺不会收集、存储或传输您的任何个人数据。所有AI对话和设置信息都安全地存储在您的本地设备上。"
+                type="success"
+                showIcon
+                icon={<CheckCircle size={16} />}
+                style={{
+                  background: isDarkTheme ? 'rgba(16, 185, 129, 0.1)' : 'rgba(16, 185, 129, 0.05)',
+                  borderColor: isDarkTheme ? '#10b981' : '#6ee7b7',
+                }}
+              />
+            </div>
           </div>
         )
       case 'about':
@@ -1033,15 +583,6 @@ const Settings: React.FC<SettingsProps> = ({ isDarkTheme, onNavigate, onThemeCha
                   <div style={{ marginTop: '16px', textAlign: 'center' }}>
                     <Space>
                       <Button 
-                        type="primary" 
-                        ghost 
-                        icon={<Info size={16} />}
-                        onClick={() => handleNavigate('/about')}
-                      >
-                        查看详细信息
-                      </Button>
-                      <Button 
-                        ghost 
                         icon={<Globe size={16} />}
                         onClick={() => window.open('https://github.com/AIDotNet/koala-desktop', '_blank')}
                       >
