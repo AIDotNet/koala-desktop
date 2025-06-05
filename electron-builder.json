@@ -3,6 +3,10 @@
   "appId": "com.aidotnet.koala-desktop",
   "productName": "Koala Desktop",
   "asar": true,
+  "electronDownload": {
+    "mirror": "https://npmmirror.com/mirrors/electron/",
+    "cache": ".electron-cache"
+  },
   "directories": {
     "output": "release/${version}",
     "buildResources": "build"

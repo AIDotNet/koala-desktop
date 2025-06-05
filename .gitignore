@@ -138,3 +138,6 @@ build
 dist
 release
 dist-electron
+
+# Electron 缓存目录
+.electron-cache/
