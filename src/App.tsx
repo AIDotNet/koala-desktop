@@ -33,7 +33,10 @@ function App() {
   // 监听来自登录页面的消息
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
-      if (event.origin !== window.location.origin) return
+      // 放宽对消息来源的限制
+      // if (event.origin !== window.location.origin) return
+      
+      console.log('App收到消息:', event.origin, event.data)
       
       if (event.data.type === 'LOGIN_SUCCESS' && event.data.token) {
         // 转发登录成功消息给整个应用

@@ -10,10 +10,39 @@ const LoginPage: React.FC<LoginPageProps> = ({ isDarkTheme }) => {
   const iframeRef = useRef<HTMLIFrameElement>(null)
 
   useEffect(() => {
+    // 检查URL参数中是否有登录信息
+    const checkUrlParams = () => {
+      const urlParams = new URLSearchParams(window.location.search)
+      const loginSuccess = urlParams.get('login_success')
+      const token = urlParams.get('token')
+      
+      if (loginSuccess === 'true' && token) {
+        console.log('从URL参数中检测到登录成功')
+        
+        // 处理登录成功
+        setTimeout(() => {
+          window.parent.postMessage({
+            type: 'CLOSE_LOGIN_TAB'
+          }, window.location.origin)
+        }, 1500)
+        
+        // 清除URL参数
+        window.history.replaceState({}, document.title, window.location.pathname)
+        return true
+      }
+      return false
+    }
+    
+    // 先检查URL参数
+    const hasLoginInfo = checkUrlParams()
+    if (hasLoginInfo) return
+    
     // 监听来自 iframe 的消息
     const handleMessage = (event: MessageEvent) => {
-      // 检查消息来源 - 允许来自 TokenAI 或我们自己的域名
-      if (event.origin !== 'https://api.token-ai.cn' && event.origin !== window.location.origin) return
+      // 放宽对消息来源的检查，允许任何来源
+      // if (event.origin !== 'https://api.token-ai.cn' && event.origin !== window.location.origin) return
+      
+      console.log('收到消息:', event.origin, event.data)
       
       if (event.data.type === 'LOGIN_SUCCESS' && event.data.token) {
         console.log('收到登录成功消息:', event.data.token)
@@ -34,8 +63,12 @@ const LoginPage: React.FC<LoginPageProps> = ({ isDarkTheme }) => {
 
     window.addEventListener('message', handleMessage)
 
+    // 定期检查URL参数，以防重定向后参数变化
+    const urlCheckInterval = setInterval(checkUrlParams, 1000)
+
     return () => {
       window.removeEventListener('message', handleMessage)
+      clearInterval(urlCheckInterval)
     }
   }, [])
 
